@@ -18,6 +18,8 @@ def service(tmp_path):
         max_attempts=3,
         starts_per_window=5,
         window_seconds=60,
+        failures_per_window=3,
+        failure_window_seconds=60,
     )
     yield PasskeyService(engine, rp_id="example.test", origin="https://example.test", policy=policy)
     engine.dispose()
@@ -41,7 +43,9 @@ def test_failed_verification_is_durably_bounded(service):
     challenge = service.begin_bootstrap(enrollment.secret, label="Test key", source="local")
     for _ in range(4):
         with pytest.raises(DomainError):
-            service.complete(challenge.ceremony_id, purpose="bootstrap", response={})
+            service.complete(
+                challenge.ceremony_id, purpose="bootstrap", response={}, source="local"
+            )
     with transaction(service.engine) as db:
         ceremony = db.get(AuthCeremony, challenge.ceremony_id)
         assert ceremony.attempts == 3
@@ -136,7 +140,10 @@ def bootstrap(service):
     enrollment = service.prepare_bootstrap()
     challenge = service.begin_bootstrap(enrollment.secret, label="Test key", source="local")
     issued = service.complete(
-        challenge.ceremony_id, purpose="bootstrap", response=key.register(challenge.options)
+        challenge.ceremony_id,
+        purpose="bootstrap",
+        response=key.register(challenge.options),
+        source="local",
     )
     return key, issued
 
@@ -147,7 +154,7 @@ def test_real_registration_login_and_stepup(service):
     key, first = bootstrap(service)
     login = service.begin_login(source="local", label="Browser")
     second = service.complete(
-        login.ceremony_id, purpose="login", response=key.assert_key(login.options)
+        login.ceremony_id, purpose="login", response=key.assert_key(login.options), source="local"
     )
     step = service.begin_stepup(second.session_id, source="local")
     third = service.complete(
@@ -155,6 +162,7 @@ def test_real_registration_login_and_stepup(service):
         purpose="stepup",
         session_id=second.session_id,
         response=key.assert_key(step.options, count=2),
+        source="local",
     )
     with transaction(service.engine) as db:
         assert db.get(BrowserSession, second.session_id).revoked
@@ -167,7 +175,10 @@ def test_real_registration_login_and_stepup(service):
         service.prepare_bootstrap()
     with pytest.raises(DomainError):
         service.complete(
-            login.ceremony_id, purpose="login", response=key.assert_key(login.options, count=3)
+            login.ceremony_id,
+            purpose="login",
+            response=key.assert_key(login.options, count=3),
+            source="local",
         )
 
 
@@ -201,6 +212,7 @@ def test_real_assertion_rejects_binding_tampering(service, change):
             login.ceremony_id,
             purpose="bootstrap" if change == "purpose" else "login",
             response=response,
+            source="local",
         )
     with transaction(service.engine) as db:
         from sqlalchemy import func, select
@@ -224,7 +236,9 @@ def test_bootstrap_concurrent_completion_has_one_owner_and_session(service):
 
     def finish():
         try:
-            return service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+            return service.complete(
+                challenge.ceremony_id, purpose="bootstrap", response=response, source="local"
+            )
         except DomainError:
             return None
 
@@ -247,10 +261,10 @@ def test_observed_expiry_cannot_revive_after_clock_rollback(service, monkeypatch
     response = key.assert_key(challenge.options)
     monkeypatch.setattr(passkeys, "utc_seconds", lambda: now + 60)
     with pytest.raises(DomainError):
-        service.complete(challenge.ceremony_id, purpose="login", response=response)
+        service.complete(challenge.ceremony_id, purpose="login", response=response, source="local")
     monkeypatch.setattr(passkeys, "utc_seconds", lambda: now + 1)
     with pytest.raises(DomainError):
-        service.complete(challenge.ceremony_id, purpose="login", response=response)
+        service.complete(challenge.ceremony_id, purpose="login", response=response, source="local")
 
 
 def test_http_configuration_origin_cookie_and_real_crypto(service):
@@ -331,7 +345,9 @@ def test_registration_rejects_binding_tampering(service, change):
     if change == "raw_id":
         response["id"] = response["rawId"] = websafe_encode(b"wrong")
     with pytest.raises(DomainError):
-        service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+        service.complete(
+            challenge.ceremony_id, purpose="bootstrap", response=response, source="local"
+        )
     with transaction(service.engine) as db:
         assert db.get(IdentityState, 1).owner_id is None
 
@@ -344,18 +360,27 @@ def test_counter_regression_and_revoked_key_cannot_issue_session(service):
     key, _ = bootstrap(service)
     first = service.begin_login(source="local", label="Browser")
     service.complete(
-        first.ceremony_id, purpose="login", response=key.assert_key(first.options, count=2)
+        first.ceremony_id,
+        purpose="login",
+        response=key.assert_key(first.options, count=2),
+        source="local",
     )
     second = service.begin_login(source="local", label="Browser")
     with pytest.raises(DomainError):
         service.complete(
-            second.ceremony_id, purpose="login", response=key.assert_key(second.options, count=1)
+            second.ceremony_id,
+            purpose="login",
+            response=key.assert_key(second.options, count=1),
+            source="local",
         )
     with transaction(service.engine) as db:
         db.scalar(select(Passkey)).revoked = True
     with pytest.raises(DomainError):
         service.complete(
-            second.ceremony_id, purpose="login", response=key.assert_key(second.options, count=3)
+            second.ceremony_id,
+            purpose="login",
+            response=key.assert_key(second.options, count=3),
+            source="local",
         )
 
 
@@ -377,16 +402,32 @@ def test_bootstrap_commit_failure_rolls_back_identity_credential_and_session(ser
     monkeypatch.setattr(passkeys, "issue_session", fail_after_issue)
     with pytest.raises(DomainError):
         service.complete(
-            challenge.ceremony_id, purpose="bootstrap", response=key.register(challenge.options)
+            challenge.ceremony_id,
+            purpose="bootstrap",
+            response=key.register(challenge.options),
+            source="local",
         )
     with transaction(service.engine) as db:
         for model in (Principal, Passkey, BrowserSession):
             assert db.scalar(select(func.count()).select_from(model)) == 0
         assert db.get(IdentityState, 1).owner_id is None
-        assert db.get(AuthCeremony, challenge.ceremony_id).attempts == 1
+        assert db.get(AuthCeremony, challenge.ceremony_id).attempts == 0
+        from journeon.models import AuthRateEvent
+
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(AuthRateEvent)
+                .where(~AuthRateEvent.bucket.startswith("source:"))
+            )
+            == 0
+        )
     monkeypatch.setattr(passkeys, "issue_session", original)
     service.complete(
-        challenge.ceremony_id, purpose="bootstrap", response=key.register(challenge.options)
+        challenge.ceremony_id,
+        purpose="bootstrap",
+        response=key.register(challenge.options),
+        source="local",
     )
 
 
@@ -396,12 +437,18 @@ def test_stepup_requires_existing_session_and_same_challenge_binding(service):
         service.begin_stepup("unknown", source="local")
     step = service.begin_stepup(issued.session_id, source="local")
     with pytest.raises(DomainError):
-        service.complete(step.ceremony_id, purpose="stepup", response=key.assert_key(step.options))
+        service.complete(
+            step.ceremony_id,
+            purpose="stepup",
+            response=key.assert_key(step.options),
+            source="local",
+        )
     service.complete(
         step.ceremony_id,
         purpose="stepup",
         session_id=issued.session_id,
         response=key.assert_key(step.options),
+        source="local",
     )
 
 
@@ -428,11 +475,11 @@ def test_expired_session_issuance_observation_prevents_ceremony_revival(service,
     response = key.assert_key(login.options)
     monkeypatch.setattr(sessions, "utc_seconds", lambda: now + 60)
     with pytest.raises(DomainError):
-        service.complete(login.ceremony_id, purpose="login", response=response)
+        service.complete(login.ceremony_id, purpose="login", response=response, source="local")
     monkeypatch.setattr(sessions, "utc_seconds", lambda: now + 1)
     monkeypatch.setattr(passkeys, "utc_seconds", lambda: now + 1)
     with pytest.raises(DomainError):
-        service.complete(login.ceremony_id, purpose="login", response=response)
+        service.complete(login.ceremony_id, purpose="login", response=response, source="local")
 
 
 def test_process_crash_during_bootstrap_leaves_reusable_uninitialized_state(service, tmp_path):
@@ -458,13 +505,13 @@ from journeon import passkeys
 from journeon.database import create_database
 engine = create_database(Path(sys.argv[1]))
 service = passkeys.PasskeyService(engine, rp_id='example.test', origin='https://example.test',
-    policy=passkeys.PasskeyPolicy(60,120,3,5,60))
+    policy=passkeys.PasskeyPolicy(60,120,3,5,60,3,60))
 original = passkeys.issue_session
 def crash(*args, **kwargs):
     original(*args, **kwargs)
     os._exit(77)
 passkeys.issue_session = crash
-service.complete(sys.argv[2], purpose='bootstrap',
+service.complete(sys.argv[2], source='local', purpose='bootstrap',
                  response=json.loads(Path(sys.argv[3]).read_text()))
 """
     environment = dict(os.environ, PYTHONPATH="src")
@@ -488,7 +535,7 @@ service.complete(sys.argv[2], purpose='bootstrap',
             assert db.scalar(select(func.count()).select_from(model)) == 0
         assert db.get(IdentityState, 1).owner_id is None
         assert not db.get(AuthCeremony, challenge.ceremony_id).consumed
-    service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+    service.complete(challenge.ceremony_id, purpose="bootstrap", response=response, source="local")
 
 
 def test_initialized_owner_cannot_be_demoted_deleted_or_unbound(service):
@@ -589,7 +636,10 @@ def test_bootstrap_session_issuance_cannot_cross_enrollment_deadline(service, mo
     monkeypatch.setattr(sessions, "utc_seconds", lambda: now + 120)
     with pytest.raises(DomainError):
         service.complete(
-            challenge.ceremony_id, purpose="bootstrap", response=key.register(challenge.options)
+            challenge.ceremony_id,
+            purpose="bootstrap",
+            response=key.register(challenge.options),
+            source="local",
         )
 
 
@@ -601,7 +651,9 @@ def test_malformed_attestation_is_sanitized_and_counted(service, value):
     response = key.register(challenge.options)
     response["response"]["attestationObject"] = value
     with pytest.raises(DomainError):
-        service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+        service.complete(
+            challenge.ceremony_id, purpose="bootstrap", response=response, source="local"
+        )
     with transaction(service.engine) as db:
         assert db.get(AuthCeremony, challenge.ceremony_id).attempts == 1
 
@@ -622,7 +674,9 @@ def test_registration_without_attested_credential_is_denied(service):
         cbor.encode({"fmt": "none", "attStmt": {}, "authData": bytes(data)})
     )
     with pytest.raises(DomainError):
-        service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+        service.complete(
+            challenge.ceremony_id, purpose="bootstrap", response=response, source="local"
+        )
 
 
 def test_verifier_logging_does_not_disclose_credential_identifiers(service, caplog):
@@ -631,7 +685,9 @@ def test_verifier_logging_does_not_disclose_credential_identifiers(service, capl
     caplog.set_level(logging.DEBUG, logger="fido2.server")
     key, _ = bootstrap(service)
     login = service.begin_login(source="local", label="Browser")
-    service.complete(login.ceremony_id, purpose="login", response=key.assert_key(login.options))
+    service.complete(
+        login.ceremony_id, purpose="login", response=key.assert_key(login.options), source="local"
+    )
     assert key.credential_id.hex() not in caplog.text
 
 
@@ -664,6 +720,7 @@ def test_pending_challenge_is_invalid_after_relying_party_configuration_change(s
             login.ceremony_id,
             purpose="login",
             response=key.assert_key(login.options, origin=changed.origin),
+            source="local",
         )
 
 
@@ -680,7 +737,9 @@ def test_verifier_recursion_failure_preserves_attempt_budget(service, monkeypatc
     monkeypatch.setattr(passkeys.RegistrationResponse, "from_dict", decoder_limit)
     for _ in range(service.policy.max_attempts + 1):
         with pytest.raises(DomainError):
-            service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+            service.complete(
+                challenge.ceremony_id, purpose="bootstrap", response=response, source="local"
+            )
     with transaction(service.engine) as db:
         row = db.get(AuthCeremony, challenge.ceremony_id)
         assert row.attempts == service.policy.max_attempts

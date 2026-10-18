@@ -5,6 +5,7 @@ import json
 import logging
 import secrets
 import struct
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from typing import Any
 from urllib.parse import urlsplit
@@ -23,15 +24,16 @@ from fido2.webauthn import (
     ResidentKeyRequirement,
     UserVerificationRequirement,
 )
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from journeon import auth_rates
 from journeon.contracts import DomainError
 from journeon.database import require_compatible_schema, transaction
 from journeon.models import (
     AuthCeremony,
-    AuthRate,
+    AuthRateEvent,
     BrowserSession,
     IdentityState,
     Passkey,
@@ -61,6 +63,13 @@ def rejected() -> DomainError:
     return DomainError("AUTHENTICATION_REQUIRED", "Passkey verification failed")
 
 
+class RejectedPasskeyInput(DomainError):
+    """Service-owned classification for rejected input before credential verification."""
+
+    def __init__(self) -> None:
+        super().__init__("AUTHENTICATION_REQUIRED", "Passkey verification failed")
+
+
 @dataclass(frozen=True)
 class PasskeyPolicy:
     ceremony_seconds: int
@@ -68,6 +77,8 @@ class PasskeyPolicy:
     max_attempts: int
     starts_per_window: int
     window_seconds: int
+    failures_per_window: int
+    failure_window_seconds: int
 
     def __post_init__(self) -> None:
         for value in (
@@ -76,9 +87,34 @@ class PasskeyPolicy:
             self.max_attempts,
             self.starts_per_window,
             self.window_seconds,
+            self.failures_per_window,
+            self.failure_window_seconds,
         ):
             if type(value) is not int or not 0 < value < 2**62:
                 raise ValueError("Passkey policy requires finite positive integers")
+
+
+STANDARD_PASSKEY_POLICY = PasskeyPolicy(300, 900, 5, 30, 300, 5, 300)
+
+
+class _CredentialFailure(DomainError):
+    def __init__(self) -> None:
+        super().__init__("AUTHENTICATION_REQUIRED", "Passkey verification failed")
+
+
+def _check_credential[T](check: Callable[..., T], *args: Any) -> T:
+    try:
+        return check(*args)
+    except (
+        ValueError,
+        KeyError,
+        TypeError,
+        IndexError,
+        OverflowError,
+        RecursionError,
+        struct.error,
+    ):
+        raise _CredentialFailure() from None
 
 
 @dataclass(frozen=True)
@@ -137,6 +173,7 @@ class PasskeyService:
             try:
                 if not self._observe(db, now):
                     raise rejected()
+                self._require_rate_policy(db)
                 state = db.get(IdentityState, 1)
                 assert state is not None
                 if (
@@ -155,21 +192,102 @@ class PasskeyService:
         assert secret is not None
         return Enrollment(secret)
 
+    def _rate_policy(self, db: Session) -> bool:
+        state = db.get(IdentityState, 1)
+        assert state is not None
+        binding = asdict(self.policy)
+        if state.rate_policy is None:
+            state.rate_policy = binding
+            db.execute(
+                update(AuthRateEvent)
+                .where(AuthRateEvent.expires_at.is_(None))
+                .values(expires_at=AuthRateEvent.observed_at + self.policy.window_seconds)
+            )
+            db.flush()
+        return state.rate_policy == binding
+
+    def _require_rate_policy(self, db: Session) -> None:
+        if not self._rate_policy(db):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Authentication policy requires explicit migration"
+            )
+
+    def reserve_http_source(self, source: str) -> tuple[int, int]:
+        """Reserve bounded input work without holding a transaction over network reads."""
+        failure = None
+        reservation_id = None
+        with transaction(self.engine) as db:
+            now = utc_seconds()
+            try:
+                if not self._observe(db, now):
+                    raise rejected()
+                self._require_rate_policy(db)
+                bucket = "rejected-source:" + digest(source)
+                if not auth_rates.available(
+                    db, {bucket}, limit=self.policy.starts_per_window, now=now
+                ):
+                    raise rejected()
+                reservation = AuthRateEvent(
+                    bucket=bucket,
+                    observed_at=now,
+                    expires_at=now + self.policy.window_seconds,
+                    weight=1,
+                )
+                db.add(reservation)
+                db.flush()
+                reservation_id = reservation.id
+            except DomainError as exc:
+                failure = exc
+        if failure is not None:
+            raise failure
+        assert reservation_id is not None
+        return reservation_id, now
+
+    def finish_http_source(self, reservation: tuple[int, int], rejected_input: bool) -> None:
+        """Retain the admission timestamp for rejected input; otherwise release its slot."""
+        with transaction(self.engine) as db:
+            row = db.get(AuthRateEvent, reservation[0])
+            if row is not None and row.observed_at == reservation[1] and not rejected_input:
+                db.delete(row)
+
     def _rate(self, db: Session, source: str, now: int) -> None:
-        key = digest(source)
-        rate = db.get(AuthRate, key)
-        if rate is None:
-            rate = AuthRate(key=key, window_start=now, last_observed=now, count=0)
-            db.add(rate)
-        if now < rate.last_observed:
+        buckets = {"source:" + digest(source)}
+        if not auth_rates.available(db, buckets, limit=self.policy.starts_per_window, now=now):
             raise rejected()
-        rate.last_observed = now
-        if now >= rate.window_start + self.policy.window_seconds:
-            rate.window_start, rate.count = now, 0
-        if rate.count >= self.policy.starts_per_window:
-            raise rejected()
-        rate.count += 1
-        db.flush()
+        auth_rates.record(db, buckets, now=now, window=self.policy.window_seconds)
+
+    def _failure_buckets(
+        self, db: Session, row: AuthCeremony, response: dict[str, Any], source: str
+    ) -> set[str]:
+        if row.purpose == "bootstrap":
+            return {"family:passkey:bootstrap-owner", "enrollment:" + str(row.enrollment_hash)}
+        buckets = set()
+        if row.subject_id is not None:
+            buckets.add("family:passkey:" + digest(row.subject_id))
+        raw_id = response.get("rawId")
+        canonical = None
+        if isinstance(raw_id, str):
+            try:
+                canonical = websafe_encode(websafe_decode(raw_id))
+            except (ValueError, TypeError):
+                pass
+        key = (
+            db.scalar(select(Passkey).where(Passkey.credential_id == canonical))
+            if canonical
+            else None
+        )
+        if key is not None:
+            buckets.update(
+                {
+                    "credential:passkey:" + digest(key.id),
+                    "family:passkey:" + digest(key.principal_id),
+                }
+            )
+        else:
+            buckets.add("anonymous-source:" + digest(source))
+            if canonical:
+                buckets.add("unknown:passkey:" + digest(canonical))
+        return buckets
 
     def begin_bootstrap(self, secret: str, *, label: str, source: str) -> Challenge:
         return self._begin("bootstrap", source=source, label=label, secret=secret)
@@ -196,6 +314,7 @@ class PasskeyService:
             try:
                 if not self._observe(db, now):
                     raise rejected()
+                self._require_rate_policy(db)
                 self._rate(db, source, now)
                 if len(label) > 128 or (purpose == "bootstrap" and not label.strip()):
                     raise rejected()
@@ -260,6 +379,7 @@ class PasskeyService:
         *,
         purpose: str,
         response: dict[str, Any],
+        source: str,
         session_id: str | None = None,
     ) -> IssuedSession:
         failure = None
@@ -267,8 +387,15 @@ class PasskeyService:
         with transaction(self.engine) as db:
             row = db.get(AuthCeremony, ceremony_id)
             now = utc_seconds()
-            if not self._observe(db, now) or row is None:
+            observed_ok = self._observe(db, now)
+            if not self._rate_policy(db):
+                failure = DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Authentication policy requires explicit migration"
+                )
+            elif not observed_ok:
                 failure = rejected()
+            elif row is None:
+                failure = RejectedPasskeyInput()
             else:
                 prior = row.last_observed
                 row.last_observed = max(prior, now)
@@ -279,13 +406,19 @@ class PasskeyService:
                     or row.session_id != session_id
                     or now < prior
                     or now >= row.deadline
-                    or row.attempts >= self.policy.max_attempts
                 )
+                buckets = self._failure_buckets(db, row, response, source)
                 if invalid:
+                    failure = (
+                        rejected()
+                        if row.attempts >= self.policy.max_attempts
+                        else RejectedPasskeyInput()
+                    )
+                elif row.attempts >= self.policy.max_attempts or not auth_rates.available(
+                    db, buckets, limit=self.policy.failures_per_window, now=now
+                ):
                     failure = rejected()
                 else:
-                    row.attempts += 1
-                    db.flush()
                     observed = now
                     completion_deadline = row.deadline
                     if row.purpose == "bootstrap":
@@ -304,20 +437,16 @@ class PasskeyService:
                                 raise rejected()
                             row.consumed = True
                             db.flush()
-                    except (
-                        ValueError,
-                        KeyError,
-                        TypeError,
-                        IndexError,
-                        OverflowError,
-                        RecursionError,
-                        struct.error,
-                        DomainError,
-                        IntegrityError,
-                    ):
+                    except _CredentialFailure:
                         failure = rejected()
+                        row.attempts += 1
+                        auth_rates.record(
+                            db, buckets, now=now, window=self.policy.failure_window_seconds
+                        )
                         if row.attempts >= self.policy.max_attempts:
                             row.consumed = True
+                    except (DomainError, IntegrityError):
+                        failure = rejected()
                     row.last_observed = max(row.last_observed, observed)
                     self._observe(db, observed)
         if failure is not None:
@@ -338,7 +467,9 @@ class PasskeyService:
                 or row.last_observed >= identity.enrollment_deadline
             ):
                 raise rejected()
-            registration = RegistrationResponse.from_dict(response)
+            registration = _check_credential(RegistrationResponse.from_dict, response)
+            if registration is None:
+                raise _CredentialFailure()
             candidate = registration.response.attestation_object.auth_data.credential_data
             if (
                 registration.response.client_data.cross_origin
@@ -346,12 +477,12 @@ class PasskeyService:
                 or candidate.public_key.get(3)
                 not in {algorithm.alg for algorithm in self.server.allowed_algorithms}
             ):
-                raise rejected()
-            auth_data = self.server.register_complete(row.state, registration)
+                raise _CredentialFailure()
+            auth_data = _check_credential(self.server.register_complete, row.state, registration)
             credential = auth_data.credential_data
             assert credential is not None
             if registration.raw_id != credential.credential_id:
-                raise rejected()
+                raise _CredentialFailure()
             assert row.subject_id is not None
             principal = Principal(
                 id=row.subject_id, role="OWNER", enabled=True, authorization_epoch=1
@@ -375,30 +506,35 @@ class PasskeyService:
             identity.enrollment_deadline = None
             identity.pending_principal_id = None
         else:
-            assertion = AuthenticationResponse.from_dict(response)
+            assertion = _check_credential(AuthenticationResponse.from_dict, response)
+            if assertion is None:
+                raise _CredentialFailure()
             key = db.scalar(
                 select(Passkey).where(Passkey.credential_id == websafe_encode(assertion.raw_id))
             )
             if key is None or key.revoked or assertion.response.client_data.cross_origin:
-                raise rejected()
+                raise _CredentialFailure()
             if assertion.response.user_handle != key.principal_id.encode() or (
                 row.subject_id is not None and key.principal_id != row.subject_id
             ):
-                raise rejected()
-            self.server.authenticate_complete(
-                row.state, [AttestedCredentialData(websafe_decode(key.credential_data))], assertion
+                raise _CredentialFailure()
+            _check_credential(
+                self.server.authenticate_complete,
+                row.state,
+                [_check_credential(AttestedCredentialData, websafe_decode(key.credential_data))],
+                assertion,
             )
             auth_data = assertion.response.authenticator_data
             if auth_data.is_backup_eligible() != key.backup_eligible:
-                raise rejected()
+                raise _CredentialFailure()
             if (
                 auth_data.counter != 0 or key.sign_count != 0
             ) and auth_data.counter <= key.sign_count:
-                raise rejected()
+                raise _CredentialFailure()
             key.sign_count = auth_data.counter
             key.backed_up = auth_data.is_backed_up()
         if key.backed_up and not key.backup_eligible:
-            raise rejected()
+            raise _CredentialFailure()
         db.flush()
         if row.purpose == "stepup":
             assert row.session_id is not None

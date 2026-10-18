@@ -122,7 +122,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0003_passkeys",
+      "migration": "0004_auth_rate_events",
       "module_id": "identity",
       "permission_namespaces": [],
       "permissions": [],
@@ -133,7 +133,8 @@
         "identity_state",
         "passkeys",
         "auth_ceremonies",
-        "auth_rates"
+        "auth_rates",
+        "auth_rate_events"
       ],
       "version": "0.0.0.dev1"
     },

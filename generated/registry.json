@@ -1,6 +1,7 @@
 {
   "api_operations": [
     {
+      "authentication": null,
       "command": "project.create.v1",
       "endpoint": "journeon.api.create_app.<locals>.create_project",
       "methods": [
@@ -16,6 +17,7 @@
       "query": null
     },
     {
+      "authentication": null,
       "command": null,
       "endpoint": "journeon.api.create_app.<locals>.get_receipt",
       "methods": [
@@ -28,6 +30,46 @@
         "project.receipt.read"
       ],
       "query": "operation.receipt.read.v1"
+    },
+    {
+      "authentication": "passkey.begin.v1",
+      "command": null,
+      "endpoint": "journeon.passkey_api.routes.<locals>.begin",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "beginPasskey",
+      "owner": "identity",
+      "path": "/api/v1/auth/passkeys/begin",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": "passkey.finish.v1",
+      "command": null,
+      "endpoint": "journeon.passkey_api.routes.<locals>.finish",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "finishPasskey",
+      "owner": "identity",
+      "path": "/api/v1/auth/passkeys/finish",
+      "permissions": [],
+      "query": null
+    }
+  ],
+  "authentication": [
+    {
+      "input_model": "PasskeyBegin",
+      "name": "passkey.begin.v1",
+      "owner": "identity",
+      "result_model": "PasskeyChallenge"
+    },
+    {
+      "input_model": "PasskeyFinish",
+      "name": "passkey.finish.v1",
+      "owner": "identity",
+      "result_model": "PasskeyAuthenticated"
     }
   ],
   "commands": [
@@ -70,7 +112,9 @@
       "version": "0.0.0.dev1"
     },
     {
-      "api_prefixes": [],
+      "api_prefixes": [
+        "/api/v1/auth/passkeys"
+      ],
       "backup_class": "R0",
       "core": true,
       "dashboards": [],
@@ -78,14 +122,18 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0002_browser_sessions",
+      "migration": "0003_passkeys",
       "module_id": "identity",
       "permission_namespaces": [],
       "permissions": [],
       "settings": [],
       "tables": [
         "principals",
-        "browser_sessions"
+        "browser_sessions",
+        "identity_state",
+        "passkeys",
+        "auth_ceremonies",
+        "auth_rates"
       ],
       "version": "0.0.0.dev1"
     },

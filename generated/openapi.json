@@ -78,6 +78,98 @@
         "title": "OperationReceipt",
         "type": "object"
       },
+      "PasskeyAuthenticated": {
+        "properties": {
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csrf_token"
+        ],
+        "title": "PasskeyAuthenticated",
+        "type": "object"
+      },
+      "PasskeyBegin": {
+        "additionalProperties": false,
+        "properties": {
+          "enrollment_secret": {
+            "default": "",
+            "maxLength": 128,
+            "title": "Enrollment Secret",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 128,
+            "title": "Label",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "bootstrap",
+              "login",
+              "stepup"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "label"
+        ],
+        "title": "PasskeyBegin",
+        "type": "object"
+      },
+      "PasskeyChallenge": {
+        "properties": {
+          "ceremony_id": {
+            "title": "Ceremony Id",
+            "type": "string"
+          },
+          "options_json": {
+            "title": "Options Json",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ceremony_id",
+          "options_json"
+        ],
+        "title": "PasskeyChallenge",
+        "type": "object"
+      },
+      "PasskeyFinish": {
+        "additionalProperties": false,
+        "properties": {
+          "ceremony_id": {
+            "maxLength": 128,
+            "title": "Ceremony Id",
+            "type": "string"
+          },
+          "credential_json": {
+            "title": "Credential Json",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "bootstrap",
+              "login",
+              "stepup"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "ceremony_id",
+          "credential_json"
+        ],
+        "title": "PasskeyFinish",
+        "type": "object"
+      },
       "ProjectCreate": {
         "additionalProperties": false,
         "properties": {
@@ -278,6 +370,146 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/auth/passkeys/begin": {
+      "post": {
+        "operationId": "beginPasskey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyBegin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyChallenge"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Begin",
+        "x-journeon-authentication": "passkey.begin.v1",
+        "x-journeon-owner": "identity"
+      }
+    },
+    "/api/v1/auth/passkeys/finish": {
+      "post": {
+        "operationId": "finishPasskey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyFinish"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyAuthenticated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Finish",
+        "x-journeon-authentication": "passkey.finish.v1",
+        "x-journeon-owner": "identity"
+      }
+    },
     "/api/v1/operations/{operation_id}": {
       "get": {
         "operationId": "getOperationReceipt",

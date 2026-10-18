@@ -15,6 +15,27 @@ export type OperationReceipt = {
   "schema_version"?: 1;
 };
 
+export type PasskeyAuthenticated = {
+  "csrf_token": string;
+};
+
+export type PasskeyBegin = {
+  "enrollment_secret"?: string;
+  "label": string;
+  "purpose": "bootstrap" | "login" | "stepup";
+};
+
+export type PasskeyChallenge = {
+  "ceremony_id": string;
+  "options_json": string;
+};
+
+export type PasskeyFinish = {
+  "ceremony_id": string;
+  "credential_json": string;
+  "purpose": "bootstrap" | "login" | "stepup";
+};
+
 export type ProjectCreate = {
   "description"?: string;
   "expected_policy_revision": number;
@@ -54,17 +75,31 @@ export class JourneonError extends Error {
 export class JourneonClient {
   constructor(private readonly baseUrl = "", private readonly transport: typeof fetch = fetch) {}
 
-  private async request(path: string, init: RequestInit): Promise<OperationReceipt> {
+  private async request<T>(path: string, init: RequestInit): Promise<T> {
     const response = await this.transport(`${this.baseUrl}${path}`, {
-      ...init, credentials: "same-origin", headers: {"Content-Type": "application/json"},
+      ...init, credentials: "same-origin",
+      headers: {"Content-Type": "application/json", ...init.headers},
     });
     const body: unknown = await response.json();
     if (!response.ok) throw new JourneonError(response.status, body);
-    return body as OperationReceipt;
+    return body as T;
   }
 
-  createProject(command: ProjectCreate): Promise<OperationReceipt> {
-    return this.request("/api/v1/projects", {method: "POST", body: JSON.stringify(command)});
+  beginPasskey(command: PasskeyBegin, csrfToken?: string): Promise<PasskeyChallenge> {
+    return this.request("/api/v1/auth/passkeys/begin", {
+      method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  finishPasskey(command: PasskeyFinish, csrfToken?: string): Promise<PasskeyAuthenticated> {
+    return this.request("/api/v1/auth/passkeys/finish", {
+      method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  createProject(command: ProjectCreate, csrfToken?: string): Promise<OperationReceipt> {
+    return this.request("/api/v1/projects", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
   getOperationReceipt(operationId: string): Promise<OperationReceipt> {

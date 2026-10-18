@@ -204,6 +204,98 @@
     "title": "OperationReceipt",
     "type": "object"
   },
+  "PasskeyAuthenticated": {
+    "properties": {
+      "csrf_token": {
+        "title": "Csrf Token",
+        "type": "string"
+      }
+    },
+    "required": [
+      "csrf_token"
+    ],
+    "title": "PasskeyAuthenticated",
+    "type": "object"
+  },
+  "PasskeyBegin": {
+    "additionalProperties": false,
+    "properties": {
+      "enrollment_secret": {
+        "default": "",
+        "maxLength": 128,
+        "title": "Enrollment Secret",
+        "type": "string"
+      },
+      "label": {
+        "maxLength": 128,
+        "title": "Label",
+        "type": "string"
+      },
+      "purpose": {
+        "enum": [
+          "bootstrap",
+          "login",
+          "stepup"
+        ],
+        "title": "Purpose",
+        "type": "string"
+      }
+    },
+    "required": [
+      "purpose",
+      "label"
+    ],
+    "title": "PasskeyBegin",
+    "type": "object"
+  },
+  "PasskeyChallenge": {
+    "properties": {
+      "ceremony_id": {
+        "title": "Ceremony Id",
+        "type": "string"
+      },
+      "options_json": {
+        "title": "Options Json",
+        "type": "string"
+      }
+    },
+    "required": [
+      "ceremony_id",
+      "options_json"
+    ],
+    "title": "PasskeyChallenge",
+    "type": "object"
+  },
+  "PasskeyFinish": {
+    "additionalProperties": false,
+    "properties": {
+      "ceremony_id": {
+        "maxLength": 128,
+        "title": "Ceremony Id",
+        "type": "string"
+      },
+      "credential_json": {
+        "title": "Credential Json",
+        "type": "string"
+      },
+      "purpose": {
+        "enum": [
+          "bootstrap",
+          "login",
+          "stepup"
+        ],
+        "title": "Purpose",
+        "type": "string"
+      }
+    },
+    "required": [
+      "purpose",
+      "ceremony_id",
+      "credential_json"
+    ],
+    "title": "PasskeyFinish",
+    "type": "object"
+  },
   "ProjectCreate": {
     "additionalProperties": false,
     "properties": {

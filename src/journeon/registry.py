@@ -6,12 +6,14 @@ from typing import Any
 
 from alembic.script import ScriptDirectory
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
+from pydantic import BaseModel
 
 from journeon.contracts import OperationReceipt, ProjectCreate
 from journeon.health import schema_and_database
 from journeon.migrate import configuration
 from journeon.models import Base
+from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 
 
 @dataclass(frozen=True)
@@ -49,15 +51,22 @@ COMMANDS = {PROJECT_CREATE.name: PROJECT_CREATE}
 MODULES: dict[str, dict[str, Any]] = {
     "identity": {
         "core": True,
-        "api_prefixes": (),
+        "api_prefixes": ("/api/v1/auth/passkeys",),
         "dashboards": (),
         "events_published": (),
         "events_consumed": (),
-        "tables": ("principals", "browser_sessions"),
+        "tables": (
+            "principals",
+            "browser_sessions",
+            "identity_state",
+            "passkeys",
+            "auth_ceremonies",
+            "auth_rates",
+        ),
         "backup_class": "R0",
         "health": "schema_and_database",
         "permissions": (),
-        "migration": "0002_browser_sessions",
+        "migration": "0003_passkeys",
         "settings": (),
         "environment_migrations": (),
     },
@@ -129,6 +138,23 @@ QUERIES: dict[str, dict[str, Any]] = {
 }
 
 
+@dataclass(frozen=True)
+class AuthenticationDefinition:
+    name: str
+    owner: str
+    input_model: type[BaseModel]
+    result_model: type[BaseModel]
+
+
+AUTHENTICATION = {
+    name: AuthenticationDefinition(name, "identity", input_model, result_model)
+    for name, input_model, result_model in (
+        ("passkey.begin.v1", PasskeyBegin, PasskeyChallenge),
+        ("passkey.finish.v1", PasskeyFinish, PasskeyAuthenticated),
+    )
+}
+
+
 def registry_manifest(app: FastAPI) -> dict[str, Any]:
     """Validate actual service bindings before generating an inspectable manifest."""
     tables = [table for module in MODULES.values() for table in module["tables"]]
@@ -162,12 +188,15 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
     operations = []
     bound_commands: set[str] = set()
     bound_queries: set[str] = set()
+    bound_authentication: set[str] = set()
     operation_ids: set[str] = set()
-    for route in app.routes:
-        if not isinstance(route, APIRoute):
+    for route in iter_route_contexts(app.routes):
+        if not isinstance(route.original_route, APIRoute):
             continue
         if not route.methods:
             raise ValueError("API operation requires an HTTP method")
+        if route.path is None or route.endpoint is None:
+            raise ValueError("API operation requires a path and endpoint")
         metadata = route.openapi_extra or {}
         owner = metadata.get("x-journeon-owner")
         if owner not in MODULES:
@@ -179,14 +208,21 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         ):
             raise ValueError("API operation is outside its owning module prefix")
         permissions = tuple(metadata.get("x-journeon-permissions", ()))
-        if not permissions or not set(permissions) <= set(module["permissions"]):
-            raise ValueError("API operation permissions are missing or outside its owner")
         if not route.operation_id or route.operation_id in operation_ids:
             raise ValueError("API operation requires a unique explicit identity")
         operation_ids.add(route.operation_id)
         command_name = metadata.get("x-journeon-command")
         query_name = metadata.get("x-journeon-query")
-        if command_name and not query_name:
+        authentication_name = metadata.get("x-journeon-authentication")
+        if sum(bool(name) for name in (command_name, query_name, authentication_name)) != 1:
+            raise ValueError(
+                "API operation must bind exactly one command or query or authentication"
+            )
+        if not authentication_name and (
+            not permissions or not set(permissions) <= set(module["permissions"])
+        ):
+            raise ValueError("API operation permissions are missing or outside its owner")
+        if command_name:
             command = COMMANDS.get(command_name)
             if (
                 command is None
@@ -201,7 +237,7 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
             ):
                 raise ValueError("Command registration differs from its actual API binding")
             bound_commands.add(command_name)
-        elif query_name and not command_name:
+        elif query_name:
             query = QUERIES.get(query_name)
             if (
                 query is None
@@ -214,7 +250,24 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 raise ValueError("Query registration differs from its actual API binding")
             bound_queries.add(query_name)
         else:
-            raise ValueError("API operation must bind exactly one command or query")
+            authentication = (
+                AUTHENTICATION.get(authentication_name)
+                if isinstance(authentication_name, str)
+                else None
+            )
+            if (
+                authentication is None
+                or authentication.name != authentication_name
+                or authentication.owner != owner
+                or "x-journeon-permissions" in metadata
+                or route.body_field is None
+                or route.body_field.field_info.annotation is not authentication.input_model
+                or route.response_model is not authentication.result_model
+                or route.methods != {"POST"}
+                or authentication_name in bound_authentication
+            ):
+                raise ValueError("Authentication registration differs from its actual API binding")
+            bound_authentication.add(authentication_name)
         operations.append(
             {
                 "operation_id": route.operation_id,
@@ -224,11 +277,14 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 "permissions": permissions,
                 "command": command_name,
                 "query": query_name,
+                "authentication": authentication_name,
                 "endpoint": f"{route.endpoint.__module__}.{route.endpoint.__qualname__}",
             }
         )
     if bound_commands != set(COMMANDS) or bound_queries != set(QUERIES):
         raise ValueError("Registered commands and queries must have actual API bindings")
+    if bound_authentication != set(AUTHENTICATION):
+        raise ValueError("Registered authentication operations must have actual API bindings")
     return {
         "modules": [
             {
@@ -250,6 +306,14 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         "queries": [
             {"name": name, **query, "result_model": query["result_model"].__name__}
             for name, query in QUERIES.items()
+        ],
+        "authentication": [
+            {
+                **asdict(authentication),
+                "input_model": authentication.input_model.__name__,
+                "result_model": authentication.result_model.__name__,
+            }
+            for authentication in AUTHENTICATION.values()
         ],
         "api_operations": operations,
     }

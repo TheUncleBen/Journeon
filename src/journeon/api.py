@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Session-bound API. Login ceremonies require separate verified integration."""
+"""Session-bound API with explicitly configured passkey authentication."""
 
 import tomllib
 from pathlib import Path
@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
+from sqlalchemy.exc import SQLAlchemyError
 
 from journeon.body_limit import BodyLimitMiddleware
 from journeon.browser_auth import BrowserAuth
@@ -20,6 +21,8 @@ from journeon.contracts import (
     OperationReceipt,
     ProjectCreate,
 )
+from journeon.passkey_api import routes as passkey_routes
+from journeon.passkeys import PasskeyService
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
 
@@ -31,7 +34,18 @@ def authenticated_context(request: Request) -> AuthenticatedContext:
     return binding.resolve(request.app.state.engine, request)
 
 
-def create_app(engine: Engine, *, browser_auth: BrowserAuth | None = None) -> FastAPI:
+def create_app(
+    engine: Engine,
+    *,
+    browser_auth: BrowserAuth | None = None,
+    passkeys: PasskeyService | None = None,
+) -> FastAPI:
+    if passkeys is not None and (
+        browser_auth is None
+        or browser_auth.canonical_origin != passkeys.origin
+        or passkeys.engine is not engine
+    ):
+        raise ValueError("Passkey and browser authentication bindings must match")
     with (Path(__file__).resolve().parents[2] / "pyproject.toml").open("rb") as metadata_file:
         version = tomllib.load(metadata_file)["project"]["version"]
     app = FastAPI(title="Journeon foundation", version=version)
@@ -45,6 +59,15 @@ def create_app(engine: Engine, *, browser_auth: BrowserAuth | None = None) -> Fa
         return JSONResponse(
             status_code=ERROR_HTTP_STATUS[exc.code],
             content=ErrorEnvelope(code=exc.code, reason=exc.reason).model_dump(),
+        )
+
+    @app.exception_handler(SQLAlchemyError)
+    async def unavailable_store(_request: Request, _exc: SQLAlchemyError) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content=ErrorEnvelope(
+                code="DEPENDENCY_UNAVAILABLE", reason="The service store is unavailable"
+            ).model_dump(),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -107,4 +130,5 @@ def create_app(engine: Engine, *, browser_auth: BrowserAuth | None = None) -> Fa
     ) -> OperationReceipt:
         return service.receipt(actor, operation_id)
 
+    app.include_router(passkey_routes(passkeys, browser_auth))
     return app

@@ -14,7 +14,7 @@ from journeon.models import Base
 class FoundationHealth(Contract):
     database: Literal["AVAILABLE", "UNAVAILABLE"]
     schema_state: Literal["CURRENT", "MISSING_OR_INCOMPATIBLE", "UNKNOWN"]
-    operational_authentication: Literal["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED"
+    operational_authentication: Literal["NOT_ASSESSED"] = "NOT_ASSESSED"
 
 
 def schema_and_database(engine: Engine) -> FoundationHealth:

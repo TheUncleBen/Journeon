@@ -1,0 +1,25 @@
+# Validation scope
+
+The current local source-tree checks use CPython 3.12.15, SQLite through Python's standard driver, Linux aarch64, Node.js 24.19.0 and TypeScript 6.0.2. The earlier source snapshot was checked on CPython 3.12.14 and Linux x86_64; the current changes have not been rerun on x86_64. The two Python locks pin the same dependency versions with platform-specific wheel hashes. The checks use actual FastAPI/Pydantic 2/SQLAlchemy 2/Alembic dependencies.
+
+| Check | Evidence and boundary |
+| --- | --- |
+| Python tests | 99 passing tests; temporary file DBs, independent connections and real subprocess termination |
+| Crash consistency | Termination after Project, receipt or outbox insertion, before commit, and after commit with response lost; reopen, retry, integrity and FK checks |
+| Race behavior | Concurrent duplicate requests create one Project/receipt/event; a waiting command sees committed grant revocation or policy revision change |
+| Authority | Current Owner/epoch, exact grants, receipt-only access, revoked replay, separate creation/receipt authority, actor-bound receipts and no implicit share grants. Lookup and retry deny revoked, expired or mismatched grants before decoding receipt JSON; a different current Owner cannot distinguish a damaged receipt from a missing one. |
+| Persisted-state validation | Every canonical Boolean has a checked database domain; raw non-Boolean writes and a second Owner using `enabled=2` fail. Malformed provider policies, damaged receipt JSON and mismatched receipt operation/Project identities return sanitized dependency errors without creating or rewriting records. |
+| API | Default auth denial despite forged headers, test-only authentication overrides, strict DTOs, stable sanitized errors and bounded chunked bodies |
+| Migrations | Explicit empty-file upgrade, repeatable upgrade, model/schema comparison, no bootstrap identities and rejection of unknown/missing migration heads |
+| Contracts | Checked-in OpenAPI/JSON schemas/client match current generation; strict TypeScript compile and synthetic fetch transport/error tests |
+| Static checks | Ruff lint/format and strict mypy for production code and tools |
+| Dependency reproducibility | The aarch64 SHA-256 lock installs offline from downloaded wheels into a separate empty venv; `pip check` passes. The earlier x86_64 lock and inventory remain unchanged. |
+| Advisory checks | Earlier snapshot: 30 Python distributions, zero skips and zero reported advisories using pip-audit 2.10.1; npm lock audit reported zero vulnerabilities. Dependency versions remain unchanged. Advisory services were not rechecked for these repairs; earlier results are point-in-time evidence, not a security certification. |
+
+The current Starlette test adapter emits a deprecation notice for its supported `httpx` integration. Tests still exercise the real adapter; migration to its replacement client remains a development dependency update, not a hidden test skip.
+
+The initial migration is unshipped and was corrected during local review. These checks create fresh databases from the corrected migration. No upgrade from the earlier development snapshot is claimed; existing temporary test databases must be recreated.
+
+Not run or provided: application wheel/build/install, installer, container/ASGI deployment, browser or native client, production login/bootstrap, live provider/MCP/terminal calls, Raspberry Pi qualification, load/performance budgets, encrypted backup/restore, release/signing/update flows, external outbox delivery or public compatibility guarantees. These limits prevent this slice being treated as an operational release.
+
+The Python license inventory comes from installed distribution metadata and SHA-256 of downloaded wheels. `tools/lock_dependencies.py work/wheels` regenerates the default lock and inventory after an intentional dependency update; obtain only the exact installed wheels for the current platform before running it. On aarch64, preserve the x86_64 files with `tools/lock_dependencies.py work/wheels --lock-file requirements-linux-aarch64.lock --inventory-file dependency-inventory-linux-aarch64.json`. Run the tool with the intended environment's Python. It does not decide legal compatibility, collect complete distribution notices or authenticate upstream provenance. Inspect dependency licenses and notices before distributing bundled software.

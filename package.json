@@ -1,0 +1,12 @@
+{
+  "name": "journeon-contract-checks",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "check": "tsc --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext generated/client.ts tests/client-types.ts",
+    "test": "tsc --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --outDir work/client-build generated/client.ts tests/client-types.ts && node tests/client-runtime.cjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2"
+  }
+}

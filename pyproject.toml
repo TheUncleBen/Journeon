@@ -1,0 +1,30 @@
+[project]
+name = "journeon"
+version = "0.0.0.dev1"
+description = "Journeon deterministic service foundation"
+requires-python = ">=3.12,<3.13"
+license = "AGPL-3.0-only"
+dependencies = [
+  "fastapi==0.143.3",
+  "pydantic==2.14.1",
+  "SQLAlchemy==2.1.5",
+  "alembic==1.20.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+strict = true
+files = ["src", "tools"]

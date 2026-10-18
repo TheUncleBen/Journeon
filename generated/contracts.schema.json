@@ -1,0 +1,274 @@
+{
+  "ErrorEnvelope": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "enum": [
+          "AUTHENTICATION_REQUIRED",
+          "PERMISSION_DENIED",
+          "VALIDATION_FAILED",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "DEPENDENCY_UNAVAILABLE",
+          "SCHEMA_UNSUPPORTED",
+          "NOT_FOUND"
+        ],
+        "title": "Code",
+        "type": "string"
+      },
+      "reason": {
+        "title": "Reason",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "code",
+      "reason"
+    ],
+    "title": "ErrorEnvelope",
+    "type": "object"
+  },
+  "OperationReceipt": {
+    "$defs": {
+      "ProjectCreated": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "instruction_authority_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Instruction Authority Ref",
+            "type": "string"
+          },
+          "instruction_owner": {
+            "const": "ENVIRONMENT",
+            "default": "ENVIRONMENT",
+            "title": "Instruction Owner",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "provider_allowance_at_creation": {
+            "$ref": "#/$defs/ProviderSnapshot"
+          },
+          "resource_refs": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Resource Refs",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "verification_policy_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Policy Ref"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "name",
+          "description",
+          "instruction_authority_ref",
+          "provider_allowance_at_creation",
+          "verification_policy_ref",
+          "resource_refs"
+        ],
+        "title": "ProjectCreated",
+        "type": "object"
+      },
+      "ProviderSnapshot": {
+        "additionalProperties": false,
+        "description": "Historical consent only; never proof of current egress/route eligibility.",
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "interpretation": {
+            "const": "HISTORICAL_CREATION_SNAPSHOT",
+            "default": "HISTORICAL_CREATION_SNAPSHOT",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "INHERIT",
+              "NARROW",
+              "LOCAL_ONLY"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "policy_revision": {
+            "minimum": 1,
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "providers": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "policy_revision",
+          "approval_id",
+          "providers"
+        ],
+        "title": "ProviderSnapshot",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "const": "project.create.v1",
+        "default": "project.create.v1",
+        "title": "Command",
+        "type": "string"
+      },
+      "committed_at": {
+        "title": "Committed At",
+        "type": "string"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "outcome": {
+        "const": "CANONICAL_COMMITTED",
+        "default": "CANONICAL_COMMITTED",
+        "title": "Outcome",
+        "type": "string"
+      },
+      "project": {
+        "$ref": "#/$defs/ProjectCreated"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "operation_id",
+      "committed_at",
+      "project"
+    ],
+    "title": "OperationReceipt",
+    "type": "object"
+  },
+  "ProjectCreate": {
+    "additionalProperties": false,
+    "properties": {
+      "description": {
+        "default": "",
+        "maxLength": 2000,
+        "title": "Description",
+        "type": "string"
+      },
+      "expected_policy_revision": {
+        "minimum": 1,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "provider_mode": {
+        "default": "INHERIT",
+        "enum": [
+          "INHERIT",
+          "NARROW",
+          "LOCAL_ONLY"
+        ],
+        "title": "Provider Mode",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "selected_providers": {
+        "anyOf": [
+          {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Selected Providers"
+      }
+    },
+    "required": [
+      "schema_version",
+      "idempotency_key",
+      "name",
+      "expected_policy_revision"
+    ],
+    "title": "ProjectCreate",
+    "type": "object"
+  }
+}

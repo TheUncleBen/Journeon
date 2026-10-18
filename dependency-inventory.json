@@ -1,0 +1,361 @@
+{
+  "scope": "Installed Python distributions; metadata inventory, not a full rights review",
+  "python": "3.12.14",
+  "platform": "Linux x86_64",
+  "packages": [
+    {
+      "name": "alembic",
+      "version": "1.20.0",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "alembic-1.20.0-py3-none-any.whl",
+      "sha256": "77eb101048d95f982c0353e9233404889dcd7a6fc244c107836c0e2fc9cf7d9d"
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "annotated_doc-0.0.5-py3-none-any.whl",
+      "sha256": "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101"
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "annotated_types-0.8.0-py3-none-any.whl",
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "anyio-4.15.1-py3-none-any.whl",
+      "sha256": "6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "use": "development",
+      "declared_license": "MPL-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "certifi-2026.7.22-py3-none-any.whl",
+      "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+    },
+    {
+      "name": "fastapi",
+      "version": "0.143.3",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "fastapi-0.143.3-py3-none-any.whl",
+      "sha256": "75e8bd68e2f52f77d29b2879749c257d64de2d85282d25270caf2bfccce5efe5"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "wheel": "h11-0.16.0-py3-none-any.whl",
+      "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "use": "development",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "wheel": "httpcore-1.0.9-py3-none-any.whl",
+      "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55"
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "use": "development",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [],
+      "wheel": "httpx-0.28.1-py3-none-any.whl",
+      "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "use": "runtime",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "wheel": "idna-3.20-py3-none-any.whl",
+      "sha256": "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.1",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "iniconfig-2.3.1-py3-none-any.whl",
+      "sha256": "9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7"
+    },
+    {
+      "name": "librt",
+      "version": "0.16.0",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "librt-0.16.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "36e53948e99bbe3ffea257124cfcae1cfb01831555c9a9c903c9f9a72db7fd07"
+    },
+    {
+      "name": "mako",
+      "version": "1.4.3",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "mako-1.4.3-py3-none-any.whl",
+      "sha256": "723296007c870bfd6b3f0c3230dba7198096e5269297ebf5e4eff9e7ffa39d4f"
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.4",
+      "use": "runtime",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "wheel": "markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "8e124f974786f831d6043728e38296969d3579db8896fe004682f5758e613581"
+    },
+    {
+      "name": "mypy",
+      "version": "1.20.2",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE",
+        "mypy/typeshed/LICENSE"
+      ],
+      "wheel": "mypy-1.20.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "a5da6976f20cae27059ea8d0c86e7cef3de720e04c4bb9ee18e3690fdb792066"
+    },
+    {
+      "name": "mypy-extensions",
+      "version": "1.1.0",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "mypy_extensions-1.1.0-py3-none-any.whl",
+      "sha256": "1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505"
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.45.1",
+      "use": "runtime",
+      "declared_license": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "opentelemetry_api-1.45.1-py3-none-any.whl",
+      "sha256": "b31553efa588ae44bc306f863c785c5333a9ecc091248c6ee68b4b6c87fdedfb"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "use": "development",
+      "declared_license": "Apache-2.0 OR BSD-2-Clause",
+      "license_files": [
+        "LICENSE",
+        "LICENSE.APACHE",
+        "LICENSE.BSD"
+      ],
+      "wheel": "packaging-26.3-py3-none-any.whl",
+      "sha256": "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+    },
+    {
+      "name": "pathspec",
+      "version": "1.1.1",
+      "use": "development",
+      "declared_license": "OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "pathspec-1.1.1-py3-none-any.whl",
+      "sha256": "a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189"
+    },
+    {
+      "name": "pip",
+      "version": "26.2.1",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "AUTHORS.txt",
+        "LICENSE.txt",
+        "src/pip/_vendor/cachecontrol/LICENSE.txt",
+        "src/pip/_vendor/certifi/LICENSE",
+        "src/pip/_vendor/distlib/LICENSE.txt",
+        "src/pip/_vendor/distro/LICENSE",
+        "src/pip/_vendor/idna/LICENSE.md",
+        "src/pip/_vendor/msgpack/COPYING",
+        "src/pip/_vendor/packaging/LICENSE",
+        "src/pip/_vendor/packaging/LICENSE.APACHE",
+        "src/pip/_vendor/packaging/LICENSE.BSD",
+        "src/pip/_vendor/pkg_resources/LICENSE",
+        "src/pip/_vendor/platformdirs/LICENSE",
+        "src/pip/_vendor/pygments/LICENSE",
+        "src/pip/_vendor/pyproject_hooks/LICENSE",
+        "src/pip/_vendor/requests/LICENSE",
+        "src/pip/_vendor/resolvelib/LICENSE",
+        "src/pip/_vendor/rich/LICENSE",
+        "src/pip/_vendor/tomli/LICENSE",
+        "src/pip/_vendor/tomli_w/LICENSE",
+        "src/pip/_vendor/truststore/LICENSE",
+        "src/pip/_vendor/urllib3/LICENSE.txt"
+      ],
+      "wheel": "pip-26.2.1-py3-none-any.whl",
+      "sha256": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.7.0",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "pluggy-1.7.0-py3-none-any.whl",
+      "sha256": "7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.14.1",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "pydantic-2.14.1-py3-none-any.whl",
+      "sha256": "9195d967ec791692a04438115466764fb8b9a27b31f14a760437694f40d6b454"
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.50.1",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "pydantic_core-2.50.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "93ba4e9d8210d941c200431a56b2c0400b131865947903937ed3ec5404307d2e"
+    },
+    {
+      "name": "pygments",
+      "version": "2.21.0",
+      "use": "development",
+      "declared_license": "BSD-2-Clause",
+      "license_files": [
+        "AUTHORS",
+        "LICENSE"
+      ],
+      "wheel": "pygments-2.21.0-py3-none-any.whl",
+      "sha256": "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "pytest-9.1.1-py3-none-any.whl",
+      "sha256": "37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c"
+    },
+    {
+      "name": "ruff",
+      "version": "0.17.1",
+      "use": "development",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "ruff-0.17.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "a6ef98e51de8ef38082f90653ceeb84944bd7673783eea13e1647c5b9b064189"
+    },
+    {
+      "name": "sqlalchemy",
+      "version": "2.1.5",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE",
+        "AUTHORS"
+      ],
+      "wheel": "sqlalchemy-2.1.5-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "6eb2fc3c1e8d2498d944b6ff64d32a63a5c900a14892c200626e701e69187113"
+    },
+    {
+      "name": "starlette",
+      "version": "1.8.0",
+      "use": "runtime",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "wheel": "starlette-1.8.0-py3-none-any.whl",
+      "sha256": "dfdd6b29c26483288088d990eee59631dedadd66ce20d203402a7ca8e3c4656f"
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "use": "runtime",
+      "declared_license": "PSF-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "use": "runtime",
+      "declared_license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
+      "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+    }
+  ]
+}

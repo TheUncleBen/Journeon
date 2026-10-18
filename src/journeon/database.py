@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from journeon.contracts import DomainError
 
-SCHEMA_REVISION = "0003_passkeys"
+SCHEMA_REVISION = "0004_auth_rate_events"
 
 
 def require_compatible_schema(session: Session) -> None:

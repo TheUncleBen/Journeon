@@ -158,6 +158,7 @@ class IdentityState(Base):
     __tablename__ = "identity_state"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     last_observed: Mapped[int] = mapped_column(Integer, default=0)
+    rate_policy: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     owner_id: Mapped[str | None] = mapped_column(ForeignKey("principals.id"))
     pending_principal_id: Mapped[str | None] = mapped_column(String(128))
     enrollment_hash: Mapped[str | None] = mapped_column(String(64))
@@ -219,4 +220,17 @@ class AuthRate(Base):
     count: Mapped[int] = mapped_column(Integer)
     __table_args__ = (
         CheckConstraint("count >= 0 AND last_observed >= window_start", name="auth_rate_state"),
+    )
+
+
+class AuthRateEvent(Base):
+    __tablename__ = "auth_rate_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bucket: Mapped[str] = mapped_column(String(128), index=True)
+    observed_at: Mapped[int] = mapped_column(Integer)
+    expires_at: Mapped[int | None] = mapped_column(Integer, index=True)
+    weight: Mapped[int] = mapped_column(Integer)
+    __table_args__ = (
+        CheckConstraint("observed_at >= 0 AND weight > 0", name="rate_event_values"),
+        CheckConstraint("expires_at IS NULL OR expires_at > observed_at", name="rate_event_expiry"),
     )

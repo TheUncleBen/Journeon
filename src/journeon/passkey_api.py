@@ -100,7 +100,11 @@ def routes(service: PasskeyService | None, binding: BrowserAuth | None) -> APIRo
         except (ValueError, RecursionError):
             raise DomainError("VALIDATION_FAILED", "Invalid passkey response") from None
         issued = active.complete(
-            command.ceremony_id, purpose=command.purpose, response=credential, session_id=session_id
+            command.ceremony_id,
+            purpose=command.purpose,
+            response=credential,
+            session_id=session_id,
+            source=request.client.host if request.client is not None else "unavailable",
         )
         auth.set_cookie(response, issued)
         return PasskeyAuthenticated(csrf_token=issued.csrf_token)

@@ -882,6 +882,7 @@
             "type": "string"
           },
           "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
             "title": "Content Hash",
             "type": "string"
           },
@@ -2721,10 +2722,44 @@
           }
         },
         "summary": "Create Bot Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Bot.id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Bot.id",
+              "when": "always"
+            }
+          ],
+          "owner_only": true,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "bot.create.v1",
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "bot.create"
+          "profile.read",
+          "profile.use",
+          "bot.read",
+          "bot.receipt.read"
         ]
       }
     },
@@ -2824,10 +2859,37 @@
           }
         },
         "summary": "Revise Bot Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "bot.revise",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "bot.revise.v1",
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "bot.revise"
+          "bot.revise",
+          "bot.read",
+          "bot.receipt.read"
         ]
       }
     },
@@ -2929,6 +2991,19 @@
           }
         },
         "summary": "Bot Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
           "bot.read"
@@ -3034,9 +3109,29 @@
           }
         },
         "summary": "Settings Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "Bot.profile_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "bot.settings.read"
+          "bot.read",
+          "profile.read"
         ],
         "x-journeon-query": "bot.settings.read.v1"
       }
@@ -3137,10 +3232,85 @@
           }
         },
         "summary": "Resolve Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "instruction_bundle.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.bot_id",
+              "when": "named Bot"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "instruction_bundle.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted bundle.id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "new construction only"
+            },
+            {
+              "capability": "bot.use",
+              "owner_configuration_authority": true,
+              "resource": "origin.bot_id",
+              "when": "new named-Bot construction only"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "component.owner_id",
+              "when": "all rendering: Profile-owned component"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "component.owner_id",
+              "when": "all rendering: Bot-owned component"
+            }
+          ],
+          "initiating_human": "accepted bundle and Task origin must belong to actor",
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "instruction.bundle.resolve.v1",
         "x-journeon-owner": "instructions",
         "x-journeon-permissions": [
-          "instruction.bundle.resolve"
+          "instruction_bundle.read",
+          "profile.read",
+          "bot.read",
+          "project.instruction.read",
+          "task.read",
+          "instruction_bundle.receipt.read",
+          "profile.use",
+          "bot.use"
         ]
       }
     },
@@ -3242,9 +3412,51 @@
           }
         },
         "summary": "Read Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "instruction_bundle.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.bot_id",
+              "when": "named Bot"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "Task origin"
+            }
+          ],
+          "initiating_human": "bundle must belong to actor",
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-owner": "instructions",
         "x-journeon-permissions": [
-          "instruction.bundle.read"
+          "instruction_bundle.read",
+          "profile.read",
+          "bot.read",
+          "project.instruction.read",
+          "task.read"
         ],
         "x-journeon-query": "instruction.bundle.read.v1"
       }
@@ -3345,10 +3557,36 @@
           }
         },
         "summary": "Legacy Preview Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "legacy_collection.preview:{version}:{content_hash}:{provenance_ref}",
+              "owner_configuration_authority": false,
+              "resource": "mapping.collection_id",
+              "when": "each mapping; hash is 64 lowercase SHA-256 hex characters"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "mapping.bot_id",
+              "when": "each mapping"
+            },
+            {
+              "capability": "bot.revise",
+              "owner_configuration_authority": true,
+              "resource": "mapping.bot_id",
+              "when": "each mapping"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "legacy-memory.preview.v1",
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "legacy-memory.preview"
+          "bot.read",
+          "bot.revise"
         ]
       }
     },
@@ -3599,9 +3837,57 @@
           }
         },
         "summary": "Effective Permission",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "diagnostic_only": true,
+          "grant_checks": [
+            {
+              "capability": "{resource_kind}.{action}",
+              "owner_configuration_authority": true,
+              "resource": "resource_id",
+              "when": "evaluate supported requested action for authenticated actor; no permission.effective grant"
+            },
+            {
+              "capability": "instruction_bundle.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.id",
+              "when": "instruction_bundle diagnostic: always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.profile_id",
+              "when": "instruction_bundle diagnostic: always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.bot_id",
+              "when": "instruction_bundle diagnostic: named Bot"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "instruction_bundle diagnostic: always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "instruction_bundle diagnostic: Task origin"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-owner": "permissions",
         "x-journeon-permissions": [
-          "permission.effective"
+          "instruction_bundle.read",
+          "profile.read",
+          "bot.read",
+          "project.instruction.read",
+          "task.read"
         ],
         "x-journeon-query": "permission.effective.v1"
       }
@@ -3702,11 +3988,15 @@
           }
         },
         "summary": "Create Profile Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "profile.create.v1",
         "x-journeon-owner": "agents",
-        "x-journeon-permissions": [
-          "profile.create"
-        ]
+        "x-journeon-permissions": []
       }
     },
     "/api/v1/profiles/preview-revision": {
@@ -3805,10 +4095,37 @@
           }
         },
         "summary": "Preview Profile Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.revise",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "affected Bot.id",
+              "when": "filter disclosed Bots; absence does not deny preview"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "profile.preview-revision.v1",
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "profile.preview-revision"
+          "profile.revise",
+          "profile.read",
+          "bot.read"
         ]
       }
     },
@@ -3908,10 +4225,44 @@
           }
         },
         "summary": "Revise Profile Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.revise",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "affected Bot.id",
+              "when": "new commit: filter disclosed impact; absence does not deny revision"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "profile.revise.v1",
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "profile.revise"
+          "profile.revise",
+          "profile.read",
+          "profile.receipt.read",
+          "bot.read"
         ]
       }
     },
@@ -4013,6 +4364,19 @@
           }
         },
         "summary": "Profile Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
           "profile.read"
@@ -4745,10 +5109,51 @@
           }
         },
         "summary": "Create Team Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "each new member.profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "each new member.profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "team.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Team.id",
+              "when": "always"
+            },
+            {
+              "capability": "team.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Team.id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "each accepted member.id",
+              "when": "accepted receipt retry"
+            }
+          ],
+          "owner_only": true,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-command": "team.create.v1",
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "team.create"
+          "profile.read",
+          "profile.use",
+          "team.read",
+          "team.receipt.read",
+          "bot.read"
         ]
       }
     },
@@ -4850,9 +5255,29 @@
           }
         },
         "summary": "Team Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "team.read",
+              "owner_configuration_authority": true,
+              "resource": "team_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "member.id",
+              "when": "filter expanded members and lead; absence does not deny Team read"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
         "x-journeon-owner": "agents",
         "x-journeon-permissions": [
-          "team.read"
+          "team.read",
+          "bot.read"
         ],
         "x-journeon-query": "team.read.v1"
       }

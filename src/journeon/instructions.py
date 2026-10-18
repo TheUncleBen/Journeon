@@ -8,17 +8,16 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
-from journeon.contracts import ComponentRef, DomainError, InstructionTemplate
-from journeon.models import InstructionAsset, InstructionRevision
+from journeon.contracts import ComponentRef, DomainError, InstructionTemplate, VariableBinding
+from journeon.models import InstructionAsset, InstructionBundle, InstructionRevision
 from journeon.permissions import AuthenticatedContext
 
 if TYPE_CHECKING:
     from sqlalchemy import Engine
 
     from journeon.contracts import BundleResolve, BundleResult, BundleView
-    from journeon.models import InstructionBundle
 
 PLACEHOLDER = re.compile(r"\{\{([a-zA-Z][a-zA-Z0-9_]*)\}\}")
 
@@ -123,41 +122,94 @@ def write_asset(
     return ComponentRef(asset_id=asset.id, revision=asset.revision, content_hash=content_hash)
 
 
+def authorized_bundle(db: Session, actor: AuthenticatedContext, identity: str) -> InstructionBundle:
+    from journeon.agents import authorize
+    from journeon.permissions import require_grant
+
+    authorize(db, actor, "instruction_bundle", identity, "read")
+    row = db.get(InstructionBundle, identity, options=[defer(InstructionBundle.snapshot)])
+    if row is None or row.principal_id != actor.principal_id:
+        raise DomainError("NOT_FOUND", "Bundle is unavailable")
+    authorize(db, actor, "profile", row.profile_id, "read")
+    if row.bot_id is not None:
+        authorize(db, actor, "bot", row.bot_id, "read")
+    require_grant(db, actor, "project.instruction.read", project_id=row.project_id)
+    if row.task_id is not None:
+        require_grant(db, actor, "task.read", project_id=row.project_id)
+
+    return row
+
+
+def authorize_component(
+    db: Session, actor: AuthenticatedContext, asset: InstructionAsset, command: "BundleResolve"
+) -> None:
+    from journeon.agents import authorize
+
+    if asset.owner_kind == "profile":
+        authorize(db, actor, "profile", asset.owner_id, "read")
+    elif asset.owner_kind == "bot":
+        authorize(db, actor, "bot", asset.owner_id, "read")
+    elif asset.owner_kind == "task":
+        if asset.owner_id != command.origin.task_id:
+            raise DomainError("PERMISSION_DENIED", "Instruction scope is unavailable")
+    elif asset.owner_kind in {"project", "skill"}:
+        if asset.owner_id != command.project_id:
+            raise DomainError("PERMISSION_DENIED", "Instruction scope is unavailable")
+    elif (
+        asset.owner_kind != "system"
+        or asset.trust != "PROTECTED"
+        or asset.purpose not in {"CORE", "NAVIGATION"}
+    ):
+        raise DomainError("PERMISSION_DENIED", "Instruction authority is unavailable")
+
+
+def render_components(
+    db: Session,
+    assets: list[InstructionAsset],
+    components: list[ComponentRef],
+    bindings: list[VariableBinding],
+) -> str:
+    variables: dict[str, dict[str, str]] = {}
+    for binding in bindings:
+        if binding.asset_id not in {
+            item.asset_id for item in components
+        } or binding.name in variables.setdefault(binding.asset_id, {}):
+            raise DomainError("VALIDATION_FAILED", "Instruction variable binding is invalid")
+        variables[binding.asset_id][binding.name] = binding.value
+    rendered = []
+    for asset, ref in zip(assets, components, strict=True):
+        revision = db.get(InstructionRevision, (ref.asset_id, ref.revision))
+        if (
+            revision is None
+            or revision.content_hash != ref.content_hash
+            or digest(revision.template) != ref.content_hash
+        ):
+            raise DomainError("REVISION_CONFLICT", "Instruction content changed")
+        template = InstructionTemplate.model_validate(revision.template)
+        rendered.append(
+            {
+                "purpose": asset.purpose,
+                "trust": asset.trust,
+                "asset": ref.model_dump(mode="json"),
+                "segments": json.loads(render(template, variables.get(asset.id, {}))),
+            }
+        )
+    rendering = canonical(rendered)
+    return rendering
+
+
 class InstructionService:
     def __init__(self, engine: "Engine") -> None:
         self.engine = engine
 
-    def _authorize_bundle(
-        self, db: Session, actor: AuthenticatedContext, row: "InstructionBundle"
-    ) -> None:
-        from journeon.agents import authorize
-        from journeon.permissions import require_grant
-
-        if row.principal_id != actor.principal_id:
-            raise DomainError("NOT_FOUND", "Bundle is unavailable")
-        authorize(db, actor, "instruction_bundle", row.id, "read")
-        authorize(db, actor, "profile", row.profile_id, "read")
-        if row.bot_id is not None:
-            authorize(db, actor, "bot", row.bot_id, "read")
-        require_grant(db, actor, "project.instruction.read", project_id=row.project_id)
-        if row.task_id is not None:
-            require_grant(db, actor, "task.read", project_id=row.project_id)
-
     def read(self, actor: AuthenticatedContext, identity: str) -> "BundleView":
-        from sqlalchemy.orm import defer
-
-        from journeon.agents import authorize, configuration_transaction
+        from journeon.agents import configuration_transaction
         from journeon.contracts import BundleView
         from journeon.database import require_compatible_schema
-        from journeon.models import InstructionBundle
 
         with configuration_transaction(self.engine) as db:
             require_compatible_schema(db)
-            authorize(db, actor, "instruction_bundle", identity, "read")
-            row = db.get(InstructionBundle, identity, options=[defer(InstructionBundle.snapshot)])
-            if row is None:
-                raise DomainError("NOT_FOUND", "Bundle is unavailable")
-            self._authorize_bundle(db, actor, row)
+            row = authorized_bundle(db, actor, identity)
             return BundleView.model_validate(row.snapshot)
 
     def resolve(self, actor: AuthenticatedContext, command: "BundleResolve") -> "BundleResult":
@@ -176,6 +228,38 @@ class InstructionService:
 
         with configuration_transaction(self.engine) as db:
             require_compatible_schema(db)
+            previous = retry(
+                db,
+                actor,
+                "instruction.bundle.resolve.v1",
+                command.idempotency_key,
+                digest(command.model_dump(mode="json", exclude={"idempotency_key"})),
+            )
+            if previous is not None:
+                old = authorized_bundle(db, actor, previous.target_id)
+                accepted = BundleView.model_validate(old.snapshot)
+                assets = []
+                for ref in accepted.components:
+                    asset = db.get(InstructionAsset, ref.asset_id)
+                    if asset is None:
+                        raise DomainError(
+                            "DEPENDENCY_UNAVAILABLE", "Instruction revision is unavailable"
+                        )
+                    authorize_component(db, actor, asset, command)
+                    assets.append(asset)
+                rendering = render_components(db, assets, accepted.components, command.variables)
+                if (
+                    hashlib.sha256(rendering.encode()).hexdigest() != accepted.content_digest
+                    or len(rendering.encode()) != accepted.byte_count
+                ):
+                    raise DomainError(
+                        "DEPENDENCY_UNAVAILABLE", "Accepted instruction rendering requires repair"
+                    )
+                return BundleResult(
+                    receipt=previous,
+                    bundle=accepted,
+                    rendering=rendering,
+                )
             profile = profile_view(db, actor, command.profile_id)
             authorize(db, actor, "profile", command.profile_id, "use")
             require_grant(db, actor, "project.instruction.read", project_id=command.project_id)
@@ -227,22 +311,7 @@ class InstructionService:
                     raise DomainError(
                         "DEPENDENCY_UNAVAILABLE", "Required instruction dependency is unavailable"
                     )
-                if asset.owner_kind == "profile":
-                    authorize(db, actor, "profile", asset.owner_id, "read")
-                elif asset.owner_kind == "bot":
-                    authorize(db, actor, "bot", asset.owner_id, "read")
-                elif asset.owner_kind == "task":
-                    if asset.owner_id != command.origin.task_id:
-                        raise DomainError("PERMISSION_DENIED", "Instruction scope is unavailable")
-                elif asset.owner_kind in {"project", "skill"}:
-                    if asset.owner_id != project.id:
-                        raise DomainError("PERMISSION_DENIED", "Instruction scope is unavailable")
-                elif (
-                    asset.owner_kind != "system"
-                    or asset.trust != "PROTECTED"
-                    or asset.purpose not in {"CORE", "NAVIGATION"}
-                ):
-                    raise DomainError("PERMISSION_DENIED", "Instruction authority is unavailable")
+                authorize_component(db, actor, asset, command)
                 if ref.revision != asset.revision:
                     raise DomainError("REVISION_CONFLICT", "Instruction revision changed")
                 if asset.purpose == "PROFILE" and (ref.asset_id, ref.revision) != (
@@ -262,50 +331,7 @@ class InstructionService:
                 raise DomainError(
                     "DEPENDENCY_UNAVAILABLE", "Required instruction dependencies are unavailable"
                 )
-            variables: dict[str, dict[str, str]] = {}
-            for binding in command.variables:
-                if binding.asset_id not in {
-                    item.asset_id for item in command.components
-                } or binding.name in variables.setdefault(binding.asset_id, {}):
-                    raise DomainError(
-                        "VALIDATION_FAILED", "Instruction variable binding is invalid"
-                    )
-                variables[binding.asset_id][binding.name] = binding.value
-            rendered = []
-            for asset, ref in zip(assets, command.components, strict=True):
-                revision = db.get(InstructionRevision, (ref.asset_id, ref.revision))
-                if (
-                    revision is None
-                    or revision.content_hash != ref.content_hash
-                    or digest(revision.template) != ref.content_hash
-                ):
-                    raise DomainError("REVISION_CONFLICT", "Instruction content changed")
-                template = InstructionTemplate.model_validate(revision.template)
-                rendered.append(
-                    {
-                        "purpose": asset.purpose,
-                        "trust": asset.trust,
-                        "asset": ref.model_dump(mode="json"),
-                        "segments": json.loads(render(template, variables.get(asset.id, {}))),
-                    }
-                )
-            rendering = canonical(rendered)
-            previous = retry(
-                db,
-                actor,
-                "instruction.bundle.resolve.v1",
-                command.idempotency_key,
-                digest(command.model_dump(mode="json", exclude={"idempotency_key"})),
-            )
-            if previous is not None:
-                old = db.get(InstructionBundle, previous.target_id)
-                assert old is not None
-                self._authorize_bundle(db, actor, old)
-                return BundleResult(
-                    receipt=previous,
-                    bundle=BundleView.model_validate(old.snapshot),
-                    rendering=rendering,
-                )
+            rendering = render_components(db, assets, command.components, command.variables)
             identity = str(uuid4())
             view = BundleView(
                 bundle_id=identity,

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """Bound command and module metadata; not a second permission authority."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 
 from alembic.script import ScriptDirectory
@@ -224,7 +224,7 @@ COMMANDS["profile.create.v1"] = CommandDefinition(
     owner="agents",
     input_model=ProfileCreate,
     result_model=ConfigurationReceipt,
-    permissions=("profile.create",),
+    permissions=(),
     risk="LOCAL_CANONICAL_MUTATION",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -237,7 +237,7 @@ COMMANDS["profile.preview-revision.v1"] = CommandDefinition(
     owner="agents",
     input_model=ProfileRevisionPreview,
     result_model=ProfileImpact,
-    permissions=("profile.preview-revision",),
+    permissions=(),
     risk="READ_ONLY_PREVIEW",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -250,7 +250,7 @@ COMMANDS["profile.revise.v1"] = CommandDefinition(
     owner="agents",
     input_model=ProfileRevise,
     result_model=ConfigurationReceipt,
-    permissions=("profile.revise",),
+    permissions=(),
     risk="LOCAL_CANONICAL_MUTATION",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -263,7 +263,7 @@ COMMANDS["bot.create.v1"] = CommandDefinition(
     owner="agents",
     input_model=BotCreate,
     result_model=ConfigurationReceipt,
-    permissions=("bot.create",),
+    permissions=(),
     risk="LOCAL_CANONICAL_MUTATION",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -276,7 +276,7 @@ COMMANDS["bot.revise.v1"] = CommandDefinition(
     owner="agents",
     input_model=BotRevise,
     result_model=ConfigurationReceipt,
-    permissions=("bot.revise",),
+    permissions=(),
     risk="LOCAL_CANONICAL_MUTATION",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -289,7 +289,7 @@ COMMANDS["team.create.v1"] = CommandDefinition(
     owner="agents",
     input_model=TeamCreate,
     result_model=ConfigurationReceipt,
-    permissions=("team.create",),
+    permissions=(),
     risk="LOCAL_CANONICAL_MUTATION",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -302,7 +302,7 @@ COMMANDS["legacy-memory.preview.v1"] = CommandDefinition(
     owner="agents",
     input_model=LegacyPreview,
     result_model=LegacyPlan,
-    permissions=("legacy-memory.preview",),
+    permissions=(),
     risk="READ_ONLY_PREVIEW",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -315,7 +315,7 @@ COMMANDS["instruction.bundle.resolve.v1"] = CommandDefinition(
     owner="instructions",
     input_model=BundleResolve,
     result_model=BundleResult,
-    permissions=("instruction.bundle.resolve",),
+    permissions=(),
     risk="LOCAL_CANONICAL_MUTATION",
     external_effects=(),
     reversibility="Immutable history; changes require another authorized command",
@@ -325,28 +325,28 @@ COMMANDS["instruction.bundle.resolve.v1"] = CommandDefinition(
 )
 QUERIES["profile.read.v1"] = {
     "owner": "agents",
-    "permissions": ("profile.read",),
+    "permissions": (),
     "result_model": ProfileView,
 }
-QUERIES["bot.read.v1"] = {"owner": "agents", "permissions": ("bot.read",), "result_model": BotView}
+QUERIES["bot.read.v1"] = {"owner": "agents", "permissions": (), "result_model": BotView}
 QUERIES["team.read.v1"] = {
     "owner": "agents",
-    "permissions": ("team.read",),
+    "permissions": (),
     "result_model": TeamView,
 }
 QUERIES["bot.settings.read.v1"] = {
     "owner": "agents",
-    "permissions": ("bot.settings.read",),
+    "permissions": (),
     "result_model": EffectiveSettings,
 }
 QUERIES["instruction.bundle.read.v1"] = {
     "owner": "instructions",
-    "permissions": ("instruction.bundle.read",),
+    "permissions": (),
     "result_model": BundleView,
 }
 QUERIES["permission.effective.v1"] = {
     "owner": "permissions",
-    "permissions": ("permission.effective",),
+    "permissions": (),
     "result_model": EffectivePermission,
 }
 MODULES["agents"] = {
@@ -364,19 +364,7 @@ MODULES["agents"] = {
     "tables": ("agent_profiles", "profile_revisions", "bots", "bot_revisions", "teams"),
     "backup_class": "R0",
     "health": "schema_and_database",
-    "permissions": (
-        "profile.create",
-        "profile.preview-revision",
-        "profile.revise",
-        "bot.create",
-        "bot.revise",
-        "team.create",
-        "legacy-memory.preview",
-        "profile.read",
-        "bot.read",
-        "team.read",
-        "bot.settings.read",
-    ),
+    "permissions": (),
     "migration": "0007_identity_instructions",
     "settings": (),
     "environment_migrations": (),
@@ -390,15 +378,193 @@ MODULES["instructions"] = {
     "tables": ("instruction_assets", "instruction_revisions", "instruction_bundles"),
     "backup_class": "R0",
     "health": "schema_and_database",
-    "permissions": ("instruction.bundle.resolve", "instruction.bundle.read"),
+    "permissions": (),
     "migration": "0007_identity_instructions",
     "settings": (),
     "environment_migrations": (),
 }
 MODULES["permissions"]["api_prefixes"] = ("/api/v1/permissions",)
-MODULES["permissions"]["permissions"] += ("permission.effective",)
 MODULES["permissions"]["migration"] = "0007_identity_instructions"
 MODULES["operations"]["migration"] = "0007_identity_instructions"
+
+
+# Descriptive service contracts, not an authorization evaluator or grant issuer.
+# A permission inventory includes conditional checks; grant_checks binds their scopes.
+def grant_check(
+    capability: str, scope: str, when: str = "always", *, owner: bool = True
+) -> dict[str, Any]:
+    return {
+        "capability": capability,
+        "resource": scope,
+        "when": when,
+        "owner_configuration_authority": owner,
+    }
+
+
+BUNDLE_DISCLOSURE = [
+    grant_check("instruction_bundle.read", "bundle.id"),
+    grant_check("profile.read", "bundle.profile_id"),
+    grant_check("bot.read", "bundle.bot_id", "named Bot"),
+    grant_check("project.instruction.read", "bundle.project_id", owner=False),
+    grant_check("task.read", "bundle.project_id", "Task origin", owner=False),
+]
+CONFIGURATION_AUTHORIZATION: dict[str, dict[str, Any]] = {
+    "profile.create.v1": {"owner_only": True, "grant_checks": []},
+    "profile.preview-revision.v1": {
+        "grant_checks": [
+            grant_check("profile.revise", "profile_id"),
+            grant_check("profile.read", "profile_id"),
+            grant_check(
+                "bot.read",
+                "affected Bot.id",
+                "filter disclosed Bots; absence does not deny preview",
+            ),
+        ]
+    },
+    "profile.revise.v1": {
+        "grant_checks": [
+            grant_check("profile.revise", "profile_id"),
+            grant_check("profile.read", "profile_id"),
+            grant_check("profile.receipt.read", "profile_id"),
+            grant_check(
+                "bot.read",
+                "affected Bot.id",
+                "new commit: filter disclosed impact; absence does not deny revision",
+            ),
+        ]
+    },
+    "bot.create.v1": {
+        "owner_only": True,
+        "grant_checks": [
+            grant_check("profile.read", "profile_id", "new creation"),
+            grant_check("profile.use", "profile_id", "new creation"),
+            grant_check("bot.read", "new or accepted Bot.id"),
+            grant_check("bot.receipt.read", "new or accepted Bot.id"),
+        ],
+    },
+    "bot.revise.v1": {
+        "grant_checks": [
+            grant_check("bot.revise", "bot_id"),
+            grant_check("bot.read", "bot_id"),
+            grant_check("bot.receipt.read", "bot_id"),
+        ]
+    },
+    "team.create.v1": {
+        "owner_only": True,
+        "grant_checks": [
+            grant_check("profile.read", "each new member.profile_id", "new creation"),
+            grant_check("profile.use", "each new member.profile_id", "new creation"),
+            grant_check("team.read", "new or accepted Team.id"),
+            grant_check("team.receipt.read", "new or accepted Team.id"),
+            grant_check("bot.read", "each accepted member.id", "accepted receipt retry"),
+        ],
+    },
+    "legacy-memory.preview.v1": {
+        "grant_checks": [
+            grant_check(
+                "legacy_collection.preview:{version}:{content_hash}:{provenance_ref}",
+                "mapping.collection_id",
+                "each mapping; hash is 64 lowercase SHA-256 hex characters",
+                owner=False,
+            ),
+            grant_check("bot.read", "mapping.bot_id", "each mapping"),
+            grant_check("bot.revise", "mapping.bot_id", "each mapping"),
+        ]
+    },
+    "instruction.bundle.resolve.v1": {
+        "initiating_human": "accepted bundle and Task origin must belong to actor",
+        "grant_checks": [
+            *BUNDLE_DISCLOSURE,
+            grant_check("instruction_bundle.receipt.read", "new or accepted bundle.id"),
+            grant_check("profile.use", "profile_id", "new construction only"),
+            grant_check("bot.use", "origin.bot_id", "new named-Bot construction only"),
+            grant_check(
+                "profile.read", "component.owner_id", "all rendering: Profile-owned component"
+            ),
+            grant_check("bot.read", "component.owner_id", "all rendering: Bot-owned component"),
+        ],
+    },
+    "profile.read.v1": {"grant_checks": [grant_check("profile.read", "profile_id")]},
+    "bot.read.v1": {"grant_checks": [grant_check("bot.read", "bot_id")]},
+    "team.read.v1": {
+        "grant_checks": [
+            grant_check("team.read", "team_id"),
+            grant_check(
+                "bot.read",
+                "member.id",
+                "filter expanded members and lead; absence does not deny Team read",
+            ),
+        ]
+    },
+    "bot.settings.read.v1": {
+        "grant_checks": [
+            grant_check("bot.read", "bot_id"),
+            grant_check("profile.read", "Bot.profile_id"),
+        ]
+    },
+    "instruction.bundle.read.v1": {
+        "initiating_human": "bundle must belong to actor",
+        "grant_checks": BUNDLE_DISCLOSURE,
+    },
+    "permission.effective.v1": {
+        "diagnostic_only": True,
+        "grant_checks": [
+            grant_check(
+                "{resource_kind}.{action}",
+                "resource_id",
+                "evaluate supported requested action for authenticated actor; "
+                "no permission.effective grant",
+            ),
+            *[
+                {**check, "when": "instruction_bundle diagnostic: " + check["when"]}
+                for check in BUNDLE_DISCLOSURE
+            ],
+        ],
+    },
+}
+for name, authorization in CONFIGURATION_AUTHORIZATION.items():
+    authorization.setdefault("owner_only", False)
+    authorization["authentication"] = "current session and Principal epoch"
+    authorization["semantics"] = "scoped checks, with conditions; no rights follow from metadata"
+    permissions = tuple(
+        dict.fromkeys(
+            check["capability"]
+            for check in authorization["grant_checks"]
+            if "{" not in check["capability"]
+        )
+    )
+    if name in COMMANDS:
+        COMMANDS[name] = replace(COMMANDS[name], permissions=permissions)
+    else:
+        QUERIES[name]["permissions"] = permissions
+for owner in ("agents", "instructions"):
+    MODULES[owner]["permissions"] = tuple(
+        dict.fromkeys(
+            permission
+            for name in CONFIGURATION_AUTHORIZATION
+            for permission in (
+                COMMANDS[name].permissions if name in COMMANDS else QUERIES[name]["permissions"]
+            )
+            if (COMMANDS[name].owner if name in COMMANDS else QUERIES[name]["owner"]) == owner
+        )
+    )
+MODULES["permissions"]["permissions"] = (
+    "project.create",
+    "project.receipt.read",
+    *QUERIES["permission.effective.v1"]["permissions"],
+)
+
+
+def configuration_metadata(name: str) -> dict[str, Any]:
+    command = COMMANDS.get(name)
+    owner = command.owner if command else QUERIES[name]["owner"]
+    permissions = command.permissions if command else QUERIES[name]["permissions"]
+    return {
+        "x-journeon-owner": owner,
+        "x-journeon-command" if command else "x-journeon-query": name,
+        "x-journeon-permissions": list(permissions),
+        "x-journeon-authorization": CONFIGURATION_AUTHORIZATION[name],
+    }
 
 
 @dataclass(frozen=True)
@@ -481,8 +647,17 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
             raise ValueError(
                 "API operation must bind exactly one command or query or authentication"
             )
+        authorization_name = command_name or query_name
+        authorization = (
+            CONFIGURATION_AUTHORIZATION.get(authorization_name)
+            if isinstance(authorization_name, str)
+            else None
+        )
+        if metadata.get("x-journeon-authorization") != authorization:
+            raise ValueError("API authorization description differs from its service contract")
         if not authentication_name and (
-            not permissions or not set(permissions) <= set(module["permissions"])
+            (not permissions and not (authorization and authorization.get("owner_only")))
+            or not set(permissions) <= set(module["permissions"])
         ):
             raise ValueError("API operation permissions are missing or outside its owner")
         if command_name:
@@ -538,6 +713,7 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 "path": route.path,
                 "methods": sorted(route.methods),
                 "permissions": permissions,
+                **({"authorization": authorization} if authorization else {}),
                 "command": command_name,
                 "query": query_name,
                 "authentication": authentication_name,
@@ -561,6 +737,11 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         "commands": [
             {
                 **asdict(command),
+                **(
+                    {"authorization": CONFIGURATION_AUTHORIZATION[command.name]}
+                    if command.name in CONFIGURATION_AUTHORIZATION
+                    else {}
+                ),
                 "input_model": command.input_model.__name__,
                 "result_model": command.result_model.__name__,
             }
@@ -570,6 +751,11 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
             {
                 "name": name,
                 **query,
+                **(
+                    {"authorization": CONFIGURATION_AUTHORIZATION[name]}
+                    if name in CONFIGURATION_AUTHORIZATION
+                    else {}
+                ),
                 "result_model": getattr(query["result_model"], "__name__", "CanonicalReceipt"),
             }
             for name, query in QUERIES.items()

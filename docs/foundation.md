@@ -56,6 +56,11 @@ explicit exact resource/action grants for supported Shared User operations.
 Deployment grants do not act as wildcards for these resources. Team views expand
 only separately readable Bots; Bot settings require Profile read authority before
 returning inherited values. Receipt lookups retain the initiating human boundary.
+Profile, Bot and Team creation is Owner-only. Permission metadata describes each
+check with its resource scope and condition; its inventory is not an all-required
+grant list. Profile previews require Profile read and revise authority. Effective
+permission diagnostics use the authenticated caller’s current authority without
+a separate diagnostic grant.
 
 Profile revision previews bind the proposed payload, current Profile revision/hash
 and sorted authorized Bot revisions and inherited-field changes. Hidden Bots do not
@@ -71,7 +76,9 @@ trusted Researcher/Librarian designations cannot enable personal memory and are 
 accepted in client commands.
 
 Legacy inventory evidence is bound by an exact `legacy_collection` capability named
-`legacy_collection.preview:<version>:<hash>:<provenance-reference>`. Such evidence
+`legacy_collection.preview:<version>:<hash>:<provenance-reference>`. The hash must
+be a lowercase 64-character SHA-256 hexadecimal digest; provenance references may
+contain colons. The fixed hash syntax prevents ambiguous evidence bindings. Such evidence
 must be supplied by authorized inventory/grant services; there is no public issuance
 route or legacy store discovery in this increment. Mappings require readable and
 revisable destination Bots, enabled memory, current destination revisions and
@@ -84,3 +91,9 @@ contain no Bot or private-memory namespace. These origin records establish candi
 provenance only; Chat admission, runtime lane isolation and native context adoption
 remain separate dependencies. All registry data retains the coherent database
 recovery boundary; no prompt retention or new grant policy is introduced.
+
+Bundle reads, receipt lookups and retries check current Profile, optional Bot,
+Project and optional Task disclosure authority before decoding stored results.
+An accepted retry with identical input renders its immutable accepted component
+revisions, even if current configuration has advanced. New operation keys still
+require current revisions. Neither retry path retains rendered variable values.

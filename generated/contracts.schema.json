@@ -1482,6 +1482,7 @@
             "type": "string"
           },
           "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
             "title": "Content Hash",
             "type": "string"
           },
@@ -1571,6 +1572,7 @@
             "type": "string"
           },
           "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
             "title": "Content Hash",
             "type": "string"
           },

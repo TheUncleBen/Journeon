@@ -24,6 +24,7 @@ from journeon.contracts import (
     EffectiveField,
     EffectivePermission,
     EffectiveSettings,
+    LegacyMapping,
     LegacyPlan,
     LegacyPreview,
     PreferenceKey,
@@ -167,6 +168,10 @@ def authorized_configuration_receipt(
         raise DomainError("NOT_FOUND", "Operation is unavailable")
     authorize(db, actor, row.target_kind, row.target_id, "receipt.read")
     authorize(db, actor, row.target_kind, row.target_id, "read")
+    if row.target_kind == "instruction_bundle":
+        from journeon.instructions import authorized_bundle
+
+        authorized_bundle(db, actor, row.target_id)
     result = ConfigurationReceipt.model_validate(row.result)
     if (result.target_id, result.target_kind, result.command, result.operation_id) != (
         row.target_id,
@@ -674,9 +679,9 @@ class AgentService:
                 if not isinstance(row, (AgentProfile, Bot, Team, InstructionBundle)):
                     raise DomainError("PERMISSION_DENIED", "Configuration is unavailable")
                 if isinstance(row, InstructionBundle):
-                    from journeon.instructions import InstructionService
+                    from journeon.instructions import authorized_bundle
 
-                    InstructionService(self.engine)._authorize_bundle(db, actor, row)
+                    authorized_bundle(db, actor, row.id)
                 return EffectivePermission(
                     allowed=True,
                     resource_kind=kind,
@@ -710,6 +715,12 @@ class AgentService:
             if len(set(identities)) != len(identities) or set(identities) & set(command.unmapped):
                 raise DomainError("VALIDATION_FAILED", "Legacy mapping is ambiguous")
             for item in command.mappings:
+                try:
+                    LegacyMapping.model_validate(item.model_dump())
+                except ValidationError:
+                    raise DomainError(
+                        "VALIDATION_FAILED", "Legacy inventory evidence is invalid"
+                    ) from None
                 # Inventory evidence is an exact capability binding, never caller authority.
                 require_grant(
                     db,

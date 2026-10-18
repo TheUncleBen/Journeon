@@ -424,7 +424,7 @@ def explicit_consent(value: object) -> object:
 class LegacyMapping(Contract):
     collection_id: Identifier
     version: PositiveRevision
-    content_hash: str
+    content_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
     provenance_ref: Identifier
     bot_id: Identifier
     expected_bot_revision: PositiveRevision

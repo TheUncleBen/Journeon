@@ -102,7 +102,9 @@ unqualified reference selections, and eligibility references confer no authority
 a candidate bundle with deterministic rendering, a digest and byte count. Literal
 `{{name}}` variables must exactly match their declarations and are encoded as
 separate lower-trust data segments. Rendered variable values are returned transiently,
-not retained in the bundle, receipt or event. Bundle provenance does not confer
+not retained in the bundle, receipt or event. Identical accepted retries render
+the accepted immutable revisions under current constituent disclosure authority;
+new operation keys require current revisions. Bundle provenance does not confer
 execution permission or establish adoption by a native context. Protected core,
 navigation, Project and Skill instruction registration still require their owning
 services; an unconfigured installation returns a missing-dependency error. No

@@ -55,6 +55,7 @@ from journeon.passkeys import PasskeyService, RejectedPasskeyInput
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
 from journeon.receipts import OperationService
+from journeon.registry import configuration_metadata
 from journeon.work import WorkService
 
 
@@ -270,11 +271,7 @@ def create_app(
         response_model=ConfigurationReceipt,
         operation_id="createProfile",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "profile.create.v1",
-            "x-journeon-permissions": ["profile.create"],
-        },
+        openapi_extra=configuration_metadata("profile.create.v1"),
     )
     def create_profile_configuration(
         command: ProfileCreate,
@@ -287,11 +284,7 @@ def create_app(
         response_model=ProfileImpact,
         operation_id="previewProfileRevision",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "profile.preview-revision.v1",
-            "x-journeon-permissions": ["profile.preview-revision"],
-        },
+        openapi_extra=configuration_metadata("profile.preview-revision.v1"),
     )
     def preview_profile_configuration(
         command: ProfileRevisionPreview,
@@ -304,11 +297,7 @@ def create_app(
         response_model=ConfigurationReceipt,
         operation_id="reviseProfile",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "profile.revise.v1",
-            "x-journeon-permissions": ["profile.revise"],
-        },
+        openapi_extra=configuration_metadata("profile.revise.v1"),
     )
     def revise_profile_configuration(
         command: ProfileRevise,
@@ -321,11 +310,7 @@ def create_app(
         response_model=ConfigurationReceipt,
         operation_id="createBot",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "bot.create.v1",
-            "x-journeon-permissions": ["bot.create"],
-        },
+        openapi_extra=configuration_metadata("bot.create.v1"),
     )
     def create_bot_configuration(
         command: BotCreate, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -337,11 +322,7 @@ def create_app(
         response_model=ConfigurationReceipt,
         operation_id="reviseBot",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "bot.revise.v1",
-            "x-journeon-permissions": ["bot.revise"],
-        },
+        openapi_extra=configuration_metadata("bot.revise.v1"),
     )
     def revise_bot_configuration(
         command: BotRevise, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -353,11 +334,7 @@ def create_app(
         response_model=ConfigurationReceipt,
         operation_id="createTeam",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "team.create.v1",
-            "x-journeon-permissions": ["team.create"],
-        },
+        openapi_extra=configuration_metadata("team.create.v1"),
     )
     def create_team_configuration(
         command: TeamCreate, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -369,11 +346,7 @@ def create_app(
         response_model=LegacyPlan,
         operation_id="previewLegacyMemory",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-command": "legacy-memory.preview.v1",
-            "x-journeon-permissions": ["legacy-memory.preview"],
-        },
+        openapi_extra=configuration_metadata("legacy-memory.preview.v1"),
     )
     def legacy_preview_configuration(
         command: LegacyPreview,
@@ -386,11 +359,7 @@ def create_app(
         response_model=BundleResult,
         operation_id="resolveInstructionBundle",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "instructions",
-            "x-journeon-command": "instruction.bundle.resolve.v1",
-            "x-journeon-permissions": ["instruction.bundle.resolve"],
-        },
+        openapi_extra=configuration_metadata("instruction.bundle.resolve.v1"),
     )
     def resolve_configuration(
         command: BundleResolve,
@@ -403,11 +372,7 @@ def create_app(
         response_model=ProfileView,
         operation_id="getProfile",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-query": "profile.read.v1",
-            "x-journeon-permissions": ["profile.read"],
-        },
+        openapi_extra=configuration_metadata("profile.read.v1"),
     )
     def profile_configuration_read(
         identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -419,11 +384,7 @@ def create_app(
         response_model=BotView,
         operation_id="getBot",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-query": "bot.read.v1",
-            "x-journeon-permissions": ["bot.read"],
-        },
+        openapi_extra=configuration_metadata("bot.read.v1"),
     )
     def bot_configuration_read(
         identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -435,11 +396,7 @@ def create_app(
         response_model=TeamView,
         operation_id="getTeam",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-query": "team.read.v1",
-            "x-journeon-permissions": ["team.read"],
-        },
+        openapi_extra=configuration_metadata("team.read.v1"),
     )
     def team_configuration_read(
         identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -451,11 +408,7 @@ def create_app(
         response_model=EffectiveSettings,
         operation_id="getBotSettings",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "agents",
-            "x-journeon-query": "bot.settings.read.v1",
-            "x-journeon-permissions": ["bot.settings.read"],
-        },
+        openapi_extra=configuration_metadata("bot.settings.read.v1"),
     )
     def settings_configuration_read(
         identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -467,11 +420,7 @@ def create_app(
         response_model=BundleView,
         operation_id="getInstructionBundle",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "instructions",
-            "x-journeon-query": "instruction.bundle.read.v1",
-            "x-journeon-permissions": ["instruction.bundle.read"],
-        },
+        openapi_extra=configuration_metadata("instruction.bundle.read.v1"),
     )
     def read_configuration_read(
         identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
@@ -483,11 +432,7 @@ def create_app(
         response_model=EffectivePermission,
         operation_id="getEffectivePermission",
         responses=errors,
-        openapi_extra={
-            "x-journeon-owner": "permissions",
-            "x-journeon-query": "permission.effective.v1",
-            "x-journeon-permissions": ["permission.effective"],
-        },
+        openapi_extra=configuration_metadata("permission.effective.v1"),
     )
     def effective_permission(
         resource_kind: ConfigurationKind,

@@ -70,6 +70,17 @@
       "sha256": "68e62fe11f30d5ca8289242866f0a5291402d8529ca2178ab8afc5c9694ae890"
     },
     {
+      "name": "click",
+      "version": "8.5.0",
+      "use": "runtime",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "wheel": "click-8.5.0-py3-none-any.whl",
+      "sha256": "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
+    },
+    {
       "name": "cryptography",
       "version": "50.0.2",
       "use": "runtime",
@@ -109,7 +120,7 @@
     {
       "name": "h11",
       "version": "0.16.0",
-      "use": "development",
+      "use": "runtime",
       "declared_license": "MIT",
       "license_files": [
         "LICENSE.txt"
@@ -404,6 +415,17 @@
       ],
       "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
       "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.54.0",
+      "use": "runtime",
+      "declared_license": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "wheel": "uvicorn-0.54.0-py3-none-any.whl",
+      "sha256": "505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf"
     }
   ]
 }

@@ -26,7 +26,7 @@ The tests use temporary file-backed databases and subprocesses. They cover curre
 
 On Linux aarch64, substitute `requirements-linux-aarch64.lock` in the install command above.
 
-Project wheel building, installation into a package location, an ASGI server and an installer have **not been tested or provided**. Run from this checkout with `PYTHONPATH=src`; migration discovery currently depends on the source-tree layout. Python dependency installation from the hashed lock has been tested in a separate empty virtual environment.
+The [local runtime guide](docs/runtime.md) describes the explicit TLS launcher and relocatable source-shaped release bundle. The bundle preserves project metadata and migration paths and includes a checked runtime wheel lock. Local subprocess checks cover TLS, authentication, shutdown and restart. A project wheel, production installer, signed updater and complete recovery workflow remain unavailable; these checks do not establish deployment readiness.
 
 ## Service boundary
 

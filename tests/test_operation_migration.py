@@ -192,3 +192,16 @@ def test_new_identity_domains_are_database_constrained(legacy_store, statement):
     upgrade(engine)
     with pytest.raises(IntegrityError), engine.begin() as db:
         db.execute(text(statement))
+
+
+def test_explicit_snapshot_migration_preserves_populated_identity_and_receipts(
+    legacy_store, tmp_path
+):
+    from journeon.operations import migrate_database, validate_snapshot
+
+    engine, path, receipt, now = legacy_store
+    snapshot = tmp_path / "before-upgrade"
+    result = migrate_database(path, snapshot)
+    assert result == {"status": "PASS", "schema": "0005_protected_operations"}
+    assert validate_snapshot(snapshot)["schema"] == "0003_passkeys"
+    verify_preserved(engine, receipt, now)

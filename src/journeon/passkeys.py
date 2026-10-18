@@ -217,7 +217,9 @@ class PasskeyService:
                     assert subject is not None
                     enrollment_hash = identity.enrollment_hash
                     options, state = self.server.register_begin(
-                        PublicKeyCredentialUserEntity(id=subject.encode(), name="Owner"),
+                        PublicKeyCredentialUserEntity(
+                            id=subject.encode(), name="Owner", display_name="Owner"
+                        ),
                         resident_key_requirement=ResidentKeyRequirement.REQUIRED,
                         user_verification=UserVerificationRequirement.REQUIRED,
                     )
@@ -308,6 +310,7 @@ class PasskeyService:
                         TypeError,
                         IndexError,
                         OverflowError,
+                        RecursionError,
                         struct.error,
                         DomainError,
                         IntegrityError,

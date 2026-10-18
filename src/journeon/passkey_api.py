@@ -97,7 +97,7 @@ def routes(service: PasskeyService | None, binding: BrowserAuth | None) -> APIRo
             credential = json.loads(command.credential_json)
             if not isinstance(credential, dict):
                 raise ValueError
-        except ValueError:
+        except (ValueError, RecursionError):
             raise DomainError("VALIDATION_FAILED", "Invalid passkey response") from None
         issued = active.complete(
             command.ceremony_id, purpose=command.purpose, response=credential, session_id=session_id

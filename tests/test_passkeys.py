@@ -665,3 +665,76 @@ def test_pending_challenge_is_invalid_after_relying_party_configuration_change(s
             purpose="login",
             response=key.assert_key(login.options, origin=changed.origin),
         )
+
+
+def test_verifier_recursion_failure_preserves_attempt_budget(service, monkeypatch):
+    from journeon import passkeys
+
+    enrollment = service.prepare_bootstrap()
+    challenge = service.begin_bootstrap(enrollment.secret, label="Test key", source="local")
+    response = Authenticator().register(challenge.options)
+
+    def decoder_limit(_response):
+        raise RecursionError("Synthetic decoder limit")
+
+    monkeypatch.setattr(passkeys.RegistrationResponse, "from_dict", decoder_limit)
+    for _ in range(service.policy.max_attempts + 1):
+        with pytest.raises(DomainError):
+            service.complete(challenge.ceremony_id, purpose="bootstrap", response=response)
+    with transaction(service.engine) as db:
+        row = db.get(AuthCeremony, challenge.ceremony_id)
+        assert row.attempts == service.policy.max_attempts
+        assert row.consumed
+        assert db.get(IdentityState, 1).owner_id is None
+
+
+def test_json_decoder_recursion_is_rejected_before_verification(service, monkeypatch):
+    import json
+
+    from fastapi.testclient import TestClient
+
+    from journeon import passkey_api
+    from journeon.api import create_app
+    from journeon.browser_auth import BrowserAuth
+
+    enrollment = service.prepare_bootstrap()
+    challenge = service.begin_bootstrap(enrollment.secret, label="Test key", source="local")
+    credential_json = json.dumps(Authenticator().register(challenge.options))
+    original = json.loads
+
+    def decoder_limit(value, *args, **kwargs):
+        if isinstance(value, str) and value == credential_json:
+            raise RecursionError("Synthetic decoder limit")
+        return original(value, *args, **kwargs)
+
+    monkeypatch.setattr(passkey_api.json, "loads", decoder_limit)
+    client = TestClient(
+        create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service),
+        base_url=service.origin,
+    )
+    result = client.post(
+        "/api/v1/auth/passkeys/finish",
+        headers={"Origin": service.origin},
+        json={
+            "purpose": "bootstrap",
+            "ceremony_id": challenge.ceremony_id,
+            "credential_json": credential_json,
+        },
+    )
+    assert result.status_code == 422
+    assert result.json() == {
+        "schema_version": 1,
+        "code": "VALIDATION_FAILED",
+        "reason": "Invalid passkey response",
+    }
+    with transaction(service.engine) as db:
+        assert db.get(AuthCeremony, challenge.ceremony_id).attempts == 0
+        assert db.get(IdentityState, 1).owner_id is None
+
+
+def test_bootstrap_options_supply_required_browser_user_display_name(service):
+    enrollment = service.prepare_bootstrap()
+    challenge = service.begin_bootstrap(enrollment.secret, label="Test key", source="local")
+    user = challenge.options["publicKey"]["user"]
+    assert user["name"] == "Owner"
+    assert user["displayName"] == user["name"]

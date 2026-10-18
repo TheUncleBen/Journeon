@@ -169,6 +169,8 @@ class ProjectService:
                         event_id=str(uuid4()),
                         operation_id=operation_id,
                         event_type="project.created",
+                        target_revision=view.revision,
+                        payload=result.model_dump(mode="json"),
                         schema_version=1,
                         principal_id=actor.principal_id,
                         project_id=project_id,

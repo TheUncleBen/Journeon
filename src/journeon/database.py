@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from journeon.contracts import DomainError
 
-SCHEMA_REVISION = "0005_protected_operations"
+SCHEMA_REVISION = "0006_work"
 
 
 def require_compatible_schema(session: Session) -> None:

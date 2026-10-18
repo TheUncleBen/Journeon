@@ -119,6 +119,8 @@ def apply_label(
             event_id=str(uuid4()),
             operation_id=operation_id,
             event_type="passkey.labelled",
+            target_revision=result.passkey.revision,
+            payload=result.model_dump(mode="json"),
             schema_version=1,
             principal_id=actor.principal_id,
             project_id=None,

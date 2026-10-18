@@ -119,7 +119,97 @@ class PasskeyMutationReceipt(Contract):
     passkey: PasskeySummary
 
 
-CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt
+TaskState = Literal[
+    "BACKLOG", "READY", "RUNNING", "WAITING", "REVIEW", "BLOCKED", "DONE", "CANCELLED", "ARCHIVED"
+]
+TaskAction = Literal["pause", "resume", "cancel"]
+
+
+class TaskCreate(Contract):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    project_id: Identifier
+    expected_project_revision: PositiveRevision
+    objective: Name
+    success_conditions: list[Name] = Field(default_factory=list)
+    responsibility: Literal["HUMAN", "UNASSIGNED"]
+    dependencies: list[Identifier] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def unique_dependencies(self) -> "TaskCreate":
+        if len(set(self.dependencies)) != len(self.dependencies):
+            raise ValueError("Task dependencies must be distinct")
+        return self
+
+
+class TaskControl(Contract):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    task_id: Identifier
+    expected_revision: PositiveRevision
+    reason: Name
+
+
+class TaskCriterion(Contract):
+    text: Name
+    provenance: Literal["USER"] = "USER"
+    principal_id: Identifier
+    objective_revision: PositiveRevision
+
+
+class TaskPolicyBinding(Contract):
+    source: Literal["PROJECT"] = "PROJECT"
+    project_id: Identifier
+    project_revision: PositiveRevision
+    policy_ref: Identifier | None
+
+
+class TaskAssignment(Contract):
+    responsibility: Literal["HUMAN", "UNASSIGNED"]
+    principal_id: Identifier | None
+    assigned_by: Identifier
+    assigned_at: str
+    reason: Literal["Task created"] = "Task created"
+
+    @model_validator(mode="after")
+    def responsible_human(self) -> "TaskAssignment":
+        if (self.responsibility == "HUMAN") != (self.principal_id is not None):
+            raise ValueError("Human responsibility requires an attributed Principal")
+        return self
+
+
+class TaskView(Contract):
+    task_id: Identifier
+    project_id: Identifier
+    initiating_principal_id: Identifier
+    revision: PositiveRevision
+    objective: Name
+    objective_revision: PositiveRevision
+    criteria_revision: PositiveRevision
+    success_conditions: list[TaskCriterion]
+    verification_policy: TaskPolicyBinding
+    assignment: TaskAssignment
+    assignment_history: list[TaskAssignment]
+    dependencies: list[Identifier]
+    state: TaskState
+    paused: bool
+    pause_reason: Name | None
+    stop_reason: Name | None
+    blocker: Name | None
+    created_at: str
+    updated_at: str
+
+
+class TaskReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["task.create.v1", "task.pause.v1", "task.resume.v1", "task.cancel.v1"]
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    task: TaskView
+
+
+CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt
 
 
 class ErrorEnvelope(Contract):

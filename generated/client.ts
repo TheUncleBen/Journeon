@@ -91,7 +91,79 @@ export type ProviderSnapshot = {
   "providers": Array<string>;
 };
 
-export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt;
+export type TaskAssignment = {
+  "assigned_at": string;
+  "assigned_by": string;
+  "principal_id": string | null;
+  "reason"?: "Task created";
+  "responsibility": "HUMAN" | "UNASSIGNED";
+};
+
+export type TaskControl = {
+  "expected_revision": number;
+  "idempotency_key": string;
+  "reason": string;
+  "schema_version": 1;
+  "task_id": string;
+};
+
+export type TaskCreate = {
+  "dependencies"?: Array<string>;
+  "expected_project_revision": number;
+  "idempotency_key": string;
+  "objective": string;
+  "project_id": string;
+  "responsibility": "HUMAN" | "UNASSIGNED";
+  "schema_version": 1;
+  "success_conditions"?: Array<string>;
+};
+
+export type TaskCriterion = {
+  "objective_revision": number;
+  "principal_id": string;
+  "provenance"?: "USER";
+  "text": string;
+};
+
+export type TaskPolicyBinding = {
+  "policy_ref": string | null;
+  "project_id": string;
+  "project_revision": number;
+  "source"?: "PROJECT";
+};
+
+export type TaskReceipt = {
+  "command": "task.create.v1" | "task.pause.v1" | "task.resume.v1" | "task.cancel.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "schema_version"?: 1;
+  "task": TaskView;
+};
+
+export type TaskView = {
+  "assignment": TaskAssignment;
+  "assignment_history": Array<TaskAssignment>;
+  "blocker": string | null;
+  "created_at": string;
+  "criteria_revision": number;
+  "dependencies": Array<string>;
+  "initiating_principal_id": string;
+  "objective": string;
+  "objective_revision": number;
+  "pause_reason": string | null;
+  "paused": boolean;
+  "project_id": string;
+  "revision": number;
+  "state": "BACKLOG" | "READY" | "RUNNING" | "WAITING" | "REVIEW" | "BLOCKED" | "DONE" | "CANCELLED" | "ARCHIVED";
+  "stop_reason": string | null;
+  "success_conditions": Array<TaskCriterion>;
+  "task_id": string;
+  "updated_at": string;
+  "verification_policy": TaskPolicyBinding;
+};
+
+export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -132,6 +204,30 @@ export class JourneonClient {
   labelPasskey(command: PasskeyLabelCommand, csrfToken?: string): Promise<PasskeyMutationReceipt> {
     return this.request("/api/v1/auth/passkeys/label", {
       method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  getTask(taskId: string): Promise<TaskView> {
+    return this.request(`/api/v1/tasks/${encodeURIComponent(taskId)}`, {method: "GET"});
+  }
+
+  createTask(command: TaskCreate, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  pauseTask(command: TaskControl, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/pause", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  resumeTask(command: TaskControl, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/resume", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  cancelTask(command: TaskControl, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/cancel", {method: "POST", body: JSON.stringify(command),
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 

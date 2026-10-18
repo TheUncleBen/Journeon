@@ -76,6 +76,11 @@ def test_generation_includes_actual_registry():
         "beginPasskey",
         "finishPasskey",
         "labelPasskey",
+        "createTask",
+        "getTask",
+        "pauseTask",
+        "resumeTask",
+        "cancelTask",
     }
     engine = create_engine("sqlite://")
     try:

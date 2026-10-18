@@ -32,3 +32,21 @@ void forgedLabel;
 // @ts-expect-error A general receipt may describe a passkey instead of a Project.
 const projectOnly: Promise<OperationReceipt> = client.getOperationReceipt("operation-fixture");
 void projectOnly;
+
+import type { TaskCreate, TaskControl, TaskReceipt, TaskView } from "../generated/client.js";
+const task: TaskCreate = {schema_version: 1, idempotency_key: "task-fixture", project_id: "project-fixture",
+  expected_project_revision: 1, objective: "Check result", responsibility: "UNASSIGNED"};
+const taskResult: Promise<TaskReceipt> = client.createTask(task);
+const taskRead: Promise<TaskView> = client.getTask("task-fixture");
+const taskControl: TaskControl = {schema_version: 1, idempotency_key: "control-fixture", task_id: "task-fixture",
+  expected_revision: 1, reason: "Human requested control"};
+const paused: Promise<TaskReceipt> = client.pauseTask(taskControl);
+const resumed: Promise<TaskReceipt> = client.resumeTask(taskControl);
+const cancelled: Promise<TaskReceipt> = client.cancelTask(taskControl);
+void [taskResult, taskRead, paused, resumed, cancelled];
+// @ts-expect-error Task creation cannot assert execution or completion.
+const fakeSuccess: TaskCreate = {...task, state: "DONE"};
+void fakeSuccess;
+// @ts-expect-error Responsibility cannot fabricate a Bot identity.
+const fakeBot: TaskCreate = {...task, responsibility: "BOT"};
+void fakeBot;

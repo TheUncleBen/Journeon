@@ -47,6 +47,89 @@
       "query": null
     },
     {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_task",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/{task_id}",
+      "permissions": [
+        "task.read"
+      ],
+      "query": "task.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": "task.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createTask",
+      "owner": "work",
+      "path": "/api/v1/tasks",
+      "permissions": [
+        "task.create",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "task.pause.v1",
+      "endpoint": "journeon.api.create_app.<locals>.pause_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "pauseTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/pause",
+      "permissions": [
+        "task.pause",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "task.resume.v1",
+      "endpoint": "journeon.api.create_app.<locals>.resume_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "resumeTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/resume",
+      "permissions": [
+        "task.resume",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "task.cancel.v1",
+      "endpoint": "journeon.api.create_app.<locals>.cancel_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "cancelTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/cancel",
+      "permissions": [
+        "task.cancel",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "query": null
+    },
+    {
       "authentication": "passkey.begin.v1",
       "command": null,
       "endpoint": "journeon.passkey_api.routes.<locals>.begin",
@@ -120,6 +203,78 @@
       "risk": "LOCAL_METADATA_MUTATION",
       "stability": "INTERNAL",
       "verification": "Current own-Principal strong session; atomic label, receipt and event"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskCreate",
+      "name": "task.create.v1",
+      "owner": "work",
+      "permissions": [
+        "task.create",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A separate authorized lifecycle command retains prior receipts",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Atomic versioned Task, receipt and event; current Project grants"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskControl",
+      "name": "task.pause.v1",
+      "owner": "work",
+      "permissions": [
+        "task.pause",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A separate authorized lifecycle command retains prior receipts",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Atomic versioned Task, receipt and event; current Project grants"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskControl",
+      "name": "task.resume.v1",
+      "owner": "work",
+      "permissions": [
+        "task.resume",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A separate authorized lifecycle command retains prior receipts",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Atomic versioned Task, receipt and event; current Project grants"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskControl",
+      "name": "task.cancel.v1",
+      "owner": "work",
+      "permissions": [
+        "task.cancel",
+        "task.read",
+        "task.receipt.read"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A separate authorized lifecycle command retains prior receipts",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Atomic versioned Task, receipt and event; current Project grants"
     }
   ],
   "modules": [
@@ -187,7 +342,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0005_protected_operations",
+      "migration": "0006_work",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -253,9 +408,52 @@
         "projects"
       ],
       "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
+        "/api/v1/tasks"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "task.created",
+        "task.paused",
+        "task.resumed",
+        "task.cancelled"
+      ],
+      "health": "schema_and_database",
+      "migration": "0006_work",
+      "module_id": "work",
+      "permission_namespaces": [
+        "task"
+      ],
+      "permissions": [
+        "task.create",
+        "task.read",
+        "task.receipt.read",
+        "task.pause",
+        "task.resume",
+        "task.cancel"
+      ],
+      "settings": [],
+      "tables": [
+        "tasks"
+      ],
+      "version": "0.0.0.dev1"
     }
   ],
   "queries": [
+    {
+      "name": "task.read.v1",
+      "owner": "work",
+      "permissions": [
+        "task.read"
+      ],
+      "result_model": "TaskView"
+    },
     {
       "name": "operation.receipt.read.v1",
       "owner": "operations",

@@ -15,6 +15,10 @@ from journeon.contracts import (
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
     ProjectCreate,
+    TaskControl,
+    TaskCreate,
+    TaskReceipt,
+    TaskView,
 )
 from journeon.health import schema_and_database
 from journeon.migrate import configuration
@@ -66,9 +70,46 @@ PASSKEY_LABEL = CommandDefinition(
     verification="Current own-Principal strong session; atomic label, receipt and event",
 )
 
-COMMANDS = {command.name: command for command in (PROJECT_CREATE, PASSKEY_LABEL)}
+WORK_COMMANDS = tuple(
+    CommandDefinition(
+        name=f"task.{action}.v1",
+        owner="work",
+        input_model=TaskCreate if action == "create" else TaskControl,
+        result_model=TaskReceipt,
+        permissions=(f"task.{action}", "task.read", "task.receipt.read"),
+        risk="LOCAL_CANONICAL_MUTATION",
+        external_effects=(),
+        reversibility="A separate authorized lifecycle command retains prior receipts",
+        dry_run=False,
+        idempotent=True,
+        verification="Atomic versioned Task, receipt and event; current Project grants",
+    )
+    for action in ("create", "pause", "resume", "cancel")
+)
+COMMANDS = {command.name: command for command in (PROJECT_CREATE, PASSKEY_LABEL, *WORK_COMMANDS)}
 
 MODULES: dict[str, dict[str, Any]] = {
+    "work": {
+        "core": True,
+        "api_prefixes": ("/api/v1/tasks",),
+        "dashboards": (),
+        "events_published": ("task.created", "task.paused", "task.resumed", "task.cancelled"),
+        "events_consumed": (),
+        "tables": ("tasks",),
+        "backup_class": "R0",
+        "health": "schema_and_database",
+        "permissions": (
+            "task.create",
+            "task.read",
+            "task.receipt.read",
+            "task.pause",
+            "task.resume",
+            "task.cancel",
+        ),
+        "migration": "0006_work",
+        "settings": (),
+        "environment_migrations": (),
+    },
     "identity": {
         "core": True,
         "api_prefixes": ("/api/v1/auth/passkeys",),
@@ -144,7 +185,7 @@ MODULES: dict[str, dict[str, Any]] = {
         "backup_class": "R1",
         "health": "schema_and_database",
         "permissions": ("operation.receipt.read",),
-        "migration": "0005_protected_operations",
+        "migration": "0006_work",
         "settings": (),
         "environment_migrations": (),
     },
@@ -152,11 +193,12 @@ MODULES: dict[str, dict[str, Any]] = {
 
 
 QUERIES: dict[str, dict[str, Any]] = {
+    "task.read.v1": {"owner": "work", "permissions": ("task.read",), "result_model": TaskView},
     "operation.receipt.read.v1": {
         "owner": "operations",
         "permissions": ("operation.receipt.read",),
         "result_model": CanonicalReceipt,
-    }
+    },
 }
 
 

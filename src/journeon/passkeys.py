@@ -542,11 +542,16 @@ class PasskeyService:
             record = db.get(BrowserSession, result.session_id)
             assert record is not None
             record.authentication_method = "passkey:" + key.id
+            record.audience = "official_browser"
             return result
-        return issue_session(
+        issued = issue_session(
             db,
             key.principal_id,
             authentication_method="passkey:" + key.id,
             client_label=row.label,
             strong=True,
         )
+        record = db.get(BrowserSession, issued.session_id)
+        assert record is not None
+        record.audience = "official_browser"
+        return issued

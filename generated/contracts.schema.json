@@ -296,6 +296,129 @@
     "title": "PasskeyFinish",
     "type": "object"
   },
+  "PasskeyLabelCommand": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_revision": {
+        "minimum": 1,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "label": {
+        "maxLength": 128,
+        "minLength": 1,
+        "title": "Label",
+        "type": "string"
+      },
+      "passkey_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Passkey Id",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "schema_version",
+      "idempotency_key",
+      "passkey_id",
+      "expected_revision",
+      "label"
+    ],
+    "title": "PasskeyLabelCommand",
+    "type": "object"
+  },
+  "PasskeyMutationReceipt": {
+    "$defs": {
+      "PasskeySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "passkey_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Passkey Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "passkey_id",
+          "principal_id",
+          "revision",
+          "label",
+          "revoked"
+        ],
+        "title": "PasskeySummary",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "const": "passkey.label.v1",
+        "default": "passkey.label.v1",
+        "title": "Command",
+        "type": "string"
+      },
+      "committed_at": {
+        "title": "Committed At",
+        "type": "string"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "outcome": {
+        "const": "CANONICAL_COMMITTED",
+        "default": "CANONICAL_COMMITTED",
+        "title": "Outcome",
+        "type": "string"
+      },
+      "passkey": {
+        "$ref": "#/$defs/PasskeySummary"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "operation_id",
+      "committed_at",
+      "passkey"
+    ],
+    "title": "PasskeyMutationReceipt",
+    "type": "object"
+  },
   "ProjectCreate": {
     "additionalProperties": false,
     "properties": {

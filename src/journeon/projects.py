@@ -158,6 +158,7 @@ class ProjectService:
                         idempotency_key=command.idempotency_key,
                         payload_hash=digest,
                         project_id=project_id,
+                        target_id=project_id,
                         authentication_ref=actor.authentication_ref,
                         result=result.model_dump(mode="json"),
                     )
@@ -171,6 +172,7 @@ class ProjectService:
                         schema_version=1,
                         principal_id=actor.principal_id,
                         project_id=project_id,
+                        target_id=project_id,
                         committed_at=committed_at,
                     )
                 )

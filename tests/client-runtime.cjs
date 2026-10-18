@@ -30,6 +30,13 @@ async function main() {
   assert.equal(calls[3].init.credentials, "same-origin");
   await client.createProject(command, "synthetic-csrf");
   assert.equal(calls[4].init.headers["X-CSRF-Token"], "synthetic-csrf");
+  const label = {schema_version: 1, idempotency_key: "label-fixture", passkey_id: "key-fixture",
+    expected_revision: 1, label: "Renamed"};
+  assert.deepEqual(await client.labelPasskey(label, "synthetic-csrf"), receipt);
+  assert.equal(calls[5].url, "/api/v1/auth/passkeys/label");
+  assert.equal(calls[5].init.headers["X-CSRF-Token"], "synthetic-csrf");
+  assert.equal(calls[5].init.credentials, "same-origin");
+  assert.deepEqual(JSON.parse(calls[5].init.body), label);
   const denied = new JourneonClient("", async () => new Response(
     JSON.stringify({code: "PERMISSION_DENIED"}), {status: 403},
   ));

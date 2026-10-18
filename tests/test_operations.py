@@ -50,7 +50,7 @@ def test_snapshot_includes_committed_wal_and_validates(database, tmp_path):
         destination = tmp_path / "snapshot"
         report = snapshot_database(path, destination)
         assert report == validate_snapshot(destination)
-        assert report["schema"] == "0004_auth_rate_events"
+        assert report["schema"] == "0005_protected_operations"
         assert (destination.stat().st_mode & 0o777) == 0o700
         assert (destination / "database.sqlite").stat().st_mode & 0o777 == 0o600
         with sqlite3.connect(destination / "database.sqlite") as saved:
@@ -96,7 +96,7 @@ def test_migration_snapshots_old_schema_and_preserves_rows(tmp_path):
         connection.exec_driver_sql("INSERT INTO principals VALUES ('preserved', 'OWNER', 1, 1)")
     engine.dispose()
     result = migrate_database(path, tmp_path / "before")
-    assert result["schema"] == "0004_auth_rate_events"
+    assert result["schema"] == "0005_protected_operations"
     assert validate_snapshot(tmp_path / "before")["schema"] == "0001_foundation"
     with sqlite3.connect(path) as connection:
         assert connection.execute("SELECT id FROM principals").fetchall() == [("preserved",)]
@@ -230,7 +230,7 @@ def test_migration_rejects_false_revision_without_current_tables(tmp_path, monke
 
     def incomplete_upgrade(config, revision):
         config.attributes["connection"].exec_driver_sql(
-            "UPDATE alembic_version SET version_num='0004_auth_rate_events'"
+            "UPDATE alembic_version SET version_num='0005_protected_operations'"
         )
 
     monkeypatch.setattr(command, "upgrade", incomplete_upgrade)

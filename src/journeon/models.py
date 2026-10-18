@@ -17,9 +17,11 @@ class Principal(Base):
     role: Mapped[str] = mapped_column(String(20))
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     authorization_epoch: Mapped[int] = mapped_column(Integer, default=1)
+    credential_revision: Mapped[int] = mapped_column(Integer, default=1)
     __table_args__ = (
         CheckConstraint("role IN ('OWNER', 'SHARED_USER')", name="principal_role"),
         CheckConstraint("authorization_epoch >= 1", name="principal_epoch"),
+        CheckConstraint("credential_revision >= 1", name="principal_credential_revision"),
         CheckConstraint("enabled IN (0, 1)", name="principal_enabled_boolean"),
         Index(
             "one_enabled_owner",
@@ -93,10 +95,19 @@ class Receipt(Base):
     command: Mapped[str] = mapped_column(String(128))
     idempotency_key: Mapped[str] = mapped_column(String(128))
     payload_hash: Mapped[str] = mapped_column(String(64))
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"))
+    owner: Mapped[str] = mapped_column(String(30), default="projects")
+    target_kind: Mapped[str] = mapped_column(String(30), default="project")
+    target_id: Mapped[str] = mapped_column(String(128))
     authentication_ref: Mapped[str] = mapped_column(String(128))
     result: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (
+        CheckConstraint(
+            "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
+            "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
+            "AND project_id IS NULL)",
+            name="receipt_target",
+        ),
         Index(
             "receipt_operation_identity", "principal_id", "command", "idempotency_key", unique=True
         ),
@@ -113,8 +124,20 @@ class OutboxEvent(Base):
     event_type: Mapped[str] = mapped_column(String(128))
     schema_version: Mapped[int] = mapped_column(Integer)
     principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"))
+    owner: Mapped[str] = mapped_column(String(30), default="projects")
+    target_kind: Mapped[str] = mapped_column(String(30), default="project")
+    target_id: Mapped[str] = mapped_column(String(128))
     committed_at: Mapped[str] = mapped_column(String(40))
+    __table_args__ = (
+        CheckConstraint(
+            "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
+            "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
+            "AND project_id IS NULL)",
+            name="event_target",
+        ),
+        {"sqlite_autoincrement": True},
+    )
 
 
 class BrowserSession(Base):
@@ -124,6 +147,7 @@ class BrowserSession(Base):
     csrf_hash: Mapped[str] = mapped_column(String(64))
     principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"), index=True)
     principal_epoch: Mapped[int] = mapped_column(Integer)
+    audience: Mapped[str] = mapped_column(String(30), default="unknown")
     authentication_method: Mapped[str] = mapped_column(String(128))
     client_label: Mapped[str] = mapped_column(String(128))
     issued_at: Mapped[int] = mapped_column(Integer)
@@ -136,6 +160,7 @@ class BrowserSession(Base):
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
     __table_args__ = (
         CheckConstraint("principal_epoch >= 1", name="session_principal_epoch"),
+        CheckConstraint("audience IN ('unknown', 'official_browser')", name="session_audience"),
         CheckConstraint("revoked IN (0, 1)", name="session_revoked_boolean"),
         CheckConstraint(
             "issued_at >= 0 AND absolute_deadline > issued_at", name="session_deadline"
@@ -173,12 +198,14 @@ class Passkey(Base):
     credential_data: Mapped[str] = mapped_column(Text)
     principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"), index=True)
     label: Mapped[str] = mapped_column(String(128))
+    revision: Mapped[int] = mapped_column(Integer, default=1)
     sign_count: Mapped[int] = mapped_column(Integer)
     backup_eligible: Mapped[bool] = mapped_column(Boolean)
     backed_up: Mapped[bool] = mapped_column(Boolean)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
     __table_args__ = (
         CheckConstraint("sign_count >= 0", name="passkey_counter"),
+        CheckConstraint("revision >= 1", name="passkey_revision"),
         CheckConstraint("backup_eligible IN (0, 1)", name="passkey_eligible_boolean"),
         CheckConstraint("backed_up IN (0, 1)", name="passkey_backup_boolean"),
         CheckConstraint("revoked IN (0, 1)", name="passkey_revoked_boolean"),
@@ -233,4 +260,42 @@ class AuthRateEvent(Base):
     __table_args__ = (
         CheckConstraint("observed_at >= 0 AND weight > 0", name="rate_event_values"),
         CheckConstraint("expires_at IS NULL OR expires_at > observed_at", name="rate_event_expiry"),
+    )
+
+
+class ProtectedRequest(Base):
+    __tablename__ = "protected_requests"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    operation_id: Mapped[str] = mapped_column(String(128), unique=True)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    principal_epoch: Mapped[int] = mapped_column(Integer)
+    session_id: Mapped[str] = mapped_column(ForeignKey("browser_sessions.id"))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    command: Mapped[str] = mapped_column(String(128))
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    credential_revision: Mapped[int] = mapped_column(Integer)
+    policy_hash: Mapped[str] = mapped_column(String(64))
+    issued_at: Mapped[int] = mapped_column(Integer)
+    deadline: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(16), default="PENDING")
+    approved_at: Mapped[int | None] = mapped_column(Integer)
+    approval_deadline: Mapped[int | None] = mapped_column(Integer)
+    strong_authenticated_at: Mapped[int | None] = mapped_column(Integer)
+    nonce_hash: Mapped[str | None] = mapped_column(String(64))
+    nonce_deadline: Mapped[int | None] = mapped_column(Integer)
+    __table_args__ = (
+        Index(
+            "protected_operation_identity",
+            "principal_id",
+            "command",
+            "idempotency_key",
+            unique=True,
+        ),
+        CheckConstraint(
+            "state IN ('PENDING', 'APPROVED', 'COMMITTED', 'CANCELLED', 'EXPIRED', 'INVALIDATED')",
+            name="protected_state",
+        ),
+        CheckConstraint("deadline > issued_at AND issued_at >= 0", name="protected_deadline"),
+        CheckConstraint("command = 'passkey.label.v1'", name="protected_command"),
     )

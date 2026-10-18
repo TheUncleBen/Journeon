@@ -9,7 +9,13 @@ from typing import Any
 from sqlalchemy import create_engine
 
 from journeon.api import create_app
-from journeon.contracts import ErrorEnvelope, OperationReceipt, ProjectCreate
+from journeon.contracts import (
+    ErrorEnvelope,
+    OperationReceipt,
+    PasskeyLabelCommand,
+    PasskeyMutationReceipt,
+    ProjectCreate,
+)
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.registry import registry_manifest
 
@@ -71,6 +77,7 @@ def artifacts() -> dict[str, str]:
     if operations != {
         "beginPasskey": ("POST", "/api/v1/auth/passkeys/begin"),
         "finishPasskey": ("POST", "/api/v1/auth/passkeys/finish"),
+        "labelPasskey": ("POST", "/api/v1/auth/passkeys/label"),
         "createProject": ("POST", "/api/v1/projects"),
         "getOperationReceipt": ("GET", "/api/v1/operations/{operation_id}"),
     }:
@@ -81,6 +88,8 @@ def artifacts() -> dict[str, str]:
 """
         + "\n\n".join(types)
         + """
+
+export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -118,7 +127,13 @@ export class JourneonClient {
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
-  getOperationReceipt(operationId: string): Promise<OperationReceipt> {
+  labelPasskey(command: PasskeyLabelCommand, csrfToken?: string): Promise<PasskeyMutationReceipt> {
+    return this.request("/api/v1/auth/passkeys/label", {
+      method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  getOperationReceipt(operationId: string): Promise<CanonicalReceipt> {
     return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`, {method: "GET"});
   }
 }
@@ -128,6 +143,8 @@ export class JourneonClient {
         model.__name__: model.model_json_schema()
         for model in (
             ProjectCreate,
+            PasskeyLabelCommand,
+            PasskeyMutationReceipt,
             OperationReceipt,
             ErrorEnvelope,
             PasskeyBegin,

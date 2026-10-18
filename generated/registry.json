@@ -27,9 +27,24 @@
       "owner": "operations",
       "path": "/api/v1/operations/{operation_id}",
       "permissions": [
-        "project.receipt.read"
+        "operation.receipt.read"
       ],
       "query": "operation.receipt.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": "passkey.label.v1",
+      "endpoint": "journeon.api.create_app.<locals>.label_passkey",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "labelPasskey",
+      "owner": "identity",
+      "path": "/api/v1/auth/passkeys/label",
+      "permissions": [
+        "passkey.self.manage"
+      ],
+      "query": null
     },
     {
       "authentication": "passkey.begin.v1",
@@ -89,6 +104,22 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Atomic Project, receipt and outbox persistence"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "PasskeyLabelCommand",
+      "name": "passkey.label.v1",
+      "owner": "identity",
+      "permissions": [
+        "passkey.self.manage"
+      ],
+      "result_model": "PasskeyMutationReceipt",
+      "reversibility": "A later authorized label change creates a new revision",
+      "risk": "LOCAL_METADATA_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current own-Principal strong session; atomic label, receipt and event"
     }
   ],
   "modules": [
@@ -120,12 +151,18 @@
       "dashboards": [],
       "environment_migrations": [],
       "events_consumed": [],
-      "events_published": [],
+      "events_published": [
+        "passkey.labelled"
+      ],
       "health": "schema_and_database",
-      "migration": "0004_auth_rate_events",
+      "migration": "0005_protected_operations",
       "module_id": "identity",
-      "permission_namespaces": [],
-      "permissions": [],
+      "permission_namespaces": [
+        "passkey"
+      ],
+      "permissions": [
+        "passkey.self.manage"
+      ],
       "settings": [],
       "tables": [
         "principals",
@@ -134,7 +171,8 @@
         "passkeys",
         "auth_ceremonies",
         "auth_rates",
-        "auth_rate_events"
+        "auth_rate_events",
+        "protected_requests"
       ],
       "version": "0.0.0.dev1"
     },
@@ -149,13 +187,13 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0001_foundation",
+      "migration": "0005_protected_operations",
       "module_id": "operations",
       "permission_namespaces": [
-        "project"
+        "operation"
       ],
       "permissions": [
-        "project.receipt.read"
+        "operation.receipt.read"
       ],
       "settings": [],
       "tables": [
@@ -222,9 +260,9 @@
       "name": "operation.receipt.read.v1",
       "owner": "operations",
       "permissions": [
-        "project.receipt.read"
+        "operation.receipt.read"
       ],
-      "result_model": "OperationReceipt"
+      "result_model": "CanonicalReceipt"
     }
   ]
 }

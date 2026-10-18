@@ -13,6 +13,10 @@ from journeon.models import Base, OutboxEvent, Project, Receipt
 from journeon.projects import ProjectService
 
 BOOLEAN_DOMAINS = {
+    ("passkeys", "revoked"): "passkey_revoked_boolean",
+    ("passkeys", "backup_eligible"): "passkey_eligible_boolean",
+    ("passkeys", "backed_up"): "passkey_backup_boolean",
+    ("auth_ceremonies", "consumed"): "ceremony_consumed_boolean",
     ("browser_sessions", "revoked"): "session_revoked_boolean",
     ("principals", "enabled"): "principal_enabled_boolean",
     ("access_grants", "enabled"): "grant_enabled_boolean",

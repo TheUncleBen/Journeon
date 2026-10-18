@@ -5,6 +5,7 @@ description = "Journeon deterministic service foundation"
 requires-python = ">=3.12,<3.13"
 license = "AGPL-3.0-only"
 dependencies = [
+  "fido2==2.2.1",
   "fastapi==0.143.3",
   "pydantic==2.14.1",
   "SQLAlchemy==2.1.5",

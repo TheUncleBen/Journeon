@@ -22,6 +22,14 @@ async function main() {
   await client.getOperationReceipt("encoded/operation");
   assert.equal(calls[1].url, "/api/v1/operations/encoded%2Foperation");
   assert.equal(calls[1].init.method, "GET");
+  await client.beginPasskey({purpose: "stepup", label: ""}, "synthetic-csrf");
+  assert.equal(calls[2].url, "/api/v1/auth/passkeys/begin");
+  assert.equal(calls[2].init.headers["X-CSRF-Token"], "synthetic-csrf");
+  await client.finishPasskey({purpose: "login", ceremony_id: "synthetic", credential_json: "{}"});
+  assert.equal(calls[3].url, "/api/v1/auth/passkeys/finish");
+  assert.equal(calls[3].init.credentials, "same-origin");
+  await client.createProject(command, "synthetic-csrf");
+  assert.equal(calls[4].init.headers["X-CSRF-Token"], "synthetic-csrf");
   const denied = new JourneonClient("", async () => new Response(
     JSON.stringify({code: "PERMISSION_DENIED"}), {status: 403},
   ));

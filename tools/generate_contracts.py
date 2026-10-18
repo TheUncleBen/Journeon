@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 
 from journeon.api import create_app
 from journeon.contracts import ErrorEnvelope, OperationReceipt, ProjectCreate
+from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -65,6 +66,8 @@ def artifacts() -> dict[str, str]:
         for method, value in methods.items()
     }
     if operations != {
+        "beginPasskey": ("POST", "/api/v1/auth/passkeys/begin"),
+        "finishPasskey": ("POST", "/api/v1/auth/passkeys/finish"),
         "createProject": ("POST", "/api/v1/projects"),
         "getOperationReceipt": ("GET", "/api/v1/operations/{operation_id}"),
     }:
@@ -85,17 +88,31 @@ export class JourneonError extends Error {
 export class JourneonClient {
   constructor(private readonly baseUrl = "", private readonly transport: typeof fetch = fetch) {}
 
-  private async request(path: string, init: RequestInit): Promise<OperationReceipt> {
+  private async request<T>(path: string, init: RequestInit): Promise<T> {
     const response = await this.transport(`${this.baseUrl}${path}`, {
-      ...init, credentials: "same-origin", headers: {"Content-Type": "application/json"},
+      ...init, credentials: "same-origin",
+      headers: {"Content-Type": "application/json", ...init.headers},
     });
     const body: unknown = await response.json();
     if (!response.ok) throw new JourneonError(response.status, body);
-    return body as OperationReceipt;
+    return body as T;
   }
 
-  createProject(command: ProjectCreate): Promise<OperationReceipt> {
-    return this.request("/api/v1/projects", {method: "POST", body: JSON.stringify(command)});
+  beginPasskey(command: PasskeyBegin, csrfToken?: string): Promise<PasskeyChallenge> {
+    return this.request("/api/v1/auth/passkeys/begin", {
+      method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  finishPasskey(command: PasskeyFinish, csrfToken?: string): Promise<PasskeyAuthenticated> {
+    return this.request("/api/v1/auth/passkeys/finish", {
+      method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  createProject(command: ProjectCreate, csrfToken?: string): Promise<OperationReceipt> {
+    return this.request("/api/v1/projects", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
   getOperationReceipt(operationId: string): Promise<OperationReceipt> {
@@ -106,7 +123,15 @@ export class JourneonClient {
     )
     schemas = {
         model.__name__: model.model_json_schema()
-        for model in (ProjectCreate, OperationReceipt, ErrorEnvelope)
+        for model in (
+            ProjectCreate,
+            OperationReceipt,
+            ErrorEnvelope,
+            PasskeyBegin,
+            PasskeyFinish,
+            PasskeyChallenge,
+            PasskeyAuthenticated,
+        )
     }
     return {
         "openapi.json": json.dumps(openapi, indent=2, sort_keys=True) + "\n",

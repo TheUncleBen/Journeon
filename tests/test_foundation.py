@@ -28,7 +28,7 @@ def test_migration_matches_models_and_is_repeatable(database):
         assert connection.exec_driver_sql("PRAGMA synchronous").scalar() == 2
         assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
     assert schema_and_database(engine).schema_state == "CURRENT"
-    assert schema_and_database(engine).operational_authentication == "NOT_IMPLEMENTED"
+    assert schema_and_database(engine).operational_authentication == "NOT_ASSESSED"
 
 
 def test_migration_never_bootstraps_principals_or_policy(tmp_path):
@@ -65,7 +65,7 @@ def test_registry_owns_every_canonical_table_and_api(database):
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0002_browser_sessions" if "browser_sessions" in module["tables"] else "0001_foundation"
+            "0003_passkeys" if "browser_sessions" in module["tables"] else "0001_foundation"
         )
         assert module["settings"] == ()  # No module-level mutable settings implemented.
     for methods in create_app(database[0]).openapi()["paths"].values():

@@ -152,3 +152,71 @@ class BrowserSession(Base):
             name="session_strong_time",
         ),
     )
+
+
+class IdentityState(Base):
+    __tablename__ = "identity_state"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    last_observed: Mapped[int] = mapped_column(Integer, default=0)
+    owner_id: Mapped[str | None] = mapped_column(ForeignKey("principals.id"))
+    pending_principal_id: Mapped[str | None] = mapped_column(String(128))
+    enrollment_hash: Mapped[str | None] = mapped_column(String(64))
+    enrollment_deadline: Mapped[int | None] = mapped_column(Integer)
+    __table_args__ = (CheckConstraint("id = 1", name="single_identity_state"),)
+
+
+class Passkey(Base):
+    __tablename__ = "passkeys"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    credential_id: Mapped[str] = mapped_column(Text, unique=True)
+    credential_data: Mapped[str] = mapped_column(Text)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"), index=True)
+    label: Mapped[str] = mapped_column(String(128))
+    sign_count: Mapped[int] = mapped_column(Integer)
+    backup_eligible: Mapped[bool] = mapped_column(Boolean)
+    backed_up: Mapped[bool] = mapped_column(Boolean)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    __table_args__ = (
+        CheckConstraint("sign_count >= 0", name="passkey_counter"),
+        CheckConstraint("backup_eligible IN (0, 1)", name="passkey_eligible_boolean"),
+        CheckConstraint("backed_up IN (0, 1)", name="passkey_backup_boolean"),
+        CheckConstraint("revoked IN (0, 1)", name="passkey_revoked_boolean"),
+        CheckConstraint("backed_up = 0 OR backup_eligible = 1", name="passkey_backup_state"),
+    )
+
+
+class AuthCeremony(Base):
+    __tablename__ = "auth_ceremonies"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    purpose: Mapped[str] = mapped_column(String(16))
+    subject_id: Mapped[str | None] = mapped_column(String(128))
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("browser_sessions.id"))
+    enrollment_hash: Mapped[str | None] = mapped_column(String(64))
+    label: Mapped[str] = mapped_column(String(128))
+    state: Mapped[dict[str, Any]] = mapped_column(JSON)
+    issued_at: Mapped[int] = mapped_column(Integer)
+    last_observed: Mapped[int] = mapped_column(Integer)
+    deadline: Mapped[int] = mapped_column(Integer)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    consumed: Mapped[bool] = mapped_column(Boolean, default=False)
+    __table_args__ = (
+        CheckConstraint(
+            "purpose IN ('bootstrap', 'login', 'stepup', 'add')", name="ceremony_purpose"
+        ),
+        CheckConstraint("consumed IN (0, 1)", name="ceremony_consumed_boolean"),
+        CheckConstraint("attempts >= 0", name="ceremony_attempts"),
+        CheckConstraint(
+            "deadline > issued_at AND last_observed >= issued_at", name="ceremony_time"
+        ),
+    )
+
+
+class AuthRate(Base):
+    __tablename__ = "auth_rates"
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    window_start: Mapped[int] = mapped_column(Integer)
+    last_observed: Mapped[int] = mapped_column(Integer)
+    count: Mapped[int] = mapped_column(Integer)
+    __table_args__ = (
+        CheckConstraint("count >= 0 AND last_observed >= window_start", name="auth_rate_state"),
+    )

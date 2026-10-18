@@ -65,7 +65,9 @@ def test_registry_owns_every_canonical_table_and_api(database):
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0004_auth_rate_events" if "browser_sessions" in module["tables"] else "0001_foundation"
+            "0005_protected_operations"
+            if set(module["tables"]) & {"browser_sessions", "operation_receipts"}
+            else "0001_foundation"
         )
         assert module["settings"] == ()  # No module-level mutable settings implemented.
     for methods in create_app(database[0]).openapi()["paths"].values():

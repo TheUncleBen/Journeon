@@ -94,6 +94,34 @@ class OperationReceipt(Contract):
     project: ProjectCreated
 
 
+class PasskeyLabelCommand(Contract):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    passkey_id: Identifier
+    expected_revision: PositiveRevision
+    label: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=128)]
+
+
+class PasskeySummary(Contract):
+    passkey_id: Identifier
+    principal_id: Identifier
+    revision: PositiveRevision
+    label: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+    revoked: bool
+
+
+class PasskeyMutationReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["passkey.label.v1"] = "passkey.label.v1"
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    passkey: PasskeySummary
+
+
+CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt
+
+
 class ErrorEnvelope(Contract):
     schema_version: SchemaVersion = 1
     code: ErrorCode

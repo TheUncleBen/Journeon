@@ -170,6 +170,127 @@
         "title": "PasskeyFinish",
         "type": "object"
       },
+      "PasskeyLabelCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "passkey_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Passkey Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "passkey_id",
+          "expected_revision",
+          "label"
+        ],
+        "title": "PasskeyLabelCommand",
+        "type": "object"
+      },
+      "PasskeyMutationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "passkey.label.v1",
+            "default": "passkey.label.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "passkey": {
+            "$ref": "#/components/schemas/PasskeySummary"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "passkey"
+        ],
+        "title": "PasskeyMutationReceipt",
+        "type": "object"
+      },
+      "PasskeySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "passkey_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Passkey Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "passkey_id",
+          "principal_id",
+          "revision",
+          "label",
+          "revoked"
+        ],
+        "title": "PasskeySummary",
+        "type": "object"
+      },
       "ProjectCreate": {
         "additionalProperties": false,
         "properties": {
@@ -510,6 +631,109 @@
         "x-journeon-owner": "identity"
       }
     },
+    "/api/v1/auth/passkeys/label": {
+      "post": {
+        "operationId": "labelPasskey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyLabelCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyMutationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Label Passkey",
+        "x-journeon-command": "passkey.label.v1",
+        "x-journeon-owner": "identity",
+        "x-journeon-permissions": [
+          "passkey.self.manage"
+        ]
+      }
+    },
     "/api/v1/operations/{operation_id}": {
       "get": {
         "operationId": "getOperationReceipt",
@@ -530,7 +754,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OperationReceipt"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OperationReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PasskeyMutationReceipt"
+                    }
+                  ],
+                  "title": "Response Getoperationreceipt"
                 }
               }
             },
@@ -610,7 +842,7 @@
         "summary": "Get Receipt",
         "x-journeon-owner": "operations",
         "x-journeon-permissions": [
-          "project.receipt.read"
+          "operation.receipt.read"
         ],
         "x-journeon-query": "operation.receipt.read.v1"
       }

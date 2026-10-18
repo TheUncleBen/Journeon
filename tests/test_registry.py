@@ -75,6 +75,7 @@ def test_generation_includes_actual_registry():
         "getOperationReceipt",
         "beginPasskey",
         "finishPasskey",
+        "labelPasskey",
     }
     engine = create_engine("sqlite://")
     try:

@@ -165,6 +165,9 @@ def test_real_registration_login_and_stepup(service):
         source="local",
     )
     with transaction(service.engine) as db:
+        assert db.get(BrowserSession, first.session_id).audience == "official_browser"
+        assert db.get(BrowserSession, second.session_id).audience == "official_browser"
+        assert db.get(BrowserSession, third.session_id).audience == "official_browser"
         assert db.get(BrowserSession, second.session_id).revoked
         assert not db.get(BrowserSession, third.session_id).revoked
         assert (
@@ -579,10 +582,13 @@ def test_additive_migration_retains_existing_owner_session_and_grant(tmp_path):
                 "'deployment',1,1,'test')"
             )
         )
+        from sqlalchemy import MetaData, Table
+
         from journeon.models import BrowserSession
 
+        legacy_sessions = Table("browser_sessions", MetaData(), autoload_with=connection)
         connection.execute(
-            BrowserSession.__table__.insert().values(
+            legacy_sessions.insert().values(
                 id="retained-session",
                 token_hash="a" * 64,
                 csrf_hash="b" * 64,

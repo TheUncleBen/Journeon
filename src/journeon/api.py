@@ -15,16 +15,21 @@ from journeon.body_limit import BodyLimitMiddleware
 from journeon.browser_auth import BrowserAuth
 from journeon.contracts import (
     ERROR_HTTP_STATUS,
+    CanonicalReceipt,
     DomainError,
     ErrorEnvelope,
     Identifier,
     OperationReceipt,
+    PasskeyLabelCommand,
+    PasskeyMutationReceipt,
     ProjectCreate,
 )
+from journeon.factors import FactorService
 from journeon.passkey_api import routes as passkey_routes
 from journeon.passkeys import PasskeyService, RejectedPasskeyInput
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
+from journeon.receipts import OperationService
 
 
 def authenticated_context(request: Request) -> AuthenticatedContext:
@@ -117,20 +122,37 @@ def create_app(
 
     @app.get(
         "/api/v1/operations/{operation_id}",
-        response_model=OperationReceipt,
+        response_model=CanonicalReceipt,
         operation_id="getOperationReceipt",
         responses=errors,
         openapi_extra={
             "x-journeon-owner": "operations",
             "x-journeon-query": "operation.receipt.read.v1",
-            "x-journeon-permissions": ["project.receipt.read"],
+            "x-journeon-permissions": ["operation.receipt.read"],
         },
     )
     def get_receipt(
         operation_id: Identifier,
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
-    ) -> OperationReceipt:
-        return service.receipt(actor, operation_id)
+    ) -> CanonicalReceipt:
+        return OperationService(engine).receipt(actor, operation_id)
+
+    @app.post(
+        "/api/v1/auth/passkeys/label",
+        response_model=PasskeyMutationReceipt,
+        operation_id="labelPasskey",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "identity",
+            "x-journeon-command": "passkey.label.v1",
+            "x-journeon-permissions": ["passkey.self.manage"],
+        },
+    )
+    def label_passkey(
+        command: PasskeyLabelCommand,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> PasskeyMutationReceipt:
+        return FactorService(engine).label(actor, command)
 
     app.include_router(passkey_routes(passkeys, browser_auth))
     return app

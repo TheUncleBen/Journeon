@@ -36,6 +36,31 @@ export type PasskeyFinish = {
   "purpose": "bootstrap" | "login" | "stepup";
 };
 
+export type PasskeyLabelCommand = {
+  "expected_revision": number;
+  "idempotency_key": string;
+  "label": string;
+  "passkey_id": string;
+  "schema_version": 1;
+};
+
+export type PasskeyMutationReceipt = {
+  "command"?: "passkey.label.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "passkey": PasskeySummary;
+  "schema_version"?: 1;
+};
+
+export type PasskeySummary = {
+  "label": string;
+  "passkey_id": string;
+  "principal_id": string;
+  "revision": number;
+  "revoked": boolean;
+};
+
 export type ProjectCreate = {
   "description"?: string;
   "expected_policy_revision": number;
@@ -65,6 +90,8 @@ export type ProviderSnapshot = {
   "policy_revision": number;
   "providers": Array<string>;
 };
+
+export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -102,7 +129,13 @@ export class JourneonClient {
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
-  getOperationReceipt(operationId: string): Promise<OperationReceipt> {
+  labelPasskey(command: PasskeyLabelCommand, csrfToken?: string): Promise<PasskeyMutationReceipt> {
+    return this.request("/api/v1/auth/passkeys/label", {
+      method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  getOperationReceipt(operationId: string): Promise<CanonicalReceipt> {
     return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`, {method: "GET"});
   }
 }

@@ -9,7 +9,13 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute, iter_route_contexts
 from pydantic import BaseModel
 
-from journeon.contracts import OperationReceipt, ProjectCreate
+from journeon.contracts import (
+    CanonicalReceipt,
+    OperationReceipt,
+    PasskeyLabelCommand,
+    PasskeyMutationReceipt,
+    ProjectCreate,
+)
 from journeon.health import schema_and_database
 from journeon.migrate import configuration
 from journeon.models import Base
@@ -20,8 +26,8 @@ from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChal
 class CommandDefinition:
     name: str
     owner: str
-    input_model: type[ProjectCreate]
-    result_model: type[OperationReceipt]
+    input_model: type[BaseModel]
+    result_model: type[BaseModel]
     permissions: tuple[str, ...]
     risk: str
     external_effects: tuple[str, ...]
@@ -46,14 +52,28 @@ PROJECT_CREATE = CommandDefinition(
     verification="Atomic Project, receipt and outbox persistence",
 )
 
-COMMANDS = {PROJECT_CREATE.name: PROJECT_CREATE}
+PASSKEY_LABEL = CommandDefinition(
+    name="passkey.label.v1",
+    owner="identity",
+    input_model=PasskeyLabelCommand,
+    result_model=PasskeyMutationReceipt,
+    permissions=("passkey.self.manage",),
+    risk="LOCAL_METADATA_MUTATION",
+    external_effects=(),
+    reversibility="A later authorized label change creates a new revision",
+    dry_run=False,
+    idempotent=True,
+    verification="Current own-Principal strong session; atomic label, receipt and event",
+)
+
+COMMANDS = {command.name: command for command in (PROJECT_CREATE, PASSKEY_LABEL)}
 
 MODULES: dict[str, dict[str, Any]] = {
     "identity": {
         "core": True,
         "api_prefixes": ("/api/v1/auth/passkeys",),
         "dashboards": (),
-        "events_published": (),
+        "events_published": ("passkey.labelled",),
         "events_consumed": (),
         "tables": (
             "principals",
@@ -63,11 +83,12 @@ MODULES: dict[str, dict[str, Any]] = {
             "auth_ceremonies",
             "auth_rates",
             "auth_rate_events",
+            "protected_requests",
         ),
         "backup_class": "R0",
         "health": "schema_and_database",
-        "permissions": (),
-        "migration": "0004_auth_rate_events",
+        "permissions": ("passkey.self.manage",),
+        "migration": "0005_protected_operations",
         "settings": (),
         "environment_migrations": (),
     },
@@ -122,8 +143,8 @@ MODULES: dict[str, dict[str, Any]] = {
         "tables": ("operation_receipts", "outbox_events"),
         "backup_class": "R1",
         "health": "schema_and_database",
-        "permissions": ("project.receipt.read",),
-        "migration": "0001_foundation",
+        "permissions": ("operation.receipt.read",),
+        "migration": "0005_protected_operations",
         "settings": (),
         "environment_migrations": (),
     },
@@ -133,8 +154,8 @@ MODULES: dict[str, dict[str, Any]] = {
 QUERIES: dict[str, dict[str, Any]] = {
     "operation.receipt.read.v1": {
         "owner": "operations",
-        "permissions": ("project.receipt.read",),
-        "result_model": OperationReceipt,
+        "permissions": ("operation.receipt.read",),
+        "result_model": CanonicalReceipt,
     }
 }
 
@@ -305,7 +326,11 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
             for command in COMMANDS.values()
         ],
         "queries": [
-            {"name": name, **query, "result_model": query["result_model"].__name__}
+            {
+                "name": name,
+                **query,
+                "result_model": getattr(query["result_model"], "__name__", "CanonicalReceipt"),
+            }
             for name, query in QUERIES.items()
         ],
         "authentication": [

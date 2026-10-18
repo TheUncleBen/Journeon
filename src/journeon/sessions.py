@@ -7,12 +7,12 @@ import time
 from dataclasses import dataclass, field
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from journeon.contracts import DomainError
 from journeon.database import require_compatible_schema
-from journeon.models import BrowserSession, Principal
+from journeon.models import BrowserSession, Principal, ProtectedRequest
 
 
 def utc_seconds() -> int:
@@ -185,7 +185,9 @@ def rotate_session(session: Session, session_id: str, *, strong: bool) -> Issued
     if new.issued_at < old.last_observed or new.issued_at >= old.absolute_deadline:
         raise denied()
     new.absolute_deadline = old.absolute_deadline
+    new.audience = old.audience
     old.revoked = True
+    invalidate_protected(session, old.id)
     session.flush()
     return replacement
 
@@ -200,6 +202,7 @@ def revoke_session(session: Session, acting_session_id: str, target_session_id: 
     ):
         raise DomainError("NOT_FOUND", "Session is unavailable")
     target.revoked = True
+    invalidate_protected(session, target.id)
     session.flush()
 
 
@@ -224,3 +227,14 @@ def session_inventory(
         }
         for row in session.scalars(query.order_by(BrowserSession.issued_at, BrowserSession.id))
     ]
+
+
+def invalidate_protected(session: Session, session_id: str) -> None:
+    session.execute(
+        update(ProtectedRequest)
+        .where(
+            ProtectedRequest.session_id == session_id,
+            ProtectedRequest.state.in_(("PENDING", "APPROVED")),
+        )
+        .values(state="INVALIDATED", nonce_hash=None, nonce_deadline=None)
+    )

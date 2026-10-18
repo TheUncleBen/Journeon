@@ -1,15 +1,29 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 import asyncio
 import json
+import runpy
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+import journeon.api as api
 from journeon.api import authenticated_context, create_app
 from journeon.body_limit import MAX_COMMAND_BYTES, BodyLimitMiddleware
 from journeon.contracts import OperationReceipt
 from journeon.database import transaction
 from journeon.models import AccessGrant
+
+
+def test_api_and_generated_versions_follow_project_metadata(database, tmp_path, monkeypatch):
+    (tmp_path / "src" / "journeon").mkdir(parents=True)
+    (tmp_path / "pyproject.toml").write_text('[project]\nversion = "0.0.0.dev2"\n')
+    monkeypatch.setattr(api, "__file__", str(tmp_path / "src" / "journeon" / "api.py"))
+    assert create_app(database[0]).openapi()["info"]["version"] == "0.0.0.dev2"
+    generator = runpy.run_path(
+        str(Path(__file__).resolve().parents[1] / "tools/generate_contracts.py")
+    )
+    assert json.loads(generator["artifacts"]()["openapi.json"])["info"]["version"] == "0.0.0.dev2"
 
 
 def test_production_binding_fails_closed_despite_forged_actor_headers(database, command):

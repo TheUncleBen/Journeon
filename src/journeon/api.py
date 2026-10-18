@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """Fail-closed API binding. Operational authentication is a later dependency."""
 
+import tomllib
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Request
@@ -27,7 +29,9 @@ def authenticated_context() -> AuthenticatedContext:
 
 
 def create_app(engine: Engine) -> FastAPI:
-    app = FastAPI(title="Journeon foundation", version="0.0.0.dev1")
+    with (Path(__file__).resolve().parents[2] / "pyproject.toml").open("rb") as metadata_file:
+        version = tomllib.load(metadata_file)["project"]["version"]
+    app = FastAPI(title="Journeon foundation", version=version)
     app.add_middleware(BodyLimitMiddleware)
     service = ProjectService(engine)
 

@@ -480,3 +480,313 @@ def test_standard_profile_is_explicit_and_complete(policy_service):
     service, _ = policy_service
     with pytest.raises(TypeError):
         PasskeyService(service.engine, rp_id="example.test", origin=service.origin)
+
+
+def test_early_http_rejections_have_a_durable_source_budget(policy_service):
+    from fastapi.testclient import TestClient
+    from sqlalchemy import select
+
+    from journeon.api import create_app
+    from journeon.browser_auth import BrowserAuth
+    from journeon.database import transaction
+    from journeon.models import AuthRateEvent
+
+    service, clock = policy_service
+    app = create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service)
+    path = "/api/v1/auth/passkeys/finish"
+    with TestClient(app, base_url=service.origin) as client:
+        for index in range(3):
+            response = client.post(
+                path,
+                json={},
+                headers={"Origin": service.origin, "X-Forwarded-For": f"peer-{index}"},
+            )
+            assert response.status_code == 422
+        with transaction(service.engine) as db:
+            before = [
+                (e.bucket, e.observed_at, e.expires_at) for e in db.scalars(select(AuthRateEvent))
+            ]
+        assert len(before) == 3
+        assert all(e[0].startswith("rejected-source:") for e in before)
+        service.engine.dispose()
+        clock[0] += 59
+        assert client.post(path, json={}).status_code == 401
+        with transaction(service.engine) as db:
+            assert [
+                (e.bucket, e.observed_at, e.expires_at) for e in db.scalars(select(AuthRateEvent))
+            ] == before
+        clock[0] += 1
+        assert client.post(path, json={}).status_code == 422
+        clock[0] -= 1
+        assert client.post(path, json={}).status_code == 401
+
+
+@pytest.mark.parametrize(
+    "case", ["oversized", "outer-json", "dto", "inner-json", "missing", "purpose"]
+)
+def test_early_rejection_paths_do_not_count_credential_failures(policy_service, case):
+    from fastapi.testclient import TestClient
+    from sqlalchemy import select
+
+    from journeon.api import create_app
+    from journeon.body_limit import MAX_COMMAND_BYTES
+    from journeon.browser_auth import BrowserAuth
+    from journeon.database import transaction
+    from journeon.models import AuthCeremony, AuthRateEvent
+
+    service, _ = policy_service
+    challenge = service.begin_login(source="fixture", label="Browser")
+    payload = {"purpose": "login", "ceremony_id": "missing", "credential_json": "{}"}
+    expected = 401
+    kwargs = {"json": payload}
+    if case == "oversized":
+        kwargs = {"content": b" " * (MAX_COMMAND_BYTES + 1)}
+        expected = 413
+    elif case == "outer-json":
+        kwargs = {
+            "content": "{",
+            "headers": {"Content-Type": "application/json", "Origin": service.origin},
+        }
+        expected = 422
+    elif case == "dto":
+        kwargs = {"json": {}}
+        expected = 422
+    elif case == "inner-json":
+        payload["credential_json"] = "{"
+        expected = 422
+    elif case == "purpose":
+        payload["ceremony_id"] = challenge.ceremony_id
+        payload["purpose"] = "bootstrap"
+    app = create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service)
+    with TestClient(app, base_url=service.origin, headers={"Origin": service.origin}) as client:
+        assert client.post("/api/v1/auth/passkeys/finish", **kwargs).status_code == expected
+    with transaction(service.engine) as db:
+        events = list(db.scalars(select(AuthRateEvent)))
+        assert sum(e.weight for e in events if e.bucket.startswith("rejected-source:")) == 1
+        assert all(e.bucket.startswith(("source:", "rejected-source:")) for e in events)
+        assert db.get(AuthCeremony, challenge.ceremony_id).attempts == 0
+
+
+def test_http_success_finish_and_downstream_throttle_do_not_count_rejections(policy_service):
+    import json
+
+    from fastapi.testclient import TestClient
+    from sqlalchemy import select
+
+    from journeon.api import create_app
+    from journeon.browser_auth import BrowserAuth
+    from journeon.database import transaction
+    from journeon.models import AuthRateEvent
+    from journeon.sessions import digest
+
+    service, _ = policy_service
+    key, _ = enroll(service)
+    app = create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service)
+    with TestClient(app, base_url=service.origin, headers={"Origin": service.origin}) as client:
+        challenge = service.begin_login(source="fixture", label="Browser")
+        assert (
+            client.post(
+                "/api/v1/auth/passkeys/finish",
+                json={
+                    "purpose": "login",
+                    "ceremony_id": challenge.ceremony_id,
+                    "credential_json": json.dumps(key.assert_key(challenge.options)),
+                },
+            ).status_code
+            == 200
+        )
+        for index in range(3):
+            fail_login(service, key, f"fail-{index}")
+        challenge = service.begin_login(source="throttled-fixture", label="Browser")
+        assert (
+            client.post(
+                "/api/v1/auth/passkeys/finish",
+                json={
+                    "purpose": "login",
+                    "ceremony_id": challenge.ceremony_id,
+                    "credential_json": json.dumps(key.assert_key(challenge.options)),
+                },
+            ).status_code
+            == 401
+        )
+        for _ in range(3):
+            assert (
+                client.post(
+                    "/api/v1/auth/passkeys/begin", json={"purpose": "login", "label": "Browser"}
+                ).status_code
+                == 200
+            )
+        assert (
+            client.post(
+                "/api/v1/auth/passkeys/begin", json={"purpose": "login", "label": "Browser"}
+            ).status_code
+            == 401
+        )
+    with transaction(service.engine) as db:
+        assert not list(
+            db.scalars(
+                select(AuthRateEvent).where(AuthRateEvent.bucket.startswith("rejected-source:"))
+            )
+        )
+        assert (
+            sum(
+                db.scalars(
+                    select(AuthRateEvent.weight).where(
+                        AuthRateEvent.bucket == "source:" + digest("testclient")
+                    )
+                )
+            )
+            == 3
+        )
+
+
+def test_missing_peer_uses_one_shared_rejection_budget(policy_service):
+    from fastapi.testclient import TestClient
+
+    from journeon.api import create_app
+    from journeon.browser_auth import BrowserAuth
+
+    service, _ = policy_service
+    app = create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service)
+    with TestClient(app, base_url=service.origin, client=None) as client:
+        for index in range(3):
+            assert (
+                client.post(
+                    "/api/v1/auth/passkeys/finish", json={}, headers={"X-Forwarded-For": str(index)}
+                ).status_code
+                == 422
+            )
+        assert client.post("/api/v1/auth/passkeys/finish", json={}).status_code == 401
+
+
+def test_parallel_rejections_cannot_exceed_source_budget(policy_service):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from fastapi.testclient import TestClient
+    from sqlalchemy import select
+
+    from journeon.api import create_app
+    from journeon.browser_auth import BrowserAuth
+    from journeon.database import transaction
+    from journeon.models import AuthRateEvent
+
+    service, _ = policy_service
+    app = create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service)
+    with TestClient(app, base_url=service.origin) as client:
+
+        def reject(_):
+            return client.post("/api/v1/auth/passkeys/finish", json={}).status_code
+
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            statuses = list(pool.map(reject, range(6)))
+    assert statuses.count(422) == 3
+    assert statuses.count(401) == 3
+    with transaction(service.engine) as db:
+        assert (
+            sum(
+                db.scalars(
+                    select(AuthRateEvent.weight).where(
+                        AuthRateEvent.bucket.startswith("rejected-source:")
+                    )
+                )
+            )
+            == 3
+        )
+
+
+def test_source_reservations_bound_work_and_expire_after_restart(policy_service):
+    import asyncio
+
+    from journeon.body_limit import BodyLimitMiddleware
+
+    service, clock = policy_service
+    held = [service.reserve_http_source("peer") for _ in range(3)]
+    service.engine.dispose()
+
+    async def unexpected(*args):
+        raise AssertionError("Blocked request must not read a body or call a handler")
+
+    messages = []
+
+    async def send(message):
+        messages.append(message)
+
+    middleware = BodyLimitMiddleware(unexpected, passkeys=service)
+    scope = {"type": "http", "path": "/api/v1/auth/passkeys/finish", "client": ("peer", 1)}
+    asyncio.run(middleware(scope, unexpected, send))
+    assert messages[0]["status"] == 401
+    clock[0] += 60
+    fresh = service.reserve_http_source("peer")
+    # Expired SQLite row IDs can be reused; old completion must not remove a new reservation.
+    service.finish_http_source(held[0], False)
+    service.reserve_http_source("peer")
+    service.reserve_http_source("peer")
+    with pytest.raises(DomainError):
+        service.reserve_http_source("peer")
+    service.finish_http_source(fresh, False)
+    service.reserve_http_source("peer")
+
+
+@pytest.mark.parametrize("failure_type,status", [("store", 503), ("internal", 500)])
+def test_server_error_releases_source_reservation(
+    policy_service, monkeypatch, failure_type, status
+):
+    from fastapi.testclient import TestClient
+    from sqlalchemy import select
+    from sqlalchemy.exc import SQLAlchemyError
+
+    from journeon.api import create_app
+    from journeon.browser_auth import BrowserAuth
+    from journeon.database import transaction
+    from journeon.models import AuthRateEvent
+
+    service, _ = policy_service
+
+    def unavailable(*args, **kwargs):
+        if failure_type == "internal":
+            raise RuntimeError("Injected internal failure")
+        raise SQLAlchemyError("Injected unavailable store")
+
+    monkeypatch.setattr(service, "complete", unavailable)
+    app = create_app(service.engine, browser_auth=BrowserAuth(service.origin), passkeys=service)
+    with TestClient(
+        app,
+        base_url=service.origin,
+        headers={"Origin": service.origin},
+        raise_server_exceptions=False,
+    ) as client:
+        response = client.post(
+            "/api/v1/auth/passkeys/finish",
+            json={"purpose": "login", "ceremony_id": "unused", "credential_json": "{}"},
+        )
+        assert response.status_code == status
+    with transaction(service.engine) as db:
+        assert not list(db.scalars(select(AuthRateEvent)))
+
+
+def test_disconnect_retains_only_original_reservation_window(policy_service):
+    import asyncio
+
+    from journeon.body_limit import BodyLimitMiddleware
+
+    service, clock = policy_service
+
+    async def unexpected(*args):
+        raise AssertionError("Disconnected input must not reach the handler")
+
+    async def disconnect():
+        return {"type": "http.disconnect"}
+
+    async def send(_message):
+        pass
+
+    middleware = BodyLimitMiddleware(unexpected, passkeys=service)
+    scope = {"type": "http", "path": "/api/v1/auth/passkeys/finish", "client": ("peer", 1)}
+    for _ in range(3):
+        asyncio.run(middleware(scope, disconnect, send))
+    service.engine.dispose()
+    clock[0] += 59
+    with pytest.raises(DomainError):
+        service.reserve_http_source("peer")
+    clock[0] += 1
+    service.reserve_http_source("peer")

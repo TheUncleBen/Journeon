@@ -22,7 +22,7 @@ from journeon.contracts import (
     ProjectCreate,
 )
 from journeon.passkey_api import routes as passkey_routes
-from journeon.passkeys import PasskeyService
+from journeon.passkeys import PasskeyService, RejectedPasskeyInput
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
 
@@ -51,11 +51,13 @@ def create_app(
     app = FastAPI(title="Journeon foundation", version=version)
     app.state.browser_auth = browser_auth
     app.state.engine = engine
-    app.add_middleware(BodyLimitMiddleware)
+    app.add_middleware(BodyLimitMiddleware, passkeys=passkeys)
     service = ProjectService(engine)
 
     @app.exception_handler(DomainError)
     async def domain_error(_request: Request, exc: DomainError) -> JSONResponse:
+        if isinstance(exc, RejectedPasskeyInput):
+            _request.scope["journeon.rejected_passkey_input"] = True
         return JSONResponse(
             status_code=ERROR_HTTP_STATUS[exc.code],
             content=ErrorEnvelope(code=exc.code, reason=exc.reason).model_dump(),

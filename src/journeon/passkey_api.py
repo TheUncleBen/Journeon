@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from journeon.browser_auth import BrowserAuth
 from journeon.contracts import DomainError, ErrorEnvelope
-from journeon.passkeys import PasskeyService
+from journeon.passkeys import PasskeyService, RejectedPasskeyInput
 
 
 class PasskeyBegin(BaseModel):
@@ -42,7 +42,7 @@ def routes(service: PasskeyService | None, binding: BrowserAuth | None) -> APIRo
         if service is None or binding is None:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Passkey authentication is not configured")
         if request.headers.get("origin") != service.origin:
-            raise DomainError("AUTHENTICATION_REQUIRED", "Passkey verification failed")
+            raise RejectedPasskeyInput()
         return service, binding
 
     errors: dict[int | str, dict[str, Any]] = {

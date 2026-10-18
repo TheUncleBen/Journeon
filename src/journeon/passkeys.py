@@ -63,6 +63,13 @@ def rejected() -> DomainError:
     return DomainError("AUTHENTICATION_REQUIRED", "Passkey verification failed")
 
 
+class RejectedPasskeyInput(DomainError):
+    """Service-owned classification for rejected input before credential verification."""
+
+    def __init__(self) -> None:
+        super().__init__("AUTHENTICATION_REQUIRED", "Passkey verification failed")
+
+
 @dataclass(frozen=True)
 class PasskeyPolicy:
     ceremony_seconds: int
@@ -204,6 +211,44 @@ class PasskeyService:
             raise DomainError(
                 "DEPENDENCY_UNAVAILABLE", "Authentication policy requires explicit migration"
             )
+
+    def reserve_http_source(self, source: str) -> tuple[int, int]:
+        """Reserve bounded input work without holding a transaction over network reads."""
+        failure = None
+        reservation_id = None
+        with transaction(self.engine) as db:
+            now = utc_seconds()
+            try:
+                if not self._observe(db, now):
+                    raise rejected()
+                self._require_rate_policy(db)
+                bucket = "rejected-source:" + digest(source)
+                if not auth_rates.available(
+                    db, {bucket}, limit=self.policy.starts_per_window, now=now
+                ):
+                    raise rejected()
+                reservation = AuthRateEvent(
+                    bucket=bucket,
+                    observed_at=now,
+                    expires_at=now + self.policy.window_seconds,
+                    weight=1,
+                )
+                db.add(reservation)
+                db.flush()
+                reservation_id = reservation.id
+            except DomainError as exc:
+                failure = exc
+        if failure is not None:
+            raise failure
+        assert reservation_id is not None
+        return reservation_id, now
+
+    def finish_http_source(self, reservation: tuple[int, int], rejected_input: bool) -> None:
+        """Retain the admission timestamp for rejected input; otherwise release its slot."""
+        with transaction(self.engine) as db:
+            row = db.get(AuthRateEvent, reservation[0])
+            if row is not None and row.observed_at == reservation[1] and not rejected_input:
+                db.delete(row)
 
     def _rate(self, db: Session, source: str, now: int) -> None:
         buckets = {"source:" + digest(source)}
@@ -347,8 +392,10 @@ class PasskeyService:
                 failure = DomainError(
                     "DEPENDENCY_UNAVAILABLE", "Authentication policy requires explicit migration"
                 )
-            elif not observed_ok or row is None:
+            elif not observed_ok:
                 failure = rejected()
+            elif row is None:
+                failure = RejectedPasskeyInput()
             else:
                 prior = row.last_observed
                 row.last_observed = max(prior, now)
@@ -359,10 +406,15 @@ class PasskeyService:
                     or row.session_id != session_id
                     or now < prior
                     or now >= row.deadline
-                    or row.attempts >= self.policy.max_attempts
                 )
                 buckets = self._failure_buckets(db, row, response, source)
-                if invalid or not auth_rates.available(
+                if invalid:
+                    failure = (
+                        rejected()
+                        if row.attempts >= self.policy.max_attempts
+                        else RejectedPasskeyInput()
+                    )
+                elif row.attempts >= self.policy.max_attempts or not auth_rates.available(
                     db, buckets, limit=self.policy.failures_per_window, now=now
                 ):
                     failure = rejected()

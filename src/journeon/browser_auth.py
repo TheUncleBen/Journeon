@@ -25,6 +25,8 @@ class BrowserAuth:
         if (
             parsed.scheme != "https"
             or not parsed.hostname
+            or parsed.port == 0
+            or parsed.netloc.endswith(":")
             or parsed.username
             or parsed.password
             or parsed.path

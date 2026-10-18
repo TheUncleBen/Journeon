@@ -29,6 +29,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from journeon import auth_rates
+from journeon.browser_auth import BrowserAuth
 from journeon.contracts import DomainError
 from journeon.database import require_compatible_schema, transaction
 from journeon.models import (
@@ -130,16 +131,8 @@ class Challenge:
 
 class PasskeyService:
     def __init__(self, engine: Engine, *, rp_id: str, origin: str, policy: PasskeyPolicy):
-        parsed = urlsplit(origin)
-        if (
-            parsed.scheme != "https"
-            or parsed.hostname != rp_id
-            or parsed.path
-            or parsed.query
-            or parsed.fragment
-            or parsed.username
-            or parsed.password
-        ):
+        BrowserAuth(origin)
+        if urlsplit(origin).hostname != rp_id:
             raise ValueError("Passkeys require the exact HTTPS relying-party origin")
         self.engine = engine
         self.policy = policy

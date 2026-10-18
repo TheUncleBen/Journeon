@@ -6,8 +6,9 @@ import pytest
 from journeon.contracts import ProjectCreate
 from journeon.database import create_database, transaction
 from journeon.migrate import upgrade
-from journeon.models import AccessGrant, DeploymentPolicy, Principal
+from journeon.models import AccessGrant, BrowserSession, DeploymentPolicy, Principal
 from journeon.permissions import AuthenticatedContext
+from journeon.sessions import issue_session
 
 
 @pytest.fixture
@@ -50,7 +51,17 @@ def database(tmp_path: Path):
 
 
 @pytest.fixture
-def actor():
+def actor(database):
+    with transaction(database[0]) as session:
+        issued = issue_session(
+            session,
+            "owner-test",
+            authentication_method="test-fixture",
+            client_label="Synthetic test",
+            strong=True,
+        )
+        record = session.get(BrowserSession, issued.session_id)
+        record.id = "synthetic-authentication"
     return AuthenticatedContext("owner-test", 1, "synthetic-authentication")
 
 

@@ -12,6 +12,7 @@ from journeon.database import transaction
 from journeon.health import schema_and_database
 from journeon.models import AccessGrant, Principal
 from journeon.projects import ProjectService
+from journeon.sessions import issue_session
 
 
 @pytest.mark.parametrize("version", [True, 1.0, "1"])
@@ -63,7 +64,15 @@ def test_owner_transfer_does_not_disclose_original_actor_receipts(
                 provenance="synthetic-test-grant",
             )
         )
-    new_actor = replace(actor, principal_id="viewer-test")
+    with transaction(engine) as session:
+        issued = issue_session(
+            session,
+            "viewer-test",
+            authentication_method="test-fixture",
+            client_label="New Owner test",
+            strong=True,
+        )
+    new_actor = replace(actor, principal_id="viewer-test", authentication_ref=issued.session_id)
     with pytest.raises(DomainError) as error:
         ProjectService(engine).receipt(new_actor, accepted.operation_id)
     assert error.value.code == "NOT_FOUND"

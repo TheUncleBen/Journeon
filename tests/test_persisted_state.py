@@ -13,6 +13,7 @@ from journeon.models import Base, OutboxEvent, Project, Receipt
 from journeon.projects import ProjectService
 
 BOOLEAN_DOMAINS = {
+    ("browser_sessions", "revoked"): "session_revoked_boolean",
     ("principals", "enabled"): "principal_enabled_boolean",
     ("access_grants", "enabled"): "grant_enabled_boolean",
 }

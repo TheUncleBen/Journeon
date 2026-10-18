@@ -7,12 +7,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import URL, Engine, create_engine, event, text
+from sqlalchemy import URL, Connection, Engine, create_engine, event, text
 from sqlalchemy.orm import Session
 
 from journeon.contracts import DomainError
 
-SCHEMA_REVISION = "0001_foundation"
+SCHEMA_REVISION = "0002_browser_sessions"
 
 
 def require_compatible_schema(session: Session) -> None:
@@ -51,7 +51,37 @@ def create_database(path: Path, *, busy_timeout_ms: int = 5000) -> Engine:
     return engine
 
 
+def _persist_session_clock(connection: Connection | Session, observations: dict[str, int]) -> None:
+    for session_id, observed in observations.items():
+        connection.execute(
+            text(
+                "UPDATE browser_sessions SET last_observed = "
+                "max(last_observed, :observed) WHERE id = :session_id"
+            ),
+            {"observed": observed, "session_id": session_id},
+        )
+
+
 @contextmanager
 def transaction(engine: Engine) -> Iterator[Session]:
-    with Session(engine, expire_on_commit=False) as session, session.begin():
-        yield session
+    observations: dict[str, int] = {}
+    failure: BaseException | None = None
+    with engine.connect() as connection, connection.begin():
+        try:
+            with (
+                Session(
+                    bind=connection,
+                    expire_on_commit=False,
+                    join_transaction_mode="create_savepoint",
+                ) as session,
+                session.begin(),
+            ):
+                session.info["session_clock_observations"] = observations
+                yield session
+                session.flush()
+        except BaseException as exc:
+            failure = exc
+        # Domain rollback preserves the outer writer lock until security time is committed.
+        _persist_session_clock(connection, observations)
+    if failure is not None:
+        raise failure

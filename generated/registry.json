@@ -78,13 +78,14 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0001_foundation",
+      "migration": "0002_browser_sessions",
       "module_id": "identity",
       "permission_namespaces": [],
       "permissions": [],
       "settings": [],
       "tables": [
-        "principals"
+        "principals",
+        "browser_sessions"
       ],
       "version": "0.0.0.dev1"
     },

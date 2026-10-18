@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from journeon.contracts import DomainError
 from journeon.models import AccessGrant, Principal
+from journeon.sessions import current_session
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,12 @@ def current_owner(session: Session, actor: AuthenticatedContext) -> Principal:
         or principal.authorization_epoch != actor.principal_epoch
     ):
         raise DomainError("PERMISSION_DENIED", "Current Owner authority is required")
+    current_session(
+        session,
+        actor.authentication_ref,
+        principal_id=actor.principal_id,
+        principal_epoch=actor.principal_epoch,
+    )
     return principal
 
 
@@ -37,6 +44,12 @@ def require_grant(
     *,
     project_id: str | None = None,
 ) -> None:
+    current_session(
+        session,
+        actor.authentication_ref,
+        principal_id=actor.principal_id,
+        principal_epoch=actor.principal_epoch,
+    )
     # Each capability is explicit: a creation grant is never a read/share grant.
     grants = session.scalars(
         select(AccessGrant).where(

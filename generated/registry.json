@@ -1,0 +1,180 @@
+{
+  "api_operations": [
+    {
+      "command": "project.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_project",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createProject",
+      "owner": "projects",
+      "path": "/api/v1/projects",
+      "permissions": [
+        "project.create",
+        "project.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_receipt",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getOperationReceipt",
+      "owner": "operations",
+      "path": "/api/v1/operations/{operation_id}",
+      "permissions": [
+        "project.receipt.read"
+      ],
+      "query": "operation.receipt.read.v1"
+    }
+  ],
+  "commands": [
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ProjectCreate",
+      "name": "project.create.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.create",
+        "project.receipt.read"
+      ],
+      "result_model": "OperationReceipt",
+      "reversibility": "No automatic undo; separate authorized lifecycle operation required",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Atomic Project, receipt and outbox persistence"
+    }
+  ],
+  "modules": [
+    {
+      "api_prefixes": [],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [],
+      "health": "schema_and_database",
+      "migration": "0001_foundation",
+      "module_id": "egress",
+      "permission_namespaces": [],
+      "permissions": [],
+      "settings": [],
+      "tables": [
+        "deployment_policy"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [],
+      "health": "schema_and_database",
+      "migration": "0001_foundation",
+      "module_id": "identity",
+      "permission_namespaces": [],
+      "permissions": [],
+      "settings": [],
+      "tables": [
+        "principals"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
+        "/api/v1/operations"
+      ],
+      "backup_class": "R1",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [],
+      "health": "schema_and_database",
+      "migration": "0001_foundation",
+      "module_id": "operations",
+      "permission_namespaces": [
+        "project"
+      ],
+      "permissions": [
+        "project.receipt.read"
+      ],
+      "settings": [],
+      "tables": [
+        "operation_receipts",
+        "outbox_events"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [],
+      "health": "schema_and_database",
+      "migration": "0001_foundation",
+      "module_id": "permissions",
+      "permission_namespaces": [
+        "project"
+      ],
+      "permissions": [
+        "project.create",
+        "project.receipt.read"
+      ],
+      "settings": [],
+      "tables": [
+        "access_grants"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
+        "/api/v1/projects"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "project.created"
+      ],
+      "health": "schema_and_database",
+      "migration": "0001_foundation",
+      "module_id": "projects",
+      "permission_namespaces": [
+        "project"
+      ],
+      "permissions": [
+        "project.create",
+        "project.receipt.read"
+      ],
+      "settings": [],
+      "tables": [
+        "projects"
+      ],
+      "version": "0.0.0.dev1"
+    }
+  ],
+  "queries": [
+    {
+      "name": "operation.receipt.read.v1",
+      "owner": "operations",
+      "permissions": [
+        "project.receipt.read"
+      ],
+      "result_model": "OperationReceipt"
+    }
+  ]
+}

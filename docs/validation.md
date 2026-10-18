@@ -4,14 +4,15 @@ The current local source-tree checks use CPython 3.12.15, SQLite through Python'
 
 | Check | Evidence and boundary |
 | --- | --- |
-| Python tests | 100 passing tests; temporary file DBs, independent connections and real subprocess termination |
+| Python tests | 117 passing tests; temporary file DBs, independent connections and real subprocess termination |
 | Crash consistency | Termination after Project, receipt or outbox insertion, before commit, and after commit with response lost; reopen, retry, integrity and FK checks |
 | Race behavior | Concurrent duplicate requests create one Project/receipt/event; a waiting command sees committed grant revocation or policy revision change |
 | Authority | Current Owner/epoch, exact grants, receipt-only access, revoked replay, separate creation/receipt authority, actor-bound receipts and no implicit share grants. Lookup and retry deny revoked, expired or mismatched grants before decoding receipt JSON; a different current Owner cannot distinguish a damaged receipt from a missing one. |
 | Persisted-state validation | Every canonical Boolean has a checked database domain; raw non-Boolean writes and a second Owner using `enabled=2` fail. Malformed provider policies, damaged receipt JSON and mismatched receipt operation/Project identities return sanitized dependency errors without creating or rewriting records. |
 | API | Default auth denial despite forged headers, test-only authentication overrides, strict DTOs, stable sanitized errors and bounded chunked bodies |
 | Migrations | Explicit empty-file upgrade, repeatable upgrade, model/schema comparison, no bootstrap identities and rejection of unknown/missing migration heads |
-| Contracts | Checked-in OpenAPI/JSON schemas/client match current generation; strict TypeScript compile and synthetic fetch transport/error tests. The API and generated OpenAPI read the version from `pyproject.toml`; a metadata-change regression prevents drift. |
+| Contracts | Four checked-in artifacts (OpenAPI, JSON schemas, typed client and registry manifest) match current generation; strict TypeScript compile and synthetic fetch transport/error tests. The API and generated OpenAPI read the version from `pyproject.toml`; a metadata-change regression prevents drift. |
+| Registry | Five existing modules, one command, one query and two HTTP operations have generated ownership and version metadata. Generation rejects table, migration, health, permission, API-prefix and command/query binding drift. These checks describe actual bindings; they do not grant runtime access or implement additional modules. |
 | Static checks | Ruff lint/format and strict mypy for production code and tools |
 | Dependency reproducibility | The aarch64 SHA-256 lock installs offline from downloaded wheels into a separate empty venv; `pip check` passes. The earlier x86_64 lock and inventory remain unchanged. |
 | Advisory checks | Earlier snapshot: 30 Python distributions, zero skips and zero reported advisories using pip-audit 2.10.1; npm lock audit reported zero vulnerabilities. Dependency versions remain unchanged. Advisory services were not rechecked for these repairs; earlier results are point-in-time evidence, not a security certification. |

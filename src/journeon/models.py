@@ -115,3 +115,40 @@ class OutboxEvent(Base):
     principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
     committed_at: Mapped[str] = mapped_column(String(40))
+
+
+class BrowserSession(Base):
+    __tablename__ = "browser_sessions"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    csrf_hash: Mapped[str] = mapped_column(String(64))
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"), index=True)
+    principal_epoch: Mapped[int] = mapped_column(Integer)
+    authentication_method: Mapped[str] = mapped_column(String(128))
+    client_label: Mapped[str] = mapped_column(String(128))
+    issued_at: Mapped[int] = mapped_column(Integer)
+    last_activity: Mapped[int] = mapped_column(Integer)
+    last_observed: Mapped[int] = mapped_column(Integer)
+    absolute_deadline: Mapped[int] = mapped_column(Integer)
+    inactivity_seconds: Mapped[int] = mapped_column(Integer)
+    strong_authenticated_at: Mapped[int | None] = mapped_column(Integer)
+    strong_freshness_seconds: Mapped[int] = mapped_column(Integer)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    __table_args__ = (
+        CheckConstraint("principal_epoch >= 1", name="session_principal_epoch"),
+        CheckConstraint("revoked IN (0, 1)", name="session_revoked_boolean"),
+        CheckConstraint(
+            "issued_at >= 0 AND absolute_deadline > issued_at", name="session_deadline"
+        ),
+        CheckConstraint(
+            "last_observed >= last_activity AND last_activity >= issued_at",
+            name="session_activity_order",
+        ),
+        CheckConstraint("inactivity_seconds > 0", name="session_inactivity"),
+        CheckConstraint("strong_freshness_seconds > 0", name="session_strong_freshness"),
+        CheckConstraint(
+            "strong_authenticated_at IS NULL OR "
+            "(strong_authenticated_at >= issued_at AND strong_authenticated_at <= last_observed)",
+            name="session_strong_time",
+        ),
+    )

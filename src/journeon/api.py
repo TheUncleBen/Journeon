@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Fail-closed API binding. Operational authentication is a later dependency."""
+"""Session-bound API. Login ceremonies require separate verified integration."""
 
 import tomllib
 from pathlib import Path
@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 
 from journeon.body_limit import BodyLimitMiddleware
+from journeon.browser_auth import BrowserAuth
 from journeon.contracts import (
     ERROR_HTTP_STATUS,
     DomainError,
@@ -23,15 +24,19 @@ from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
 
 
-def authenticated_context() -> AuthenticatedContext:
-    # No headers, environment switch, hardcoded identity, or local auth exception.
-    raise DomainError("AUTHENTICATION_REQUIRED", "Authenticated service context is required")
+def authenticated_context(request: Request) -> AuthenticatedContext:
+    binding: BrowserAuth | None = request.app.state.browser_auth
+    if binding is None:
+        raise DomainError("AUTHENTICATION_REQUIRED", "Authenticated service context is required")
+    return binding.resolve(request.app.state.engine, request)
 
 
-def create_app(engine: Engine) -> FastAPI:
+def create_app(engine: Engine, *, browser_auth: BrowserAuth | None = None) -> FastAPI:
     with (Path(__file__).resolve().parents[2] / "pyproject.toml").open("rb") as metadata_file:
         version = tomllib.load(metadata_file)["project"]["version"]
     app = FastAPI(title="Journeon foundation", version=version)
+    app.state.browser_auth = browser_auth
+    app.state.engine = engine
     app.add_middleware(BodyLimitMiddleware)
     service = ProjectService(engine)
 

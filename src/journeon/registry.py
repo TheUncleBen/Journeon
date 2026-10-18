@@ -40,11 +40,11 @@ COMMANDS = {PROJECT_CREATE.name: PROJECT_CREATE}
 
 MODULES = {
     "identity": {
-        "tables": ("principals",),
+        "tables": ("principals", "browser_sessions"),
         "backup_class": "R0",
         "health": "schema_and_database",
         "permissions": (),
-        "migration": "0001_foundation",
+        "migration": "0002_browser_sessions",
         "settings": (),
     },
     "permissions": {

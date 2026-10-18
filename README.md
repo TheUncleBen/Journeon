@@ -2,7 +2,7 @@
 
 Journeon is being developed as a service-owned project environment. This source-tree foundation implements one internal Project-create command with transactional authorization, persistence and receipt reconciliation. It is an early development slice, not an operational installation or release candidate.
 
-The production FastAPI authentication dependency always denies access. Only tests supply synthetic authenticated contexts and setup records. Authentication, Owner bootstrap, session revocation, provider approval editing and grant administration remain dependencies for a usable application.
+The FastAPI authentication dependency denies access unless explicitly configured with a canonical HTTPS origin and a valid durable session. Session primitives validate opaque cookies, CSRF, expiry and revocation; only tests currently issue sessions after synthetic authentication. There is no login or Owner-bootstrap route. Verified authentication ceremonies, protected confirmations, provider approval editing and grant administration remain dependencies for a usable application.
 
 ## Verify this slice
 
@@ -32,11 +32,13 @@ Project wheel building, installation into a package location, an ASGI server and
 
 `ProjectService.create` owns Project registration. The command accepts a name, description, idempotency key, expected deployment-policy revision and an inheritance/narrowing choice. It creates no files, Git repository, graph, provider request, implicit verification policy or automatic sharing grant. Environment-owned instruction authority is represented by a stable reference; instruction editing is a later operation.
 
-Creation requires a current enabled Owner and two explicit deployment grants: `project.create` and `project.receipt.read`. The receipt grant authorizes the normal creation response without inventing a grant for a Project that does not yet exist. It does not authorize general Project reads. Shared-user creation is outside this slice.
+Creation requires a current durable session, a current enabled Owner and two explicit deployment grants: `project.create` and `project.receipt.read`. The receipt grant authorizes the normal creation response without inventing a grant for a Project that does not yet exist. It does not authorize general Project reads. Shared-user creation is outside this slice.
 
-An existing receipt requires its original actor, a current matching authorization epoch and a current deployment or exact-Project `project.receipt.read` grant. A retry does not need a fresh creation grant. The stored provider allowance is explicitly a **historical creation snapshot**; neither it nor a receipt permits current provider egress. Future egress must re-evaluate current setup approval and Project narrowing.
+An existing receipt requires its original actor, a current durable session, a current matching authorization epoch and a current deployment or exact-Project `project.receipt.read` grant. A retry does not need a fresh creation grant. The stored provider allowance is explicitly a **historical creation snapshot**; neither it nor a receipt permits current provider egress. Future egress must re-evaluate current setup approval and Project narrowing.
 
 The API exposes `POST /api/v1/projects` and `GET /api/v1/operations/{operation_id}`. OpenAPI, JSON schemas and the TypeScript fetch client are generated from the real API/models in `generated/`. These bindings are INTERNAL. The client supplies compile-time DTO types; the service performs authoritative runtime and cross-field validation. The client does not implement login, retries, offline queues or runtime response validation.
+
+Session policy defaults are seven days absolute, twelve hours inactivity and five minutes recent strong authentication. The earlier session deadline applies. Browser commands with valid origin and CSRF qualify as activity; reads and background polling do not extend inactivity. Rotation invalidates the old cookie and preserves the absolute deadline. Session records store token and CSRF hashes, and revocation survives restart. Session issuance and strong-auth rotation are internal primitives that must be called only after verified authentication; neither exposes an HTTP login endpoint. Owner session inventory/revocation and a Shared User's own-session controls are internal service functions, with no management UI or public route yet.
 
 See [foundation invariants](docs/foundation.md) and [validation scope](docs/validation.md).
 

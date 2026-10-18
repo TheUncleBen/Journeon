@@ -73,7 +73,11 @@ def create_app(engine: Engine) -> FastAPI:
         response_model=OperationReceipt,
         operation_id="createProject",
         responses=errors,
-        openapi_extra={"x-journeon-owner": "projects", "x-journeon-command": "project.create.v1"},
+        openapi_extra={
+            "x-journeon-owner": "projects",
+            "x-journeon-command": "project.create.v1",
+            "x-journeon-permissions": ["project.create", "project.receipt.read"],
+        },
     )
     def create_project(
         command: ProjectCreate,
@@ -86,7 +90,11 @@ def create_app(engine: Engine) -> FastAPI:
         response_model=OperationReceipt,
         operation_id="getOperationReceipt",
         responses=errors,
-        openapi_extra={"x-journeon-owner": "operations"},
+        openapi_extra={
+            "x-journeon-owner": "operations",
+            "x-journeon-query": "operation.receipt.read.v1",
+            "x-journeon-permissions": ["project.receipt.read"],
+        },
     )
     def get_receipt(
         operation_id: Identifier,

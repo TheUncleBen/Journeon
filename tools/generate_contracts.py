@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 
 from journeon.api import create_app
 from journeon.contracts import ErrorEnvelope, OperationReceipt, ProjectCreate
+from journeon.registry import registry_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -52,7 +53,9 @@ def artifacts() -> dict[str, str]:
     # No connection is opened; the engine supplies the app factory's schema-only dependency.
     engine = create_engine("sqlite://")
     try:
-        openapi = create_app(engine).openapi()
+        app = create_app(engine)
+        registry = registry_manifest(app)
+        openapi = app.openapi()
     finally:
         engine.dispose()
     definitions = openapi["components"]["schemas"]
@@ -109,6 +112,7 @@ export class JourneonClient {
         for model in (ProjectCreate, OperationReceipt, ErrorEnvelope)
     }
     return {
+        "registry.json": json.dumps(registry, indent=2, sort_keys=True) + "\n",
         "openapi.json": json.dumps(openapi, indent=2, sort_keys=True) + "\n",
         "contracts.schema.json": json.dumps(schemas, indent=2, sort_keys=True) + "\n",
         "client.ts": client,

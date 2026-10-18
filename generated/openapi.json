@@ -376,7 +376,11 @@
           }
         },
         "summary": "Get Receipt",
-        "x-journeon-owner": "operations"
+        "x-journeon-owner": "operations",
+        "x-journeon-permissions": [
+          "project.receipt.read"
+        ],
+        "x-journeon-query": "operation.receipt.read.v1"
       }
     },
     "/api/v1/projects": {
@@ -476,7 +480,11 @@
         },
         "summary": "Create Project",
         "x-journeon-command": "project.create.v1",
-        "x-journeon-owner": "projects"
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.create",
+          "project.receipt.read"
+        ]
       }
     }
   }

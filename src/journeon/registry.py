@@ -1,9 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """Bound command and module metadata; not a second permission authority."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from typing import Any
+
+from alembic.script import ScriptDirectory
+from fastapi import FastAPI
+from fastapi.routing import APIRoute
 
 from journeon.contracts import OperationReceipt, ProjectCreate
+from journeon.health import schema_and_database
+from journeon.migrate import configuration
+from journeon.models import Base
 
 
 @dataclass(frozen=True)
@@ -38,45 +46,210 @@ PROJECT_CREATE = CommandDefinition(
 
 COMMANDS = {PROJECT_CREATE.name: PROJECT_CREATE}
 
-MODULES = {
+MODULES: dict[str, dict[str, Any]] = {
     "identity": {
+        "core": True,
+        "api_prefixes": (),
+        "dashboards": (),
+        "events_published": (),
+        "events_consumed": (),
         "tables": ("principals",),
         "backup_class": "R0",
         "health": "schema_and_database",
         "permissions": (),
         "migration": "0001_foundation",
         "settings": (),
+        "environment_migrations": (),
     },
     "permissions": {
+        "core": True,
+        "api_prefixes": (),
+        "dashboards": (),
+        "events_published": (),
+        "events_consumed": (),
         "tables": ("access_grants",),
         "backup_class": "R0",
         "health": "schema_and_database",
         "permissions": ("project.create", "project.receipt.read"),
         "migration": "0001_foundation",
         "settings": (),
+        "environment_migrations": (),
     },
     "egress": {
+        "core": True,
+        "api_prefixes": (),
+        "dashboards": (),
+        "events_published": (),
+        "events_consumed": (),
         "tables": ("deployment_policy",),
         "backup_class": "R0",
         "health": "schema_and_database",
         "permissions": (),
         "migration": "0001_foundation",
         "settings": (),
+        "environment_migrations": (),
     },
     "projects": {
+        "core": True,
+        "api_prefixes": ("/api/v1/projects",),
+        "dashboards": (),
+        "events_published": ("project.created",),
+        "events_consumed": (),
         "tables": ("projects",),
         "backup_class": "R0",
         "health": "schema_and_database",
         "permissions": ("project.create", "project.receipt.read"),
         "migration": "0001_foundation",
         "settings": (),
+        "environment_migrations": (),
     },
     "operations": {
+        "core": True,
+        "api_prefixes": ("/api/v1/operations",),
+        "dashboards": (),
+        "events_published": (),
+        "events_consumed": (),
         "tables": ("operation_receipts", "outbox_events"),
         "backup_class": "R1",
         "health": "schema_and_database",
         "permissions": ("project.receipt.read",),
         "migration": "0001_foundation",
         "settings": (),
+        "environment_migrations": (),
     },
 }
+
+
+QUERIES: dict[str, dict[str, Any]] = {
+    "operation.receipt.read.v1": {
+        "owner": "operations",
+        "permissions": ("project.receipt.read",),
+        "result_model": OperationReceipt,
+    }
+}
+
+
+def registry_manifest(app: FastAPI) -> dict[str, Any]:
+    """Validate actual service bindings before generating an inspectable manifest."""
+    tables = [table for module in MODULES.values() for table in module["tables"]]
+    if len(tables) != len(set(tables)) or set(tables) != set(Base.metadata.tables):
+        raise ValueError("Every canonical table requires exactly one registered owner")
+    revisions = {
+        revision.revision
+        for revision in ScriptDirectory.from_config(configuration()).walk_revisions()
+    }
+    for module in MODULES.values():
+        if (
+            module["backup_class"] not in {"R0", "R1", "R2", "R3"}
+            or module["migration"] not in revisions
+            or module["health"] != schema_and_database.__name__
+            or type(module["core"]) is not bool
+            or module["settings"] != ()
+            or module["environment_migrations"] != ()
+        ):
+            raise ValueError("Module backup, migration, health or core declaration is invalid")
+    for name, definition in COMMANDS.items():
+        if (
+            definition.name != name
+            or not definition.risk
+            or not definition.reversibility
+            or not definition.verification
+            or not definition.stability
+            or type(definition.dry_run) is not bool
+            or type(definition.idempotent) is not bool
+        ):
+            raise ValueError("Command effect and verification metadata is incomplete")
+    operations = []
+    bound_commands: set[str] = set()
+    bound_queries: set[str] = set()
+    operation_ids: set[str] = set()
+    for route in app.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        if not route.methods:
+            raise ValueError("API operation requires an HTTP method")
+        metadata = route.openapi_extra or {}
+        owner = metadata.get("x-journeon-owner")
+        if owner not in MODULES:
+            raise ValueError("API operation has no registered module owner")
+        module = MODULES[owner]
+        if not any(
+            route.path == prefix or route.path.startswith(prefix + "/")
+            for prefix in module["api_prefixes"]
+        ):
+            raise ValueError("API operation is outside its owning module prefix")
+        permissions = tuple(metadata.get("x-journeon-permissions", ()))
+        if not permissions or not set(permissions) <= set(module["permissions"]):
+            raise ValueError("API operation permissions are missing or outside its owner")
+        if not route.operation_id or route.operation_id in operation_ids:
+            raise ValueError("API operation requires a unique explicit identity")
+        operation_ids.add(route.operation_id)
+        command_name = metadata.get("x-journeon-command")
+        query_name = metadata.get("x-journeon-query")
+        if command_name and not query_name:
+            command = COMMANDS.get(command_name)
+            if (
+                command is None
+                or command.name != command_name
+                or command.owner != owner
+                or command.permissions != permissions
+                or route.body_field is None
+                or route.body_field.field_info.annotation is not command.input_model
+                or route.response_model is not command.result_model
+                or route.methods & {"GET", "HEAD", "OPTIONS"}
+                or command_name in bound_commands
+            ):
+                raise ValueError("Command registration differs from its actual API binding")
+            bound_commands.add(command_name)
+        elif query_name and not command_name:
+            query = QUERIES.get(query_name)
+            if (
+                query is None
+                or query["owner"] != owner
+                or query["permissions"] != permissions
+                or route.response_model is not query["result_model"]
+                or not route.methods <= {"GET", "HEAD"}
+                or query_name in bound_queries
+            ):
+                raise ValueError("Query registration differs from its actual API binding")
+            bound_queries.add(query_name)
+        else:
+            raise ValueError("API operation must bind exactly one command or query")
+        operations.append(
+            {
+                "operation_id": route.operation_id,
+                "owner": owner,
+                "path": route.path,
+                "methods": sorted(route.methods),
+                "permissions": permissions,
+                "command": command_name,
+                "query": query_name,
+                "endpoint": f"{route.endpoint.__module__}.{route.endpoint.__qualname__}",
+            }
+        )
+    if bound_commands != set(COMMANDS) or bound_queries != set(QUERIES):
+        raise ValueError("Registered commands and queries must have actual API bindings")
+    return {
+        "modules": [
+            {
+                "module_id": name,
+                "version": app.version,
+                **module,
+                "permission_namespaces": sorted({p.split(".")[0] for p in module["permissions"]}),
+            }
+            for name, module in sorted(MODULES.items())
+        ],
+        "commands": [
+            {
+                **asdict(command),
+                "input_model": command.input_model.__name__,
+                "result_model": command.result_model.__name__,
+            }
+            for command in COMMANDS.values()
+        ],
+        "queries": [
+            {"name": name, **query, "result_model": query["result_model"].__name__}
+            for name, query in QUERIES.items()
+        ],
+        "api_operations": operations,
+    }

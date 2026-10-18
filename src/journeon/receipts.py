@@ -26,6 +26,10 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     )
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
+    if row.owner in {"agents", "instructions"}:
+        from journeon.agents import authorized_configuration_receipt
+
+        return authorized_configuration_receipt(db, actor, row)
     if row.owner == "work":
         return authorized_work_receipt(db, actor, row)
     if row.command == "project.create.v1" and row.owner == "projects":

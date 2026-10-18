@@ -10,15 +10,33 @@ from sqlalchemy import create_engine
 
 from journeon.api import create_app
 from journeon.contracts import (
+    BotCreate,
+    BotRevise,
+    BotView,
+    BundleResolve,
+    BundleResult,
+    BundleView,
+    ConfigurationReceipt,
+    EffectivePermission,
+    EffectiveSettings,
     ErrorEnvelope,
+    LegacyPlan,
+    LegacyPreview,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
+    ProfileCreate,
+    ProfileImpact,
+    ProfileRevise,
+    ProfileRevisionPreview,
+    ProfileView,
     ProjectCreate,
     TaskControl,
     TaskCreate,
     TaskReceipt,
     TaskView,
+    TeamCreate,
+    TeamView,
 )
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.registry import registry_manifest
@@ -79,6 +97,20 @@ def artifacts() -> dict[str, str]:
         for method, value in methods.items()
     }
     if operations != {
+        "createProfile": ("POST", "/api/v1/profiles"),
+        "previewProfileRevision": ("POST", "/api/v1/profiles/preview-revision"),
+        "reviseProfile": ("POST", "/api/v1/profiles/revise"),
+        "createBot": ("POST", "/api/v1/bots"),
+        "reviseBot": ("POST", "/api/v1/bots/revise"),
+        "createTeam": ("POST", "/api/v1/teams"),
+        "previewLegacyMemory": ("POST", "/api/v1/legacy-memory/preview"),
+        "resolveInstructionBundle": ("POST", "/api/v1/instruction-bundles"),
+        "getProfile": ("GET", "/api/v1/profiles/{identity}"),
+        "getBot": ("GET", "/api/v1/bots/{identity}"),
+        "getTeam": ("GET", "/api/v1/teams/{identity}"),
+        "getBotSettings": ("GET", "/api/v1/bots/{identity}/effective-settings"),
+        "getInstructionBundle": ("GET", "/api/v1/instruction-bundles/{identity}"),
+        "getEffectivePermission": ("GET", "/api/v1/permissions/effective"),
         "getTask": ("GET", "/api/v1/tasks/{task_id}"),
         "createTask": ("POST", "/api/v1/tasks"),
         "pauseTask": ("POST", "/api/v1/tasks/pause"),
@@ -98,7 +130,8 @@ def artifacts() -> dict[str, str]:
         + "\n\n".join(types)
         + """
 
-export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt;
+export type CanonicalReceipt =
+  OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -117,6 +150,79 @@ export class JourneonClient {
     const body: unknown = await response.json();
     if (!response.ok) throw new JourneonError(response.status, body);
     return body as T;
+  }
+
+  createProfile(command: ProfileCreate, csrfToken: string): Promise<ConfigurationReceipt> {
+    return this.request("/api/v1/profiles", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  previewProfileRevision(
+    command: ProfileRevisionPreview, csrfToken: string,
+  ): Promise<ProfileImpact> {
+    return this.request("/api/v1/profiles/preview-revision", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  reviseProfile(command: ProfileRevise, csrfToken: string): Promise<ConfigurationReceipt> {
+    return this.request("/api/v1/profiles/revise", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  createBot(command: BotCreate, csrfToken: string): Promise<ConfigurationReceipt> {
+    return this.request("/api/v1/bots", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  reviseBot(command: BotRevise, csrfToken: string): Promise<ConfigurationReceipt> {
+    return this.request("/api/v1/bots/revise", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  createTeam(command: TeamCreate, csrfToken: string): Promise<ConfigurationReceipt> {
+    return this.request("/api/v1/teams", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  previewLegacyMemory(command: LegacyPreview, csrfToken: string): Promise<LegacyPlan> {
+    return this.request("/api/v1/legacy-memory/preview", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  resolveInstructionBundle(command: BundleResolve, csrfToken: string): Promise<BundleResult> {
+    return this.request("/api/v1/instruction-bundles", {
+      method: "POST", headers: {"X-CSRF-Token": csrfToken}, body: JSON.stringify(command),
+    });
+  }
+  getProfile(identity: string): Promise<ProfileView> {
+    return this.request(`/api/v1/profiles/${encodeURIComponent(identity)}`,
+      {method: "GET"});
+  }
+  getBot(identity: string): Promise<BotView> {
+    return this.request(`/api/v1/bots/${encodeURIComponent(identity)}`,
+      {method: "GET"});
+  }
+  getTeam(identity: string): Promise<TeamView> {
+    return this.request(`/api/v1/teams/${encodeURIComponent(identity)}`,
+      {method: "GET"});
+  }
+  getBotSettings(identity: string): Promise<EffectiveSettings> {
+    return this.request(`/api/v1/bots/${encodeURIComponent(identity)}/effective-settings`,
+      {method: "GET"});
+  }
+  getInstructionBundle(identity: string): Promise<BundleView> {
+    return this.request(`/api/v1/instruction-bundles/${encodeURIComponent(identity)}`,
+      {method: "GET"});
+  }
+  getEffectivePermission(
+    resourceKind: EffectivePermission["resource_kind"], resourceId: string,
+    action: EffectivePermission["action"],
+  ): Promise<EffectivePermission> {
+    const query = new URLSearchParams({
+      resource_kind: resourceKind, resource_id: resourceId, action,
+    });
+    return this.request(`/api/v1/permissions/effective?${query}`,
+      {method: "GET"});
   }
 
   beginPasskey(command: PasskeyBegin, csrfToken?: string): Promise<PasskeyChallenge> {
@@ -143,7 +249,8 @@ export class JourneonClient {
   }
 
   getTask(taskId: string): Promise<TaskView> {
-    return this.request(`/api/v1/tasks/${encodeURIComponent(taskId)}`, {method: "GET"});
+    return this.request(`/api/v1/tasks/${encodeURIComponent(taskId)}`,
+      {method: "GET"});
   }
 
   createTask(command: TaskCreate, csrfToken?: string): Promise<TaskReceipt> {
@@ -167,7 +274,8 @@ export class JourneonClient {
   }
 
   getOperationReceipt(operationId: string): Promise<CanonicalReceipt> {
-    return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`, {method: "GET"});
+    return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`,
+      {method: "GET"});
   }
 }
 """
@@ -175,6 +283,24 @@ export class JourneonClient {
     schemas = {
         model.__name__: model.model_json_schema()
         for model in (
+            ProfileCreate,
+            ProfileRevisionPreview,
+            ProfileRevise,
+            ProfileImpact,
+            ProfileView,
+            BotCreate,
+            BotRevise,
+            BotView,
+            TeamCreate,
+            TeamView,
+            ConfigurationReceipt,
+            EffectiveSettings,
+            EffectivePermission,
+            LegacyPreview,
+            LegacyPlan,
+            BundleResolve,
+            BundleView,
+            BundleResult,
             ProjectCreate,
             TaskCreate,
             TaskControl,

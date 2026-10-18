@@ -10,15 +10,33 @@ from fastapi.routing import APIRoute, iter_route_contexts
 from pydantic import BaseModel
 
 from journeon.contracts import (
+    BotCreate,
+    BotRevise,
+    BotView,
+    BundleResolve,
+    BundleResult,
+    BundleView,
     CanonicalReceipt,
+    ConfigurationReceipt,
+    EffectivePermission,
+    EffectiveSettings,
+    LegacyPlan,
+    LegacyPreview,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
+    ProfileCreate,
+    ProfileImpact,
+    ProfileRevise,
+    ProfileRevisionPreview,
+    ProfileView,
     ProjectCreate,
     TaskControl,
     TaskCreate,
     TaskReceipt,
     TaskView,
+    TeamCreate,
+    TeamView,
 )
 from journeon.health import schema_and_database
 from journeon.migrate import configuration
@@ -200,6 +218,187 @@ QUERIES: dict[str, dict[str, Any]] = {
         "result_model": CanonicalReceipt,
     },
 }
+
+COMMANDS["profile.create.v1"] = CommandDefinition(
+    name="profile.create.v1",
+    owner="agents",
+    input_model=ProfileCreate,
+    result_model=ConfigurationReceipt,
+    permissions=("profile.create",),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=False,
+    idempotent=True,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["profile.preview-revision.v1"] = CommandDefinition(
+    name="profile.preview-revision.v1",
+    owner="agents",
+    input_model=ProfileRevisionPreview,
+    result_model=ProfileImpact,
+    permissions=("profile.preview-revision",),
+    risk="READ_ONLY_PREVIEW",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=True,
+    idempotent=False,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["profile.revise.v1"] = CommandDefinition(
+    name="profile.revise.v1",
+    owner="agents",
+    input_model=ProfileRevise,
+    result_model=ConfigurationReceipt,
+    permissions=("profile.revise",),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=False,
+    idempotent=True,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["bot.create.v1"] = CommandDefinition(
+    name="bot.create.v1",
+    owner="agents",
+    input_model=BotCreate,
+    result_model=ConfigurationReceipt,
+    permissions=("bot.create",),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=False,
+    idempotent=True,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["bot.revise.v1"] = CommandDefinition(
+    name="bot.revise.v1",
+    owner="agents",
+    input_model=BotRevise,
+    result_model=ConfigurationReceipt,
+    permissions=("bot.revise",),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=False,
+    idempotent=True,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["team.create.v1"] = CommandDefinition(
+    name="team.create.v1",
+    owner="agents",
+    input_model=TeamCreate,
+    result_model=ConfigurationReceipt,
+    permissions=("team.create",),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=False,
+    idempotent=True,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["legacy-memory.preview.v1"] = CommandDefinition(
+    name="legacy-memory.preview.v1",
+    owner="agents",
+    input_model=LegacyPreview,
+    result_model=LegacyPlan,
+    permissions=("legacy-memory.preview",),
+    risk="READ_ONLY_PREVIEW",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=True,
+    idempotent=False,
+    verification="Current exact authority and transaction checks",
+)
+COMMANDS["instruction.bundle.resolve.v1"] = CommandDefinition(
+    name="instruction.bundle.resolve.v1",
+    owner="instructions",
+    input_model=BundleResolve,
+    result_model=BundleResult,
+    permissions=("instruction.bundle.resolve",),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Immutable history; changes require another authorized command",
+    dry_run=False,
+    idempotent=True,
+    verification="Current exact authority and transaction checks",
+)
+QUERIES["profile.read.v1"] = {
+    "owner": "agents",
+    "permissions": ("profile.read",),
+    "result_model": ProfileView,
+}
+QUERIES["bot.read.v1"] = {"owner": "agents", "permissions": ("bot.read",), "result_model": BotView}
+QUERIES["team.read.v1"] = {
+    "owner": "agents",
+    "permissions": ("team.read",),
+    "result_model": TeamView,
+}
+QUERIES["bot.settings.read.v1"] = {
+    "owner": "agents",
+    "permissions": ("bot.settings.read",),
+    "result_model": EffectiveSettings,
+}
+QUERIES["instruction.bundle.read.v1"] = {
+    "owner": "instructions",
+    "permissions": ("instruction.bundle.read",),
+    "result_model": BundleView,
+}
+QUERIES["permission.effective.v1"] = {
+    "owner": "permissions",
+    "permissions": ("permission.effective",),
+    "result_model": EffectivePermission,
+}
+MODULES["agents"] = {
+    "core": True,
+    "api_prefixes": ("/api/v1/profiles", "/api/v1/bots", "/api/v1/teams", "/api/v1/legacy-memory"),
+    "dashboards": (),
+    "events_published": (
+        "profile.create.committed",
+        "profile.revise.committed",
+        "bot.create.committed",
+        "bot.revise.committed",
+        "team.create.committed",
+    ),
+    "events_consumed": (),
+    "tables": ("agent_profiles", "profile_revisions", "bots", "bot_revisions", "teams"),
+    "backup_class": "R0",
+    "health": "schema_and_database",
+    "permissions": (
+        "profile.create",
+        "profile.preview-revision",
+        "profile.revise",
+        "bot.create",
+        "bot.revise",
+        "team.create",
+        "legacy-memory.preview",
+        "profile.read",
+        "bot.read",
+        "team.read",
+        "bot.settings.read",
+    ),
+    "migration": "0007_identity_instructions",
+    "settings": (),
+    "environment_migrations": (),
+}
+MODULES["instructions"] = {
+    "core": True,
+    "api_prefixes": ("/api/v1/instruction-bundles",),
+    "dashboards": (),
+    "events_published": ("instruction.bundle.resolve.committed",),
+    "events_consumed": (),
+    "tables": ("instruction_assets", "instruction_revisions", "instruction_bundles"),
+    "backup_class": "R0",
+    "health": "schema_and_database",
+    "permissions": ("instruction.bundle.resolve", "instruction.bundle.read"),
+    "migration": "0007_identity_instructions",
+    "settings": (),
+    "environment_migrations": (),
+}
+MODULES["permissions"]["api_prefixes"] = ("/api/v1/permissions",)
+MODULES["permissions"]["permissions"] += ("permission.effective",)
+MODULES["permissions"]["migration"] = "0007_identity_instructions"
+MODULES["operations"]["migration"] = "0007_identity_instructions"
 
 
 @dataclass(frozen=True)

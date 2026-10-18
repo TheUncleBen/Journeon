@@ -130,6 +130,216 @@
       "query": null
     },
     {
+      "authentication": null,
+      "command": "profile.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_profile_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createProfile",
+      "owner": "agents",
+      "path": "/api/v1/profiles",
+      "permissions": [
+        "profile.create"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "profile.preview-revision.v1",
+      "endpoint": "journeon.api.create_app.<locals>.preview_profile_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewProfileRevision",
+      "owner": "agents",
+      "path": "/api/v1/profiles/preview-revision",
+      "permissions": [
+        "profile.preview-revision"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "profile.revise.v1",
+      "endpoint": "journeon.api.create_app.<locals>.revise_profile_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "reviseProfile",
+      "owner": "agents",
+      "path": "/api/v1/profiles/revise",
+      "permissions": [
+        "profile.revise"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "bot.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_bot_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createBot",
+      "owner": "agents",
+      "path": "/api/v1/bots",
+      "permissions": [
+        "bot.create"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "bot.revise.v1",
+      "endpoint": "journeon.api.create_app.<locals>.revise_bot_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "reviseBot",
+      "owner": "agents",
+      "path": "/api/v1/bots/revise",
+      "permissions": [
+        "bot.revise"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "team.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_team_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createTeam",
+      "owner": "agents",
+      "path": "/api/v1/teams",
+      "permissions": [
+        "team.create"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "legacy-memory.preview.v1",
+      "endpoint": "journeon.api.create_app.<locals>.legacy_preview_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewLegacyMemory",
+      "owner": "agents",
+      "path": "/api/v1/legacy-memory/preview",
+      "permissions": [
+        "legacy-memory.preview"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "instruction.bundle.resolve.v1",
+      "endpoint": "journeon.api.create_app.<locals>.resolve_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "resolveInstructionBundle",
+      "owner": "instructions",
+      "path": "/api/v1/instruction-bundles",
+      "permissions": [
+        "instruction.bundle.resolve"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.profile_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getProfile",
+      "owner": "agents",
+      "path": "/api/v1/profiles/{identity}",
+      "permissions": [
+        "profile.read"
+      ],
+      "query": "profile.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.bot_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getBot",
+      "owner": "agents",
+      "path": "/api/v1/bots/{identity}",
+      "permissions": [
+        "bot.read"
+      ],
+      "query": "bot.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.team_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getTeam",
+      "owner": "agents",
+      "path": "/api/v1/teams/{identity}",
+      "permissions": [
+        "team.read"
+      ],
+      "query": "team.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.settings_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getBotSettings",
+      "owner": "agents",
+      "path": "/api/v1/bots/{identity}/effective-settings",
+      "permissions": [
+        "bot.settings.read"
+      ],
+      "query": "bot.settings.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.read_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getInstructionBundle",
+      "owner": "instructions",
+      "path": "/api/v1/instruction-bundles/{identity}",
+      "permissions": [
+        "instruction.bundle.read"
+      ],
+      "query": "instruction.bundle.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.effective_permission",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getEffectivePermission",
+      "owner": "permissions",
+      "path": "/api/v1/permissions/effective",
+      "permissions": [
+        "permission.effective"
+      ],
+      "query": "permission.effective.v1"
+    },
+    {
       "authentication": "passkey.begin.v1",
       "command": null,
       "endpoint": "journeon.passkey_api.routes.<locals>.begin",
@@ -275,9 +485,188 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Atomic versioned Task, receipt and event; current Project grants"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ProfileCreate",
+      "name": "profile.create.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.create"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "ProfileRevisionPreview",
+      "name": "profile.preview-revision.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.preview-revision"
+      ],
+      "result_model": "ProfileImpact",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "READ_ONLY_PREVIEW",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ProfileRevise",
+      "name": "profile.revise.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.revise"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BotCreate",
+      "name": "bot.create.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.create"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BotRevise",
+      "name": "bot.revise.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.revise"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TeamCreate",
+      "name": "team.create.v1",
+      "owner": "agents",
+      "permissions": [
+        "team.create"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "LegacyPreview",
+      "name": "legacy-memory.preview.v1",
+      "owner": "agents",
+      "permissions": [
+        "legacy-memory.preview"
+      ],
+      "result_model": "LegacyPlan",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "READ_ONLY_PREVIEW",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BundleResolve",
+      "name": "instruction.bundle.resolve.v1",
+      "owner": "instructions",
+      "permissions": [
+        "instruction.bundle.resolve"
+      ],
+      "result_model": "BundleResult",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
     }
   ],
   "modules": [
+    {
+      "api_prefixes": [
+        "/api/v1/profiles",
+        "/api/v1/bots",
+        "/api/v1/teams",
+        "/api/v1/legacy-memory"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "profile.create.committed",
+        "profile.revise.committed",
+        "bot.create.committed",
+        "bot.revise.committed",
+        "team.create.committed"
+      ],
+      "health": "schema_and_database",
+      "migration": "0007_identity_instructions",
+      "module_id": "agents",
+      "permission_namespaces": [
+        "bot",
+        "legacy-memory",
+        "profile",
+        "team"
+      ],
+      "permissions": [
+        "profile.create",
+        "profile.preview-revision",
+        "profile.revise",
+        "bot.create",
+        "bot.revise",
+        "team.create",
+        "legacy-memory.preview",
+        "profile.read",
+        "bot.read",
+        "team.read",
+        "bot.settings.read"
+      ],
+      "settings": [],
+      "tables": [
+        "agent_profiles",
+        "profile_revisions",
+        "bots",
+        "bot_revisions",
+        "teams"
+      ],
+      "version": "0.0.0.dev1"
+    },
     {
       "api_prefixes": [],
       "backup_class": "R0",
@@ -333,6 +722,36 @@
     },
     {
       "api_prefixes": [
+        "/api/v1/instruction-bundles"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "instruction.bundle.resolve.committed"
+      ],
+      "health": "schema_and_database",
+      "migration": "0007_identity_instructions",
+      "module_id": "instructions",
+      "permission_namespaces": [
+        "instruction"
+      ],
+      "permissions": [
+        "instruction.bundle.resolve",
+        "instruction.bundle.read"
+      ],
+      "settings": [],
+      "tables": [
+        "instruction_assets",
+        "instruction_revisions",
+        "instruction_bundles"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
         "/api/v1/operations"
       ],
       "backup_class": "R1",
@@ -342,7 +761,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0006_work",
+      "migration": "0007_identity_instructions",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -358,7 +777,9 @@
       "version": "0.0.0.dev1"
     },
     {
-      "api_prefixes": [],
+      "api_prefixes": [
+        "/api/v1/permissions"
+      ],
       "backup_class": "R0",
       "core": true,
       "dashboards": [],
@@ -366,14 +787,16 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0001_foundation",
+      "migration": "0007_identity_instructions",
       "module_id": "permissions",
       "permission_namespaces": [
+        "permission",
         "project"
       ],
       "permissions": [
         "project.create",
-        "project.receipt.read"
+        "project.receipt.read",
+        "permission.effective"
       ],
       "settings": [],
       "tables": [
@@ -461,6 +884,54 @@
         "operation.receipt.read"
       ],
       "result_model": "CanonicalReceipt"
+    },
+    {
+      "name": "profile.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.read"
+      ],
+      "result_model": "ProfileView"
+    },
+    {
+      "name": "bot.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.read"
+      ],
+      "result_model": "BotView"
+    },
+    {
+      "name": "team.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "team.read"
+      ],
+      "result_model": "TeamView"
+    },
+    {
+      "name": "bot.settings.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.settings.read"
+      ],
+      "result_model": "EffectiveSettings"
+    },
+    {
+      "name": "instruction.bundle.read.v1",
+      "owner": "instructions",
+      "permissions": [
+        "instruction.bundle.read"
+      ],
+      "result_model": "BundleView"
+    },
+    {
+      "name": "permission.effective.v1",
+      "owner": "permissions",
+      "permissions": [
+        "permission.effective"
+      ],
+      "result_model": "EffectivePermission"
     }
   ]
 }

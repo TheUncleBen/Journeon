@@ -3,7 +3,18 @@
 
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, CheckConstraint, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -46,7 +57,11 @@ class AccessGrant(Base):
     __table_args__ = (
         CheckConstraint("revision >= 1", name="grant_revision"),
         CheckConstraint("enabled IN (0, 1)", name="grant_enabled_boolean"),
-        CheckConstraint("resource_kind IN ('deployment', 'project')", name="grant_resource_kind"),
+        CheckConstraint(
+            "resource_kind IN ('deployment', 'project', 'profile', 'bot', 'team', "
+            "'instruction_bundle', 'legacy_collection')",
+            name="grant_resource_kind",
+        ),
     )
 
 
@@ -106,6 +121,9 @@ class Receipt(Base):
             "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
             "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
             "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
+            "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
+            "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
+            "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
             "AND project_id IS NOT NULL)",
             name="receipt_target",
         ),
@@ -138,6 +156,9 @@ class OutboxEvent(Base):
             "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
             "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
             "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
+            "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
+            "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
+            "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
             "AND project_id IS NOT NULL)",
             name="event_target",
         ),
@@ -314,3 +335,133 @@ class Task(Base):
     revision: Mapped[int] = mapped_column(Integer)
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (CheckConstraint("revision >= 1", name="task_revision"),)
+
+
+class AgentProfile(Base):
+    __tablename__ = "agent_profiles"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(String(200))
+    __table_args__ = (CheckConstraint("revision >= 1", name="profile_revision"),)
+
+
+class ProfileRevision(Base):
+    __tablename__ = "profile_revisions"
+    profile_id: Mapped[str] = mapped_column(ForeignKey("agent_profiles.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    author: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    reason: Mapped[str] = mapped_column(String(200))
+    content_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40))
+    __table_args__ = (CheckConstraint("revision >= 1", name="profile_history_revision"),)
+
+
+class Bot(Base):
+    __tablename__ = "bots"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("agent_profiles.id"))
+    team_id: Mapped[str | None] = mapped_column(
+        ForeignKey(
+            "teams.id",
+            deferrable=True,
+            initially="DEFERRED",
+            use_alter=True,
+            name="bot_team_membership",
+        )
+    )
+    revision: Mapped[int] = mapped_column(Integer)
+    namespace_ref: Mapped[str] = mapped_column(String(128), unique=True)
+    memory_enabled: Mapped[bool] = mapped_column(Boolean)
+    builtin_role: Mapped[str | None] = mapped_column(String(20))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        CheckConstraint("revision >= 1", name="bot_revision"),
+        UniqueConstraint("id", "team_id", name="bot_team_identity"),
+        CheckConstraint("namespace_ref = 'bot:' || id", name="bot_namespace"),
+        CheckConstraint("memory_enabled IN (0, 1)", name="bot_memory_boolean"),
+        CheckConstraint(
+            "builtin_role IS NULL OR (builtin_role IN ('RESEARCHER', 'LIBRARIAN') "
+            "AND memory_enabled = 0)",
+            name="bot_fixed_memory",
+        ),
+    )
+
+
+class BotRevision(Base):
+    __tablename__ = "bot_revisions"
+    bot_id: Mapped[str] = mapped_column(ForeignKey("bots.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    author: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    reason: Mapped[str] = mapped_column(String(200))
+    content_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40))
+    __table_args__ = (CheckConstraint("revision >= 1", name="bot_history_revision"),)
+
+
+class Team(Base):
+    __tablename__ = "teams"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    revision: Mapped[int] = mapped_column(Integer)
+    lead_bot_id: Mapped[str] = mapped_column(String(128))
+    __table_args__ = (
+        CheckConstraint("revision >= 1", name="team_revision"),
+        ForeignKeyConstraint(
+            ["lead_bot_id", "id"],
+            ["bots.id", "bots.team_id"],
+            deferrable=True,
+            initially="DEFERRED",
+            name="team_member_lead",
+        ),
+    )
+
+
+class InstructionAsset(Base):
+    __tablename__ = "instruction_assets"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    owner_kind: Mapped[str] = mapped_column(String(30))
+    owner_id: Mapped[str] = mapped_column(String(128))
+    purpose: Mapped[str] = mapped_column(String(30))
+    trust: Mapped[str] = mapped_column(String(30))
+    revision: Mapped[int] = mapped_column(Integer)
+    __table_args__ = (
+        CheckConstraint("revision >= 1", name="asset_revision"),
+        CheckConstraint(
+            "purpose IN ('CORE', 'NAVIGATION', 'PROFILE', 'BOT', 'PROJECT', "
+            "'SKILLS', 'TASK', 'WORKFLOW')",
+            name="asset_purpose",
+        ),
+        CheckConstraint("trust IN ('PROTECTED', 'CONFIGURATION')", name="asset_trust"),
+        CheckConstraint(
+            "(purpose IN ('CORE', 'NAVIGATION') "
+            "AND owner_kind = 'system' AND trust = 'PROTECTED') OR "
+            "(purpose NOT IN ('CORE', 'NAVIGATION') AND trust = 'CONFIGURATION')",
+            name="asset_protected_owner",
+        ),
+    )
+
+
+class InstructionRevision(Base):
+    __tablename__ = "instruction_revisions"
+    asset_id: Mapped[str] = mapped_column(ForeignKey("instruction_assets.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    template: Mapped[dict[str, Any]] = mapped_column(JSON)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    previous_hash: Mapped[str | None] = mapped_column(String(64))
+    author: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    reason: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[str] = mapped_column(String(40))
+    __table_args__ = (CheckConstraint("revision >= 1", name="instruction_revision"),)
+
+
+class InstructionBundle(Base):
+    __tablename__ = "instruction_bundles"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    profile_id: Mapped[str] = mapped_column(ForeignKey("agent_profiles.id"))
+    bot_id: Mapped[str | None] = mapped_column(ForeignKey("bots.id"))
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    task_id: Mapped[str | None] = mapped_column(ForeignKey("tasks.id"))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)

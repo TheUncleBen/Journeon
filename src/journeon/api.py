@@ -23,6 +23,10 @@ from journeon.contracts import (
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
     ProjectCreate,
+    TaskControl,
+    TaskCreate,
+    TaskReceipt,
+    TaskView,
 )
 from journeon.factors import FactorService
 from journeon.passkey_api import routes as passkey_routes
@@ -30,6 +34,7 @@ from journeon.passkeys import PasskeyService, RejectedPasskeyInput
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
 from journeon.receipts import OperationService
+from journeon.work import WorkService
 
 
 def authenticated_context(request: Request) -> AuthenticatedContext:
@@ -153,6 +158,91 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> PasskeyMutationReceipt:
         return FactorService(engine).label(actor, command)
+
+    @app.get(
+        "/api/v1/tasks/{task_id}",
+        response_model=TaskView,
+        operation_id="getTask",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "work",
+            "x-journeon-query": "task.read.v1",
+            "x-journeon-permissions": ["task.read"],
+        },
+    )
+    def get_task(
+        task_id: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskView:
+        return WorkService(engine).read(actor, task_id)
+
+    @app.post(
+        "/api/v1/tasks",
+        response_model=TaskReceipt,
+        operation_id="createTask",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "work",
+            "x-journeon-command": "task.create.v1",
+            "x-journeon-permissions": ["task.create", "task.read", "task.receipt.read"],
+        },
+    )
+    def create_task(
+        command: TaskCreate,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskReceipt:
+        return WorkService(engine).create(actor, command)
+
+    @app.post(
+        "/api/v1/tasks/pause",
+        response_model=TaskReceipt,
+        operation_id="pauseTask",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "work",
+            "x-journeon-command": "task.pause.v1",
+            "x-journeon-permissions": ["task.pause", "task.read", "task.receipt.read"],
+        },
+    )
+    def pause_task(
+        command: TaskControl,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskReceipt:
+        return WorkService(engine).control(actor, "pause", command)
+
+    @app.post(
+        "/api/v1/tasks/resume",
+        response_model=TaskReceipt,
+        operation_id="resumeTask",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "work",
+            "x-journeon-command": "task.resume.v1",
+            "x-journeon-permissions": ["task.resume", "task.read", "task.receipt.read"],
+        },
+    )
+    def resume_task(
+        command: TaskControl,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskReceipt:
+        return WorkService(engine).control(actor, "resume", command)
+
+    @app.post(
+        "/api/v1/tasks/cancel",
+        response_model=TaskReceipt,
+        operation_id="cancelTask",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "work",
+            "x-journeon-command": "task.cancel.v1",
+            "x-journeon-permissions": ["task.cancel", "task.read", "task.receipt.read"],
+        },
+    )
+    def cancel_task(
+        command: TaskControl,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskReceipt:
+        return WorkService(engine).control(actor, "cancel", command)
 
     app.include_router(passkey_routes(passkeys, browser_auth))
     return app

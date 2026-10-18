@@ -14,6 +14,7 @@ from journeon.models import Passkey, Receipt
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import _authorized_receipt
 from journeon.sessions import current_session
+from journeon.work import authorized_work_receipt
 
 
 def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -> CanonicalReceipt:
@@ -25,6 +26,8 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     )
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
+    if row.owner == "work":
+        return authorized_work_receipt(db, actor, row)
     if row.command == "project.create.v1" and row.owner == "projects":
         if row.target_kind != "project" or row.target_id != row.project_id:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored operation state requires repair")

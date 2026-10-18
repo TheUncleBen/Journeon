@@ -105,7 +105,8 @@ class Receipt(Base):
         CheckConstraint(
             "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
             "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
-            "AND project_id IS NULL)",
+            "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
+            "AND project_id IS NOT NULL)",
             name="receipt_target",
         ),
         Index(
@@ -129,11 +130,15 @@ class OutboxEvent(Base):
     target_kind: Mapped[str] = mapped_column(String(30), default="project")
     target_id: Mapped[str] = mapped_column(String(128))
     committed_at: Mapped[str] = mapped_column(String(40))
+    target_revision: Mapped[int] = mapped_column(Integer)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (
+        CheckConstraint("target_revision >= 1", name="event_target_revision"),
         CheckConstraint(
             "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
             "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
-            "AND project_id IS NULL)",
+            "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
+            "AND project_id IS NOT NULL)",
             name="event_target",
         ),
         {"sqlite_autoincrement": True},
@@ -299,3 +304,13 @@ class ProtectedRequest(Base):
         CheckConstraint("deadline > issued_at AND issued_at >= 0", name="protected_deadline"),
         CheckConstraint("command = 'passkey.label.v1'", name="protected_command"),
     )
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    initiating_principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    revision: Mapped[int] = mapped_column(Integer)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (CheckConstraint("revision >= 1", name="task_revision"),)

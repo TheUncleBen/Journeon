@@ -15,6 +15,10 @@ from journeon.contracts import (
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
     ProjectCreate,
+    TaskControl,
+    TaskCreate,
+    TaskReceipt,
+    TaskView,
 )
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.registry import registry_manifest
@@ -75,6 +79,11 @@ def artifacts() -> dict[str, str]:
         for method, value in methods.items()
     }
     if operations != {
+        "getTask": ("GET", "/api/v1/tasks/{task_id}"),
+        "createTask": ("POST", "/api/v1/tasks"),
+        "pauseTask": ("POST", "/api/v1/tasks/pause"),
+        "resumeTask": ("POST", "/api/v1/tasks/resume"),
+        "cancelTask": ("POST", "/api/v1/tasks/cancel"),
         "beginPasskey": ("POST", "/api/v1/auth/passkeys/begin"),
         "finishPasskey": ("POST", "/api/v1/auth/passkeys/finish"),
         "labelPasskey": ("POST", "/api/v1/auth/passkeys/label"),
@@ -89,7 +98,7 @@ def artifacts() -> dict[str, str]:
         + "\n\n".join(types)
         + """
 
-export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt;
+export type CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -133,6 +142,30 @@ export class JourneonClient {
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
+  getTask(taskId: string): Promise<TaskView> {
+    return this.request(`/api/v1/tasks/${encodeURIComponent(taskId)}`, {method: "GET"});
+  }
+
+  createTask(command: TaskCreate, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  pauseTask(command: TaskControl, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/pause", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  resumeTask(command: TaskControl, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/resume", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  cancelTask(command: TaskControl, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/cancel", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
   getOperationReceipt(operationId: string): Promise<CanonicalReceipt> {
     return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`, {method: "GET"});
   }
@@ -143,6 +176,10 @@ export class JourneonClient {
         model.__name__: model.model_json_schema()
         for model in (
             ProjectCreate,
+            TaskCreate,
+            TaskControl,
+            TaskReceipt,
+            TaskView,
             PasskeyLabelCommand,
             PasskeyMutationReceipt,
             OperationReceipt,

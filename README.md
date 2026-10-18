@@ -1,8 +1,8 @@
 # Journeon
 
-Journeon is being developed as a service-owned project environment. This source-tree foundation implements one internal Project-create command with transactional authorization, persistence and receipt reconciliation. It is an early development slice, not an operational installation or release candidate.
+Journeon is being developed as a service-owned project environment. This source-tree foundation implements internal Project creation, passkey labeling and local Task lifecycle commands with transactional authorization, persistence and receipt reconciliation. It is an early development slice, not an operational installation or release candidate.
 
-The FastAPI authentication dependency denies access unless explicitly configured with a canonical HTTPS origin and a valid durable session. Session primitives validate opaque cookies, CSRF, expiry and revocation; explicitly configured passkey ceremonies can issue sessions after WebAuthn verification. Bootstrap requires a secret prepared through trusted local administration. Protected confirmations, passkey management, recovery, provider approval editing and grant administration remain dependencies for a usable application.
+The FastAPI authentication dependency denies access unless explicitly configured with a canonical HTTPS origin and a valid durable session. Session primitives validate opaque cookies, CSRF, expiry and revocation; explicitly configured passkey ceremonies can issue sessions after WebAuthn verification. Bootstrap requires a secret prepared through trusted local administration. Complete protected-confirmation interfaces, passkey management, recovery, provider approval editing and grant administration remain dependencies for a usable application.
 
 ## Verify this slice
 
@@ -32,7 +32,7 @@ The [local runtime guide](docs/runtime.md) describes the explicit TLS launcher a
 
 `ProjectService.create` owns Project registration. The command accepts a name, description, idempotency key, expected deployment-policy revision and an inheritance/narrowing choice. It creates no files, Git repository, graph, provider request, implicit verification policy or automatic sharing grant. Environment-owned instruction authority is represented by a stable reference; instruction editing is a later operation.
 
-Creation requires a current durable session, a current enabled Owner and two explicit deployment grants: `project.create` and `project.receipt.read`. The receipt grant authorizes the normal creation response without inventing a grant for a Project that does not yet exist. It does not authorize general Project reads. Shared-user creation is outside this slice.
+Creation requires a current durable session, a current enabled Owner and two explicit deployment grants: `project.create` and `project.receipt.read`. The receipt grant authorizes the normal creation response without inventing a grant for a Project that does not yet exist. It does not authorize general Project reads. Shared-user Project creation is outside this slice.
 
 An existing receipt requires its original actor, a current durable session, a current matching authorization epoch and a current deployment or exact-Project `project.receipt.read` grant. A retry does not need a fresh creation grant. The stored provider allowance is explicitly a **historical creation snapshot**; neither it nor a receipt permits current provider egress. Future egress must re-evaluate current setup approval and Project narrowing.
 
@@ -49,3 +49,34 @@ Owned code is AGPL-3.0-only; see [LICENSE](LICENSE). The platform-specific Pytho
 ## Traceability
 
 Planning, approval and source records are maintained separately. This bounded implementation does not establish completion of the wider milestone.
+
+## Local Work transactions
+
+The authenticated API supports `POST /api/v1/tasks`, `GET /api/v1/tasks/{task_id}`,
+and `POST /api/v1/tasks/pause`, `/resume`, and `/cancel`. Task creation records an
+objective, optional user success conditions, an inherited Project verification-policy
+reference with its Project revision, and explicit human or unassigned responsibility.
+A human assignment names the authenticated creator. Creation does not require a Bot
+or start execution. New Tasks remain in `BACKLOG`.
+
+Each action requires its own current deployment or exact-Project grant:
+`task.create`, `task.pause`, `task.resume`, or `task.cancel`. Mutations also require
+`task.read` and `task.receipt.read`; reads require `task.read`. Both Owners and Shared
+Users use these same checks. Receipt lookup is restricted to the original actor with
+current read and receipt grants. An identical command retry additionally requires the
+current action grant and returns the original receipt; changed input under that key
+conflicts. Controls require the current Task revision.
+
+Pause prevents future admission and preserves active `RUNNING`/`REVIEW` and existing
+`BLOCKED` states; other nonterminal states become `WAITING`. Resume rechecks Project
+policy and dependencies and preserves existing blockers. A missing verification policy
+blocks continuation. Otherwise unresolved dependencies remain waiting and a locally
+registered Task returns to `BACKLOG`, without claiming route or execution admission.
+Cancel records `CANCELLED` and denies subsequent continuation controls. Terminal Tasks
+cannot be reopened through these commands. Historical receipts remain historical.
+
+Task changes, typed receipts and versioned event payloads commit in one transaction.
+Migration `0006_work` preserves prior Project/passkey operations and the event sequence
+allocation ceiling, including pruned sequence numbers. Event delivery, replay cursors,
+restore-incarnation invalidation, execution, Attempts, Jobs, review, completion evidence,
+Bot assignment and operational Work UI remain unavailable in this increment.

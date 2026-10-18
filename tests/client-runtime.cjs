@@ -37,6 +37,22 @@ async function main() {
   assert.equal(calls[5].init.headers["X-CSRF-Token"], "synthetic-csrf");
   assert.equal(calls[5].init.credentials, "same-origin");
   assert.deepEqual(JSON.parse(calls[5].init.body), label);
+  const task = {schema_version: 1, idempotency_key: "task-fixture", project_id: "project-fixture",
+    expected_project_revision: 1, objective: "Check result", responsibility: "UNASSIGNED"};
+  assert.deepEqual(await client.createTask(task, "synthetic-csrf"), receipt);
+  await client.getTask("encoded/task");
+  const control = {schema_version: 1, idempotency_key: "control-fixture", task_id: "task-fixture",
+    expected_revision: 1, reason: "Human requested control"};
+  for (const action of ["pause", "resume", "cancel"]) {
+    assert.deepEqual(await client[`${action}Task`](control, "synthetic-csrf"), receipt);
+  }
+  assert.deepEqual(calls.slice(6).map(call => call.url), ["/api/v1/tasks", "/api/v1/tasks/encoded%2Ftask",
+    "/api/v1/tasks/pause", "/api/v1/tasks/resume", "/api/v1/tasks/cancel"]);
+  for (const call of [calls[6], ...calls.slice(8)]) {
+    assert.equal(call.init.credentials, "same-origin");
+    assert.equal(call.init.method, "POST");
+    assert.equal(call.init.headers["X-CSRF-Token"], "synthetic-csrf");
+  }
   const denied = new JourneonClient("", async () => new Response(
     JSON.stringify({code: "PERMISSION_DENIED"}), {status: 403},
   ));

@@ -4,7 +4,7 @@ The current local source-tree checks use CPython 3.12.15, SQLite through Python'
 
 | Check | Evidence and boundary |
 | --- | --- |
-| Python tests | 142 passing tests; temporary file DBs, independent connections and real subprocess termination |
+| Python tests | 149 passing tests; temporary file DBs, independent connections and real subprocess termination |
 | Crash consistency | Termination after Project, receipt or outbox insertion, before commit, and after commit with response lost; reopen, retry, integrity and FK checks |
 | Race behavior | Concurrent duplicate requests create one Project/receipt/event; a waiting command sees committed grant revocation or policy revision change |
 | Authority | Current Owner/epoch, exact grants, receipt-only access, revoked replay, separate creation/receipt authority, actor-bound receipts and no implicit share grants. Lookup and retry deny revoked, expired or mismatched grants before decoding receipt JSON; a different current Owner cannot distinguish a damaged receipt from a missing one. |
@@ -12,7 +12,7 @@ The current local source-tree checks use CPython 3.12.15, SQLite through Python'
 | API | Default auth denial despite forged headers; explicit HTTPS-origin session binding rejects missing/wrong CSRF and hostile origins. Tests seed sessions through trusted internal primitives; no login ceremony is implemented. Strict DTOs, stable sanitized errors and bounded chunked bodies remain enforced. |
 | Migrations | Explicit empty-file upgrade, additive session migration preserving existing Owner/Project records, repeatable upgrade, model/schema comparison, no bootstrap identities and rejection of unknown/missing migration heads |
 | Contracts | Checked-in OpenAPI/JSON schemas/client match current generation; strict TypeScript compile and synthetic fetch transport/error tests. The API and generated OpenAPI read the version from `pyproject.toml`; a metadata-change regression prevents drift. |
-| Sessions | Hashed opaque tokens, finite independent deadlines, non-sliding polling, current principal epochs, rotation and rollback, own/Owner revocation and inventory, restart persistence, clock rollback denial and expiration at final Project commit. Revoked sessions cannot access retries or receipts. |
+| Sessions | Hashed opaque tokens, finite independent deadlines, non-sliding polling, current principal epochs, rotation and rollback, own/Owner revocation and inventory, restart persistence, clock rollback denial across rejected transactions and restart, and expiration at final Project commit. Revoked sessions cannot access retries or receipts. |
 | Static checks | Ruff lint/format and strict mypy for production code and tools |
 | Dependency reproducibility | The aarch64 SHA-256 lock installs offline from downloaded wheels into a separate empty venv; `pip check` passes. The earlier x86_64 lock and inventory remain unchanged. |
 | Advisory checks | Earlier snapshot: 30 Python distributions, zero skips and zero reported advisories using pip-audit 2.10.1; npm lock audit reported zero vulnerabilities. Dependency versions remain unchanged. Advisory services were not rechecked for these repairs; earlier results are point-in-time evidence, not a security certification. |

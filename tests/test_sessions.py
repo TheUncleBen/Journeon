@@ -357,3 +357,114 @@ def test_rotation_cannot_cross_absolute_deadline(database, clock, monkeypatch):
     monkeypatch.setattr(sessions, "utc_seconds", lambda: next(times))
     with pytest.raises(DomainError), transaction(engine) as db:
         rotate_session(db, issued.session_id, strong=True)
+
+
+def test_rotation_expiry_observation_survives_rollback(database, clock, monkeypatch):
+    engine, _ = database
+    issued = issue(engine, policy=SessionPolicy(10, 100, 5))
+    times = iter([2000000009, 2000000010])
+    monkeypatch.setattr(sessions, "utc_seconds", lambda: next(times))
+    with pytest.raises(DomainError), transaction(engine) as db:
+        rotate_session(db, issued.session_id, strong=True)
+    monkeypatch.setattr(sessions, "utc_seconds", lambda: 2000000009)
+    with pytest.raises(DomainError), transaction(engine) as db:
+        current_session(db, issued.session_id)
+
+
+def test_observed_expiry_cannot_be_reversed_after_denied_transaction_and_restart(database, clock):
+    engine, path = database
+    issued = issue(engine, policy=SessionPolicy(100, 100, 5))
+    clock[0] += 100
+    with pytest.raises(DomainError), transaction(engine) as db:
+        current_session(db, issued.session_id)
+    engine.dispose()
+    clock[0] -= 50
+    reopened = create_database(path)
+    try:
+        with pytest.raises(DomainError), transaction(reopened) as db:
+            current_session(db, issued.session_id)
+    finally:
+        reopened.dispose()
+
+
+def test_handled_authentication_denial_retains_clock_observation(database, clock):
+    engine, _ = database
+    issued = issue(engine, policy=SessionPolicy(100, 100, 5))
+    clock[0] += 100
+    with transaction(engine) as db:
+        with pytest.raises(DomainError):
+            current_session(db, issued.session_id)
+    clock[0] -= 50
+    with pytest.raises(DomainError), transaction(engine) as db:
+        current_session(db, issued.session_id)
+    with transaction(engine) as db:
+        assert db.get(BrowserSession, issued.session_id).last_observed == 2000000100
+
+
+def test_handled_denial_cannot_revalidate_after_clock_rollback_in_same_transaction(database, clock):
+    engine, _ = database
+    issued = issue(engine, policy=SessionPolicy(100, 100, 5))
+    with transaction(engine) as db:
+        clock[0] += 100
+        with pytest.raises(DomainError):
+            current_session(db, issued.session_id)
+        clock[0] -= 50
+        with pytest.raises(DomainError):
+            current_session(db, issued.session_id)
+    with transaction(engine) as db:
+        assert db.get(BrowserSession, issued.session_id).last_observed == 2000000100
+
+
+def test_rotation_rejects_clock_rollback_between_validation_and_issuance(
+    database, clock, monkeypatch
+):
+    engine, _ = database
+    issued = issue(engine)
+    times = iter([2000000010, 2000000001])
+    monkeypatch.setattr(sessions, "utc_seconds", lambda: next(times))
+    with pytest.raises(DomainError), transaction(engine) as db:
+        rotate_session(db, issued.session_id, strong=True)
+
+
+def test_failed_flush_rolls_back_domain_but_commits_observed_clock(database, clock):
+    from sqlalchemy.exc import IntegrityError
+
+    engine, _ = database
+    issued = issue(engine)
+    clock[0] += 50
+    with pytest.raises(IntegrityError), transaction(engine) as db:
+        current_session(db, issued.session_id)
+        db.add(Principal(id="second-owner", role="OWNER", enabled=True, authorization_epoch=1))
+        db.flush()
+    with transaction(engine) as db:
+        assert db.get(Principal, "second-owner") is None
+        assert db.get(BrowserSession, issued.session_id).last_observed == 2000000050
+
+
+def test_denied_transaction_retains_writer_lock_until_clock_fence_commits(database, clock):
+    import sqlite3
+
+    from sqlalchemy import event
+
+    engine, path = database
+    issued = issue(engine, policy=SessionPolicy(100, 100, 5))
+    checked = []
+
+    def after_domain_rollback(connection, cursor, statement, parameters, context, executemany):
+        if statement.startswith("ROLLBACK TO SAVEPOINT"):
+            with sqlite3.connect(path, timeout=0) as contender:
+                with pytest.raises(sqlite3.OperationalError, match="locked"):
+                    contender.execute("BEGIN IMMEDIATE")
+            checked.append(True)
+
+    clock[0] += 100
+    event.listen(engine, "after_cursor_execute", after_domain_rollback)
+    try:
+        with pytest.raises(DomainError), transaction(engine) as db:
+            current_session(db, issued.session_id)
+    finally:
+        event.remove(engine, "after_cursor_execute", after_domain_rollback)
+    assert checked == [True]
+    clock[0] -= 50
+    with pytest.raises(DomainError), transaction(engine) as db:
+        current_session(db, issued.session_id)

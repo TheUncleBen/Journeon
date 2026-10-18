@@ -110,6 +110,12 @@ def current_session(
     now = utc_seconds()
     if record is None:
         raise denied()
+    observations = session.info.get("session_clock_observations")
+    if observations is None:
+        raise DomainError(
+            "DEPENDENCY_UNAVAILABLE", "Session validation requires a service transaction"
+        )
+    observations[record.id] = max(observations.get(record.id, 0), now)
     principal = session.get(Principal, record.principal_id, populate_existing=True)
     if (
         record.revoked
@@ -119,6 +125,7 @@ def current_session(
         or (principal_id is not None and record.principal_id != principal_id)
         or (principal_epoch is not None and record.principal_epoch != principal_epoch)
         or now < record.last_observed
+        or now < observations[record.id]
         or now < record.issued_at
         or now >= record.absolute_deadline
         or now >= record.last_activity + record.inactivity_seconds
@@ -173,7 +180,9 @@ def rotate_session(session: Session, session_id: str, *, strong: bool) -> Issued
     )
     new = session.get(BrowserSession, replacement.session_id)
     assert new is not None
-    if new.issued_at >= old.absolute_deadline:
+    observations = session.info["session_clock_observations"]
+    observations[old.id] = max(observations[old.id], new.issued_at)
+    if new.issued_at < old.last_observed or new.issued_at >= old.absolute_deadline:
         raise denied()
     new.absolute_deadline = old.absolute_deadline
     old.revoked = True

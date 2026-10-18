@@ -4,15 +4,18 @@
 Stop the application before migration. Snapshots contain only the SQLite database,
 not external files or recovery credentials, and are not a complete deployment backup.
 Failed operations preserve partial output for inspection; they never restore automatically.
-Live WAL diagnostics require an explicit snapshot and do not certify service readiness.
+Doctor reports copied-byte observations, never live-health approval.
+Live WAL diagnostics require an explicit coherent snapshot.
 """
 
 import argparse
 import hashlib
 import json
 import os
+import shutil
 import sqlite3
 import stat
+import tempfile
 import time
 from contextlib import closing
 from pathlib import Path
@@ -53,36 +56,54 @@ def _metadata(connection: sqlite3.Connection) -> dict[str, Any]:
 
 
 def doctor(path: Path) -> dict[str, str]:
-    """Inspect without opening WAL databases or changing database journal settings."""
+    """Inspect private copied bytes without giving the source path to SQLite."""
     try:
         _regular(path)
-        with path.open("rb") as stream:
-            header = stream.read(100)
-        if len(header) != 100 or header[:16] != b"SQLite format 3\x00":
-            raise ValueError("Invalid database header")
-        if header[18:20] != b"\x01\x01":
-            return {
-                "status": "WARN",
-                "schema": "NOT_ASSESSED",
-                "detail": "WAL database requires an explicit coherent snapshot for validation",
-            }
-        # Refuse a live rollback journal rather than attempting recovery during diagnosis.
-        if Path(str(path) + "-journal").exists():
-            return {
-                "status": "WARN",
-                "schema": "NOT_ASSESSED",
-                "detail": "Database journal requires operational recovery assessment",
-            }
-        with closing(_connect(path)) as connection:
-            connection.execute("BEGIN")
-            metadata = _metadata(connection)
-        current = metadata["schema"] == SCHEMA_REVISION and set(Base.metadata.tables) <= set(
+        with tempfile.TemporaryDirectory(prefix="journeon-doctor-") as directory:
+            copied = Path(directory) / "observed.sqlite"
+            with path.open("rb") as source, copied.open("xb") as target:
+                before = os.fstat(source.fileno())
+                shutil.copyfileobj(source, target)
+                after = os.fstat(source.fileno())
+            current = path.lstat()
+            fields = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
+            if any(
+                getattr(before, field) != getattr(observed, field)
+                for observed in (after, current)
+                for field in fields
+            ):
+                return {
+                    "status": "WARN",
+                    "schema": "NOT_ASSESSED",
+                    "detail": (
+                        "Database changed during observation; no coherent assessment is available"
+                    ),
+                }
+            with copied.open("rb") as stream:
+                header = stream.read(100)
+            if len(header) != 100 or header[:16] != b"SQLite format 3\x00":
+                raise ValueError("Invalid database header")
+            if header[18:20] != b"\x01\x01" or any(
+                Path(str(path) + suffix).exists() for suffix in ("-wal", "-journal")
+            ):
+                return {
+                    "status": "WARN",
+                    "schema": "NOT_ASSESSED",
+                    "detail": "Journal state requires an explicit coherent snapshot for validation",
+                }
+            with closing(_connect(copied)) as connection:
+                metadata = _metadata(connection)
+        compatible = metadata["schema"] == SCHEMA_REVISION and set(Base.metadata.tables) <= set(
             metadata["tables"]
         )
         return {
-            "status": "PASS" if current else "FAIL",
-            "schema": "CURRENT" if current else "INCOMPATIBLE",
-            "detail": "Database integrity and schema checked; authentication is not assessed",
+            "status": "INFO" if compatible else "FAIL",
+            "schema": "CURRENT" if compatible else "INCOMPATIBLE",
+            "scope": "COPIED_BYTES_ONLY",
+            "detail": (
+                "Copied-byte integrity and schema observed; "
+                "live consistency and service health are not assessed"
+            ),
         }
     except (OSError, ValueError, sqlite3.Error):
         return {
@@ -233,7 +254,7 @@ def main() -> int:
         if args.json
         else "\n".join(f"{k}: {v}" for k, v in result.items())
     )
-    return 0 if result.get("status", "PASS") == "PASS" else 1
+    return 0 if result.get("status", "PASS") in {"PASS", "INFO"} else 1
 
 
 if __name__ == "__main__":

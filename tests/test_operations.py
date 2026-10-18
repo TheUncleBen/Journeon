@@ -265,3 +265,124 @@ def test_snapshot_syncs_new_directory_entry_before_success(database, tmp_path, m
     ):
         info = path.stat()
         assert (info.st_dev, info.st_ino) in synced
+
+
+def test_doctor_journal_transition_never_opens_source_with_sqlite(tmp_path, monkeypatch):
+    from journeon import operations
+
+    path = tmp_path / "source.sqlite"
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE alembic_version (version_num TEXT)")
+        connection.execute("INSERT INTO alembic_version VALUES ('old')")
+    original = operations._connect
+    opened = []
+
+    def transition(target):
+        connection = sqlite3.connect(path)
+        assert connection.execute("PRAGMA journal_mode=WAL").fetchone() == ("wal",)
+        connection.close()
+        opened.append(target)
+        return original(target)
+
+    monkeypatch.setattr(operations, "_connect", transition)
+    result = doctor(path)
+    assert path not in opened
+    assert not Path(str(path) + "-wal").exists()
+    assert not Path(str(path) + "-shm").exists()
+    assert result["status"] != "PASS"
+
+
+def test_doctor_success_is_observation_not_live_health(database, tmp_path):
+    destination = tmp_path / "snapshot"
+    snapshot_database(database[1], destination)
+    result = doctor(destination / "database.sqlite")
+    assert result["status"] == "INFO"
+    assert result["scope"] == "COPIED_BYTES_ONLY"
+    assert result["schema"] == "CURRENT"
+
+
+@pytest.mark.parametrize("failure", ["copy", "sqlite"])
+def test_doctor_private_copy_is_cleaned_and_errors_redacted(tmp_path, monkeypatch, failure):
+    import shutil
+    import tempfile
+
+    from journeon import operations
+
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(scratch))
+    path = tmp_path / "source.sqlite"
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE sample (id INTEGER)")
+    before = path.read_bytes()
+
+    def fail(*args, **kwargs):
+        raise OSError("private diagnostic value")
+
+    monkeypatch.setattr(shutil, "copyfileobj", fail) if failure == "copy" else monkeypatch.setattr(
+        operations, "_metadata", fail
+    )
+    result = doctor(path)
+    assert result["status"] == "FAIL"
+    assert "private diagnostic value" not in str(result)
+    assert list(scratch.iterdir()) == []
+    assert path.read_bytes() == before
+
+
+def test_doctor_detects_source_replacement_during_copy(tmp_path, monkeypatch):
+    import shutil
+
+    path = tmp_path / "source.sqlite"
+    replacement = tmp_path / "replacement.sqlite"
+    for target in (path, replacement):
+        with sqlite3.connect(target) as connection:
+            connection.execute("CREATE TABLE sample (id INTEGER)")
+    original = shutil.copyfileobj
+
+    def replace(source, target, *args, **kwargs):
+        original(source, target, *args, **kwargs)
+        replacement.replace(path)
+
+    monkeypatch.setattr(shutil, "copyfileobj", replace)
+    result = doctor(path)
+    assert result["status"] == "WARN"
+    assert result["schema"] == "NOT_ASSESSED"
+
+
+def test_doctor_rejects_symlink_without_opening_target(tmp_path, monkeypatch):
+    from journeon import operations
+
+    target = tmp_path / "target"
+    target.write_bytes(b"private bytes")
+    path = tmp_path / "alias"
+    path.symlink_to(target)
+
+    def forbidden(*args):
+        pytest.fail("Doctor must not open the original path with SQLite")
+
+    monkeypatch.setattr(operations, "_connect", forbidden)
+    before = tree_bytes(tmp_path)
+    assert doctor(path)["status"] == "FAIL"
+    assert tree_bytes(tmp_path) == before
+
+
+def test_doctor_source_disappears_during_copy_cleans_temporary_files(tmp_path, monkeypatch):
+    import shutil
+    import tempfile
+
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(scratch))
+    path = tmp_path / "source.sqlite"
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE sample (id INTEGER)")
+    original = shutil.copyfileobj
+
+    def remove(source, target, *args, **kwargs):
+        original(source, target, *args, **kwargs)
+        path.unlink()
+
+    monkeypatch.setattr(shutil, "copyfileobj", remove)
+    assert doctor(path)["status"] == "FAIL"
+    assert list(scratch.iterdir()) == []
+    assert not path.exists()

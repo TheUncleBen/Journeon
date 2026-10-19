@@ -97,6 +97,14 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         from journeon.agents import authorized_configuration_receipt
 
         return authorized_configuration_receipt(db, actor, row)
+    if row.owner == "work" and row.target_kind == "execution":
+        from journeon.executions import execution_receipt
+
+        return execution_receipt(db, actor, row)
+    if row.owner == "work" and row.target_kind == "attempt":
+        from journeon.attempts import authorized_attempt_receipt
+
+        return authorized_attempt_receipt(db, actor, row)
     if row.owner == "work":
         return authorized_work_receipt(db, actor, row)
     if row.command == "project.verification.configure.v1" and row.owner == "projects":
@@ -125,6 +133,36 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored operation owner is unsupported")
 
 
+def check_receipt_configuration(
+    db: Session,
+    actor: AuthenticatedContext,
+    row: Receipt,
+    engine: Engine,
+    configuration: InstructionConfiguration | None,
+) -> None:
+    if row.owner == "work" and row.target_kind == "execution":
+        from journeon.executions import ExecutionService, authorized_execution
+
+        execution = authorized_execution(db, actor, row.target_id)
+        ExecutionService(engine, configuration).check_configuration(db, actor, execution)
+    if row.owner == "work" and row.target_kind == "attempt":
+        from journeon.attempts import AttemptService, authorized_attempt
+
+        attempt = authorized_attempt(db, actor, row.target_id)
+        AttemptService(engine, configuration).check_configuration(db, attempt)
+    if (
+        configuration is not None
+        and row.principal_id == actor.principal_id
+        and row.project_id is not None
+        and row.owner in {"instructions", "project_instructions"}
+    ):
+        from journeon.models import ProjectInstructionBinding
+        from journeon.project_instructions import ProjectInstructionService
+
+        if db.get(ProjectInstructionBinding, row.project_id) is not None:
+            ProjectInstructionService(engine, configuration).binding(db, actor, row.project_id)
+
+
 class OperationService:
     def __init__(
         self, engine: Engine, configuration: InstructionConfiguration | None = None
@@ -145,19 +183,7 @@ class OperationService:
                 row = db.get(Receipt, operation_id, options=[defer(Receipt.result)])
                 if row is None:
                     raise DomainError("NOT_FOUND", "Operation is unavailable")
-                if (
-                    self.configuration is not None
-                    and row.principal_id == actor.principal_id
-                    and row.project_id is not None
-                    and row.owner in {"instructions", "project_instructions"}
-                ):
-                    from journeon.models import ProjectInstructionBinding
-                    from journeon.project_instructions import ProjectInstructionService
-
-                    if db.get(ProjectInstructionBinding, row.project_id) is not None:
-                        ProjectInstructionService(self.engine, self.configuration).binding(
-                            db, actor, row.project_id
-                        )
+                check_receipt_configuration(db, actor, row, self.engine, self.configuration)
                 return authorized_receipt(db, actor, row)
         except (ValidationError, json.JSONDecodeError):
             raise DomainError(

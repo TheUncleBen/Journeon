@@ -122,7 +122,8 @@ class Receipt(Base):
             " NOT NULL "
             "AND target_id = project_id) OR (owner = 'identity' AND target_kin"
             "d = 'passkey' "
-            "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
+            "AND project_id IS NULL) OR (owner = 'work' AND target_k"
+            "ind IN ('task','attempt','execution') "
             "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
             "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
             "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
@@ -170,7 +171,8 @@ class OutboxEvent(Base):
             " NOT NULL "
             "AND target_id = project_id) OR (owner = 'identity' AND target_kin"
             "d = 'passkey' "
-            "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
+            "AND project_id IS NULL) OR (owner = 'work' AND target_k"
+            "ind IN ('task','attempt','execution') "
             "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
             "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
             "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
@@ -761,3 +763,120 @@ class TaskRevision(Base):
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
     operation_id: Mapped[str | None] = mapped_column(ForeignKey("operation_receipts.id"))
     __table_args__ = (CheckConstraint("revision >= 1", name="task_history_revision"),)
+
+
+class Attempt(Base):
+    __tablename__ = "attempts"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), index=True)
+    root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"))
+    root_revision: Mapped[int] = mapped_column(Integer)
+    workspace_key: Mapped[str] = mapped_column(String(128))
+    workspace_revision: Mapped[int] = mapped_column(Integer)
+    configuration_revision: Mapped[int] = mapped_column(Integer)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    authentication_ref: Mapped[str] = mapped_column(String(128))
+    principal_epoch: Mapped[int] = mapped_column(Integer)
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    revision: Mapped[int] = mapped_column(Integer)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    inputs: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint("principal_id", "idempotency_key", name="attempt_identity"),
+        CheckConstraint(
+            "revision >= 1 AND principal_epoch >= 1 AND root_revisio"
+            "n >= 1 AND workspace_revision >= 1 AND configuration_re"
+            "vision >= 1",
+            name="attempt_revision",
+        ),
+    )
+
+
+class AttemptManifest(Base):
+    __tablename__ = "attempt_manifests"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("attempts.id"), unique=True)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class AttemptEffect(Base):
+    __tablename__ = "attempt_effects"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("attempts.id"), index=True)
+    fence: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(String(30))
+    state: Mapped[str] = mapped_column(String(30))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        CheckConstraint("fence >= 1", name="attempt_effect_fence"),
+        CheckConstraint("state IN ('PREPARED','APPLIED','UNKNOWN')", name="attempt_effect_state"),
+    )
+
+
+class WorkspaceLease(Base):
+    __tablename__ = "workspace_leases"
+    root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"), primary_key=True)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("attempts.id"))
+    fence: Mapped[int] = mapped_column(Integer)
+    deadline: Mapped[str] = mapped_column(String(40))
+    __table_args__ = (CheckConstraint("fence >= 1", name="workspace_lease_fence"),)
+
+
+class Execution(Base):
+    __tablename__ = "executions"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"))
+    root_revision: Mapped[int] = mapped_column(Integer)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    authentication_ref: Mapped[str] = mapped_column(String(128))
+    principal_epoch: Mapped[int] = mapped_column(Integer)
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    revision: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(30))
+    drained: Mapped[bool] = mapped_column(Boolean)
+    memory_bytes: Mapped[int] = mapped_column(Integer)
+    storage_bytes: Mapped[int] = mapped_column(Integer)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    inputs: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint("principal_id", "idempotency_key", name="execution_identity"),
+        CheckConstraint(
+            "revision >= 1 AND principal_epoch >= 1 AND root_revision >= 1",
+            name="execution_revision",
+        ),
+        CheckConstraint("memory_bytes > 0 AND storage_bytes > 0", name="execution_resources"),
+        CheckConstraint(
+            "state IN ('STARTING','RUNNING','COMPLETED','CANCELLED','UNKNOWN')",
+            name="execution_state",
+        ),
+    )
+
+
+class ExecutionManifest(Base):
+    __tablename__ = "execution_manifests"
+    execution_id: Mapped[str] = mapped_column(ForeignKey("executions.id"), primary_key=True)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class ExecutionEffect(Base):
+    __tablename__ = "execution_effects"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    execution_id: Mapped[str] = mapped_column(ForeignKey("executions.id"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(String(30))
+    observation: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint("execution_id", "revision", "kind", name="execution_effect_identity"),
+        CheckConstraint("revision >= 1", name="execution_effect_revision"),
+        CheckConstraint(
+            "kind IN ('INTENT','INPUT_BOUND','PREPARING','START_REQUESTED',"
+            "'STARTED','COMPLETED','UNKNOWN','RECONCILED')",
+            name="execution_effect_kind",
+        ),
+    )

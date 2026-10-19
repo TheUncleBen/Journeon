@@ -30,7 +30,16 @@ def populated_0009(request):
     return engine, path, receipts, retained
 
 
-@pytest.mark.parametrize("boundary", [None, "CREATE TABLE jobs", "INSERT INTO operation_receipts"])
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        None,
+        "CREATE TABLE jobs",
+        "INSERT INTO operation_receipts",
+        "CREATE TABLE attempts",
+        "CREATE TABLE execution_manifests",
+    ],
+)
 def test_populated_0009_upgrade_and_crash_preserve_canonical_rows(populated_0009, boundary):
     engine, path, receipts, retained = populated_0009
     if boundary is not None:
@@ -63,6 +72,7 @@ upgrade(engine)
     with engine.begin() as db:
         for name, rows in retained.items():
             assert db.exec_driver_sql(f'SELECT * FROM "{name}"').all() == rows
+        assert db.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         assert (
             db.exec_driver_sql(
@@ -89,6 +99,50 @@ def test_all_pruned_event_sequence_ceiling_is_preserved(populated_0009):
         db.exec_driver_sql("DELETE FROM outbox_events")
     upgrade(engine)
     with engine.begin() as db:
+        assert (
+            db.exec_driver_sql(
+                "SELECT seq FROM sqlite_sequence WHERE name='outbox_events'"
+            ).scalar()
+            == 900
+        )
+
+
+@pytest.mark.parametrize("crash", [False, True])
+def test_populated_task_history_receipt_references_survive_upgrade(populated_0009, crash):
+    engine, path, _, _ = populated_0009
+    with engine.begin() as db:
+        config = configuration()
+        config.attributes["connection"] = db
+        command.upgrade(config, "0011_task_admission")
+        db.exec_driver_sql(
+            "UPDATE task_revisions SET operation_id=(SELECT id FROM operation_receipts LIMIT 1)"
+        )
+        retained = db.exec_driver_sql("SELECT * FROM task_revisions").all()
+        assert retained and all(row.operation_id for row in retained)
+    if crash:
+        script = """import os,sys
+from pathlib import Path
+from sqlalchemy import event
+from journeon.database import create_database
+from journeon.migrate import upgrade
+engine=create_database(Path(sys.argv[1]))
+def interrupt(conn,cursor,statement,parameters,context,many):
+    if statement.startswith('UPDATE task_revisions SET operation_id=NULL'): os._exit(79)
+event.listen(engine,'after_cursor_execute',interrupt)
+upgrade(engine)
+"""
+        result = subprocess.run([sys.executable, "-c", script, str(path)], timeout=30)
+        assert result.returncode == 79
+        with engine.begin() as db:
+            assert db.exec_driver_sql("SELECT * FROM task_revisions").all() == retained
+            assert db.exec_driver_sql("SELECT version_num FROM alembic_version").scalar() == (
+                "0011_task_admission"
+            )
+    upgrade(engine)
+    with engine.begin() as db:
+        assert db.exec_driver_sql("SELECT * FROM task_revisions").all() == retained
+        assert db.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
+        assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         assert (
             db.exec_driver_sql(
                 "SELECT seq FROM sqlite_sequence WHERE name='outbox_events'"

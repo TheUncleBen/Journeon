@@ -17,6 +17,38 @@ export type AdmissionDecision = {
   "workflow_revision": number;
 };
 
+export type AttemptPrepare = {
+  "expected_policy_revision": number;
+  "idempotency_key": string;
+  "origin": TaskAttemptOrigin | JobAttemptOrigin;
+  "previous_attempt_id"?: string | null;
+  "project_id": string;
+  "schema_version": 1;
+  "workspace_key": string;
+  "workspace_revision": number;
+};
+
+export type AttemptReceipt = {
+  "attempt": AttemptView;
+  "command"?: "attempt.prepare.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "schema_version"?: 1;
+};
+
+export type AttemptView = {
+  "attempt_id": string;
+  "created_at": string;
+  "execution_authorized"?: false;
+  "manifest": RunManifest | null;
+  "origin": TaskAttemptOrigin | JobAttemptOrigin;
+  "preparation_operation_id": string;
+  "project_id": string;
+  "revision": number;
+  "state": "PREPARING" | "PREPARED" | "RECOVERY_REQUIRED";
+};
+
 export type AttentionList = Array<AttentionView>;
 
 export type AttentionView = {
@@ -172,6 +204,22 @@ export type CandidateView = {
   "tree_hash": string;
 };
 
+export type ChangeSetSnapshot = {
+  "base_commit": string | null;
+  "binary_diff_hash": string | null;
+  "byte_count": number;
+  "deleted": Array<string>;
+  "head": string | null;
+  "index": Array<IndexEntry>;
+  "index_hash": string;
+  "kind": "GIT" | "DIRECTORY";
+  "snapshot_hash": string;
+  "submodules": Record<string, string>;
+  "untracked": Array<string>;
+  "working": Array<SourceEntry>;
+  "working_hash": string;
+};
+
 export type ComponentRef = {
   "asset_id": string;
   "content_hash": string;
@@ -188,6 +236,20 @@ export type ConfigurationReceipt = {
   "schema_version"?: 1;
   "target_id": string;
   "target_kind": "profile" | "bot" | "team" | "instruction_bundle";
+};
+
+export type DeterministicInstructionBundle = {
+  "bundle_id": string;
+  "byte_count": number;
+  "components": Array<ComponentRef>;
+  "content_digest": string;
+  "initiating_principal_id": string;
+  "kind"?: "DETERMINISTIC";
+  "production": ProductionInstructionProvenance;
+  "project_id": string;
+  "rendering": string;
+  "task_id": string;
+  "task_revision": number;
 };
 
 export type Document = {
@@ -253,6 +315,69 @@ export type ExactConfirmation = {
   "request_id": string;
 };
 
+export type ExecutionArtifact = {
+  "byte_count": number;
+  "data": string;
+  "path": string;
+  "sha256": string;
+};
+
+export type ExecutionCompletion = {
+  "artifacts": Array<ExecutionArtifact>;
+  "drained": boolean;
+  "exit_code": number;
+  "kind"?: "RESULT";
+  "output_bytes": number;
+  "reason": "EXITED" | "AUTHORITY_EXPIRED" | "CANCELLED" | "CONTROLLER_LOST" | "OUTPUT_LIMIT" | "DRAIN_INCOMPLETE" | "ARTIFACT_LIMIT" | "ARTIFACT_UNAVAILABLE";
+};
+
+export type ExecutionOutput = {
+  "data": string;
+  "kind"?: "OUTPUT";
+  "stream": "stdout" | "stderr";
+};
+
+export type ExecutionReceipt = {
+  "command": "execution.start.v1" | "execution.stop.v1";
+  "committed_at": string;
+  "execution": ExecutionView;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "schema_version"?: 1;
+};
+
+export type ExecutionView = {
+  "authentication_ref": string;
+  "check_id": string;
+  "completion"?: ExecutionCompletion | null;
+  "containment"?: Record<string, string>;
+  "created_at": string;
+  "drained"?: boolean;
+  "evidence_digest"?: string | null;
+  "execution_id": string;
+  "host_fingerprint": string;
+  "initiating_principal_id": string;
+  "invocation_id"?: string | null;
+  "launcher_exit_code"?: number | null;
+  "manifest_digest": string;
+  "manifest_id"?: string | null;
+  "origin"?: "DIRECT_VERIFICATION";
+  "output"?: Array<ExecutionOutput>;
+  "policy_revision": number;
+  "principal_epoch": number;
+  "project_id": string;
+  "revision": number;
+  "root_key": string;
+  "root_revision": number;
+  "route_digest": string;
+  "route_key": string;
+  "route_revision": number;
+  "state": "STARTING" | "RUNNING" | "COMPLETED" | "CANCELLED" | "UNKNOWN";
+  "stop_requested"?: boolean;
+  "unit": string;
+  "verification_passed"?: boolean;
+};
+
 export type HistoryRead = {
   "project_id": string;
   "revision": number;
@@ -270,6 +395,14 @@ export type HistoryView = {
   "required_fragments": Array<string>;
   "revision": number;
   "tree_hash": string;
+};
+
+export type IndexEntry = {
+  "content_hash": string | null;
+  "mode": string;
+  "object_id": string;
+  "path": string;
+  "stage": number;
 };
 
 export type InstructionAccept = {
@@ -381,6 +514,12 @@ export type InstructionView = {
   "selected_refs": Array<DocumentReference>;
   "status": "AVAILABLE" | "DRIFT" | "PENDING" | "REVOKED";
   "tree_hash": string;
+};
+
+export type JobAttemptOrigin = {
+  "job_id": string;
+  "job_revision": number;
+  "kind": "JOB";
 };
 
 export type JobCancel = {
@@ -804,6 +943,38 @@ export type RootRevoke = {
   "root_id": string;
 };
 
+export type RunManifest = {
+  "attempt_id": string;
+  "authentication_ref": string;
+  "content_digest": string;
+  "created_at": string;
+  "initiating_principal_id": string;
+  "instruction_bundle": DeterministicInstructionBundle;
+  "manifest_id": string;
+  "origin": TaskAttemptOrigin | JobAttemptOrigin;
+  "previous_attempt_id": string | null;
+  "principal_epoch": number;
+  "project_id": string;
+  "root_id": string;
+  "root_revision": number;
+  "schema_version"?: 1;
+  "snapshot": ChangeSetSnapshot;
+  "task": TaskView;
+  "verification_policy": VerificationPolicy;
+  "workspace_key": string;
+  "workspace_kind": "GIT" | "DIRECTORY";
+  "workspace_revision": number;
+};
+
+export type SourceEntry = {
+  "byte_count": number;
+  "content_hash": string;
+  "kind": "FILE" | "DIRECTORY" | "SYMLINK";
+  "link_target"?: string | null;
+  "mode": number;
+  "path": string;
+};
+
 export type TaskAdmission = {
   "expected_policy_revision": number;
   "expected_revision": number;
@@ -834,6 +1005,12 @@ export type TaskAssignment = {
   "principal_id": string | null;
   "reason"?: string;
   "responsibility": "HUMAN" | "UNASSIGNED" | "BOT";
+};
+
+export type TaskAttemptOrigin = {
+  "kind": "TASK";
+  "task_id": string;
+  "task_revision": number;
 };
 
 export type TaskControl = {
@@ -1013,7 +1190,7 @@ export type WorkflowTemplates = {
   "templates": Array<WorkflowTemplate>;
 };
 
-export type CanonicalReceipt = VerificationPolicyReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt;
+export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -1232,6 +1409,15 @@ export class JourneonClient {
   admitTask(command: TaskAdmission, csrfToken?: string): Promise<TaskReceipt> {
     return this.request("/api/v1/tasks/admit", {method: "POST", body: JSON.stringify(command),
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  prepareAttempt(command: AttemptPrepare, csrfToken: string): Promise<AttemptReceipt> {
+    return this.request("/api/v1/attempts/prepare", {method: "POST", body: JSON.stringify(command),
+      headers: {"X-CSRF-Token": csrfToken}});
+  }
+
+  getAttempt(attemptId: string): Promise<AttemptView> {
+    return this.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`, {method: "GET"});
   }
 
   configureVerification(command: VerificationPolicyConfigure,

@@ -92,6 +92,8 @@ def test_generation_includes_actual_registry():
         "labelPasskey",
         "createTask",
         "getTask",
+        "prepareAttempt",
+        "getAttempt",
         "pauseTask",
         "resumeTask",
         "cancelTask",

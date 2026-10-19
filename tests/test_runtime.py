@@ -199,6 +199,7 @@ app.state.engine.dispose()
         == tomllib.loads((release / "pyproject.toml").read_text())["project"]["version"]
     )
     assert data["revisions"] == [
+        "0012_attempt_execution",
         "0011_task_admission",
         "0010_work_execution",
         "0009_instruction_scope",
@@ -487,3 +488,18 @@ def test_origin_ports_are_validated_by_all_bindings(settings, database):
             )
         with pytest.raises(ValueError):
             RuntimeConfig.model_validate({**settings, "origin": origin})
+
+
+def test_runtime_owns_execution_reconciliation_and_drain(settings, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from journeon.executions import ExecutionService
+
+    events = []
+    monkeypatch.setattr(ExecutionService, "reconcile", lambda self: events.append("reconciled"))
+    monkeypatch.setattr(ExecutionService, "shutdown", lambda self: events.append("drained"))
+    app = application(RuntimeConfig.model_validate(settings))
+    with TestClient(app):
+        assert events == ["reconciled"]
+        assert isinstance(app.state.execution_service, ExecutionService)
+    assert events == ["reconciled", "drained"]

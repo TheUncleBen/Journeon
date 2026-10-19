@@ -12,6 +12,8 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from journeon.agents import AgentService
+from journeon.attempt_contracts import AttemptPrepare, AttemptReceipt, AttemptView
+from journeon.attempts import AttemptService
 from journeon.body_limit import BodyLimitMiddleware
 from journeon.browser_auth import BrowserAuth
 from journeon.contracts import (
@@ -315,6 +317,32 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> TaskReceipt:
         return WorkService(engine).control(actor, "cancel", command)
+
+    @app.post(
+        "/api/v1/attempts/prepare",
+        response_model=AttemptReceipt,
+        operation_id="prepareAttempt",
+        responses=errors,
+        openapi_extra=configuration_metadata("attempt.prepare.v1"),
+    )
+    def prepare_attempt(
+        command: AttemptPrepare,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> AttemptReceipt:
+        return AttemptService(engine, instructions).prepare(actor, command)
+
+    @app.get(
+        "/api/v1/attempts/{attempt_id}",
+        response_model=AttemptView,
+        operation_id="getAttempt",
+        responses=errors,
+        openapi_extra=configuration_metadata("attempt.read.v1"),
+    )
+    def get_attempt(
+        attempt_id: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> AttemptView:
+        return AttemptService(engine, instructions).read(actor, attempt_id)
 
     @app.post(
         "/api/v1/tasks/revise",

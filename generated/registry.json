@@ -164,6 +164,105 @@
       "authorization": {
         "grant_checks": [
           {
+            "capability": "attempt.prepare",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current original Principal, Task admission and exact accepted instruction inputs; preparation grants no process authority"
+      },
+      "command": "attempt.prepare.v1",
+      "endpoint": "journeon.api.create_app.<locals>.prepare_attempt",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "prepareAttempt",
+      "owner": "work",
+      "path": "/api/v1/attempts/prepare",
+      "permissions": [
+        "attempt.prepare",
+        "attempt.read",
+        "attempt.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current originating Principal and Project grants before stored Attempt disclosure"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_attempt",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getAttempt",
+      "owner": "work",
+      "path": "/api/v1/attempts/{attempt_id}",
+      "permissions": [
+        "attempt.read",
+        "task.read"
+      ],
+      "query": "attempt.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
             "capability": "task.revise",
             "owner_configuration_authority": false,
             "resource": "task.project_id",
@@ -3556,6 +3655,74 @@
       "verification": "Current policy, assignment and Task revisions; no process execution"
     },
     {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "attempt.prepare",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current original Principal, Task admission and exact accepted instruction inputs; preparation grants no process authority"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "Attempt workspace and snapshot storage"
+      ],
+      "idempotent": true,
+      "input_model": "AttemptPrepare",
+      "name": "attempt.prepare.v1",
+      "owner": "work",
+      "permissions": [
+        "attempt.prepare",
+        "attempt.read",
+        "attempt.receipt.read"
+      ],
+      "result_model": "AttemptReceipt",
+      "reversibility": "Retain preparation evidence; no automatic workspace removal",
+      "risk": "LOCAL_WORKSPACE_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current Task inputs and immutable produced workspace snapshot"
+    },
+    {
       "dry_run": false,
       "external_effects": [],
       "idempotent": true,
@@ -3572,6 +3739,42 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Immutable proof definitions confer no execution authority"
+    }
+  ],
+  "internal_services": [
+    {
+      "doctor": "ExecutionService.doctor",
+      "operations": [
+        {
+          "command": "execution.start.v1",
+          "input_model": "ExecutionStart",
+          "method": "ExecutionService.start",
+          "origin": "DIRECT_VERIFICATION",
+          "permissions": [
+            "execution.start",
+            "execution.read",
+            "execution.receipt.read"
+          ],
+          "result_model": "ExecutionReceipt",
+          "transport": "IN_PROCESS"
+        },
+        {
+          "command": "execution.stop.v1",
+          "input_model": "ExecutionStop",
+          "method": "ExecutionService.stop",
+          "origin": "DIRECT_VERIFICATION",
+          "permissions": [
+            "execution.stop",
+            "execution.read",
+            "execution.receipt.read"
+          ],
+          "result_model": "ExecutionReceipt",
+          "transport": "IN_PROCESS"
+        }
+      ],
+      "owner": "work",
+      "reconciliation": "ExecutionService.reconcile",
+      "service": "journeon.executions.ExecutionService"
     }
   ],
   "modules": [
@@ -3936,7 +4139,8 @@
     },
     {
       "api_prefixes": [
-        "/api/v1/tasks"
+        "/api/v1/tasks",
+        "/api/v1/attempts"
       ],
       "backup_class": "R0",
       "core": true,
@@ -3948,14 +4152,18 @@
         "task.paused",
         "task.resumed",
         "task.cancelled",
+        "attempt.prepared",
+        "execution.admitted",
+        "execution.stop_requested",
         "task.revised",
         "task.assigned",
         "task.admission.checked"
       ],
       "health": "schema_and_database",
-      "migration": "0011_task_admission",
+      "migration": "0012_attempt_execution",
       "module_id": "work",
       "permission_namespaces": [
+        "attempt",
         "bot",
         "execution",
         "profile",
@@ -3969,6 +4177,15 @@
         "task.pause",
         "task.resume",
         "task.cancel",
+        "attempt.prepare",
+        "attempt.read",
+        "attempt.receipt.read",
+        "execution.start",
+        "execution.read",
+        "execution.stop",
+        "execution.drain",
+        "execution.complete",
+        "execution.receipt.read",
         "task.revise",
         "task.assign",
         "task.admit",
@@ -3982,6 +4199,13 @@
       "settings": [],
       "tables": [
         "tasks",
+        "attempts",
+        "attempt_manifests",
+        "attempt_effects",
+        "workspace_leases",
+        "executions",
+        "execution_manifests",
+        "execution_effects",
         "task_revisions"
       ],
       "version": "0.0.0.dev1"
@@ -4268,6 +4492,33 @@
         "project.instruction.read"
       ],
       "result_model": "AttentionList"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current originating Principal and Project grants before stored Attempt disclosure"
+      },
+      "name": "attempt.read.v1",
+      "owner": "work",
+      "permissions": [
+        "attempt.read",
+        "task.read"
+      ],
+      "result_model": "AttemptView"
     },
     {
       "name": "project.read.v1",

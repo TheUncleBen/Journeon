@@ -774,8 +774,218 @@ class RestoreReceipt(Contract):
     status: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
 
 
+class SourceEntry(Contract):
+    path: str
+    kind: Literal["FILE", "DIRECTORY", "SYMLINK"]
+    mode: int
+    content_hash: str
+    byte_count: int
+    link_target: str | None = None
+
+
+class IndexEntry(Contract):
+    path: str
+    mode: str
+    object_id: str
+    stage: int = Field(ge=0, le=3)
+    content_hash: str | None
+
+
+class ChangeSetSnapshot(Contract):
+    kind: Literal["GIT", "DIRECTORY"]
+    base_commit: str | None
+    head: str | None
+    index: list[IndexEntry]
+    working: list[SourceEntry]
+    deleted: list[str]
+    untracked: list[str]
+    index_hash: str
+    working_hash: str
+    binary_diff_hash: str | None
+    submodules: dict[str, str]
+    byte_count: int
+    snapshot_hash: str
+
+
+class TaskAttemptOrigin(Contract):
+    kind: Literal["TASK"]
+    task_id: Identifier
+    task_revision: PositiveRevision
+
+
+class JobAttemptOrigin(Contract):
+    kind: Literal["JOB"]
+    job_id: Identifier
+    job_revision: PositiveRevision
+
+
+AttemptOrigin = Annotated[TaskAttemptOrigin | JobAttemptOrigin, Field(discriminator="kind")]
+
+
+class AttemptPrepare(Contract):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    origin: AttemptOrigin
+    project_id: Identifier
+    expected_policy_revision: PositiveRevision
+    workspace_key: Identifier
+    workspace_revision: PositiveRevision
+    previous_attempt_id: Identifier | None = None
+
+
+class DeterministicInstructionBundle(Contract):
+    kind: Literal["DETERMINISTIC"] = "DETERMINISTIC"
+    bundle_id: Identifier
+    initiating_principal_id: Identifier
+    project_id: Identifier
+    task_id: Identifier
+    task_revision: PositiveRevision
+    production: ProductionInstructionProvenance
+    components: list[ComponentRef]
+    rendering: str
+    content_digest: str
+    byte_count: int = Field(ge=0)
+
+
+class RunManifest(Contract):
+    schema_version: SchemaVersion = 1
+    manifest_id: Identifier
+    attempt_id: Identifier
+    origin: AttemptOrigin
+    initiating_principal_id: Identifier
+    authentication_ref: Identifier
+    principal_epoch: PositiveRevision
+    project_id: Identifier
+    task: TaskView
+    verification_policy: VerificationPolicy
+    instruction_bundle: DeterministicInstructionBundle
+    workspace_key: Identifier
+    workspace_revision: PositiveRevision
+    root_id: Identifier
+    root_revision: PositiveRevision
+    workspace_kind: Literal["GIT", "DIRECTORY"]
+    snapshot: ChangeSetSnapshot
+    previous_attempt_id: Identifier | None
+    created_at: str
+    content_digest: str
+
+
+class AttemptView(Contract):
+    attempt_id: Identifier
+    project_id: Identifier
+    origin: AttemptOrigin
+    revision: PositiveRevision
+    state: Literal["PREPARING", "PREPARED", "RECOVERY_REQUIRED"]
+    preparation_operation_id: Identifier
+    manifest: RunManifest | None
+    execution_authorized: Literal[False] = False
+    created_at: str
+
+
+class AttemptReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["attempt.prepare.v1"] = "attempt.prepare.v1"
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    attempt: AttemptView
+
+
+class ExecutionStart(Contract):
+    schema_version: SchemaVersion = 1
+    idempotency_key: Identifier
+    project_id: Identifier
+    expected_policy_revision: PositiveRevision
+    root_key: Identifier
+    root_revision: PositiveRevision
+    route_key: Identifier
+    route_revision: PositiveRevision
+    check_id: Identifier
+
+
+class ExecutionStop(Contract):
+    schema_version: SchemaVersion = 1
+    idempotency_key: Identifier
+    execution_id: Identifier
+    expected_revision: PositiveRevision
+
+
+class ExecutionArtifact(Contract):
+    path: str
+    byte_count: int = Field(ge=0)
+    sha256: str
+    data: str
+
+
+class ExecutionOutput(Contract):
+    kind: Literal["OUTPUT"] = "OUTPUT"
+    stream: Literal["stdout", "stderr"]
+    data: str
+
+
+class ExecutionCompletion(Contract):
+    kind: Literal["RESULT"] = "RESULT"
+    exit_code: int
+    reason: Literal[
+        "EXITED",
+        "AUTHORITY_EXPIRED",
+        "CANCELLED",
+        "CONTROLLER_LOST",
+        "OUTPUT_LIMIT",
+        "DRAIN_INCOMPLETE",
+        "ARTIFACT_LIMIT",
+        "ARTIFACT_UNAVAILABLE",
+    ]
+    drained: bool
+    output_bytes: int = Field(ge=0)
+    artifacts: list[ExecutionArtifact]
+
+
+class ExecutionView(Contract):
+    execution_id: Identifier
+    origin: Literal["DIRECT_VERIFICATION"] = "DIRECT_VERIFICATION"
+    project_id: Identifier
+    root_key: Identifier
+    root_revision: PositiveRevision
+    policy_revision: PositiveRevision
+    revision: PositiveRevision
+    state: Literal["STARTING", "RUNNING", "COMPLETED", "CANCELLED", "UNKNOWN"]
+    manifest_digest: str
+    manifest_id: Identifier | None = None
+    route_key: Identifier
+    route_revision: PositiveRevision
+    route_digest: str
+    check_id: Identifier
+    initiating_principal_id: Identifier
+    authentication_ref: Identifier
+    principal_epoch: PositiveRevision
+    host_fingerprint: str
+    created_at: str
+    unit: str
+    invocation_id: str | None = None
+    launcher_exit_code: int | None = None
+    containment: dict[str, str] = Field(default_factory=dict)
+    completion: ExecutionCompletion | None = None
+    output: list[ExecutionOutput] = Field(default_factory=list)
+    evidence_digest: str | None = None
+    stop_requested: bool = False
+    verification_passed: bool = False
+    drained: bool = False
+
+
+class ExecutionReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["execution.start.v1", "execution.stop.v1"]
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    execution: ExecutionView
+
+
 CanonicalReceipt = (
-    VerificationPolicyReceipt
+    ExecutionReceipt
+    | AttemptReceipt
+    | VerificationPolicyReceipt
     | RestoreReceipt
     | JobReceipt
     | OperationReceipt

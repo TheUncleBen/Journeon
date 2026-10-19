@@ -18,7 +18,9 @@ from journeon.permissions import AuthenticatedContext
 if TYPE_CHECKING:
     from sqlalchemy import Engine
 
-    from journeon.contracts import BundleResolve, BundleResult, BundleView
+    from journeon.attempt_contracts import DeterministicInstructionBundle
+    from journeon.contracts import BundleResolve, BundleResult, BundleView, TaskView
+    from journeon.instruction_contracts import InstructionView
 
 PLACEHOLDER = re.compile(r"\{\{([a-zA-Z][a-zA-Z0-9_]*)\}\}")
 
@@ -480,3 +482,116 @@ class InstructionService:
                 project_id=project.id,
             )
             return BundleResult(receipt=receipt, bundle=view, rendering=rendering)
+
+    def deterministic_bundle(
+        self,
+        db: Session,
+        actor: AuthenticatedContext,
+        task: "TaskView",
+        observed: "InstructionView",
+    ) -> "DeterministicInstructionBundle":
+        from journeon.attempt_contracts import DeterministicInstructionBundle
+        from journeon.contracts import ProductionInstructionProvenance
+        from journeon.models import InstructionInstallation, ProjectInstructionBinding
+        from journeon.permissions import require_grant
+
+        require_grant(db, actor, "task.read", project_id=task.project_id)
+        require_grant(
+            db,
+            actor,
+            "project.instruction.read",
+            resource_kind="project",
+            resource_id=task.project_id,
+        )
+        installation = db.get(InstructionInstallation, 1)
+        binding = db.get(ProjectInstructionBinding, task.project_id)
+        if installation is None or binding is None or binding.active_operation:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Active instruction dependencies are required"
+            )
+        if (
+            observed.project_id != task.project_id
+            or observed.revision != binding.revision
+            or observed.tree_hash != binding.tree_hash
+        ):
+            raise DomainError("REVISION_CONFLICT", "Project instruction inputs changed")
+        refs = [ComponentRef.model_validate(value) for value in installation.snapshot["components"]]
+        if len(refs) != 2:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Protected instruction selection requires repair"
+            )
+        project_asset = db.get(InstructionAsset, binding.entry_asset_id)
+        project_revision = db.get(InstructionRevision, (binding.entry_asset_id, binding.revision))
+        if (
+            project_asset is None
+            or project_revision is None
+            or project_asset.revision != binding.revision
+        ):
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Project instruction entry requires repair")
+        refs.append(
+            ComponentRef(
+                asset_id=project_asset.id,
+                revision=binding.revision,
+                content_hash=project_revision.content_hash,
+            )
+        )
+        assets = []
+        for ref, purpose in zip(refs, ("CORE", "NAVIGATION", "PROJECT"), strict=True):
+            asset = db.get(InstructionAsset, ref.asset_id)
+            if asset is None or asset.purpose != purpose or asset.revision != ref.revision:
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Applicable instruction dependencies require repair"
+                )
+            if purpose != "PROJECT" and (
+                asset.owner_kind != "system" or asset.trust != "PROTECTED"
+            ):
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Protected instruction provenance requires repair"
+                )
+            assets.append(asset)
+        rendered = json.loads(render_components(db, assets, refs, []))
+        rendered.extend(
+            [
+                {
+                    "purpose": "TASK",
+                    "trust": "LOWER_TRUST_DATA",
+                    "task_id": task.task_id,
+                    "revision": task.revision,
+                    "objective": task.objective,
+                    "objective_revision": task.objective_revision,
+                    "criteria_revision": task.criteria_revision,
+                    "success_conditions": [
+                        item.model_dump(mode="json") for item in task.success_conditions
+                    ],
+                },
+                {
+                    "purpose": "WORKFLOW",
+                    "trust": "CONFIGURATION",
+                    "revision": task.workflow_revision,
+                    "workflow": task.workflow.model_dump(mode="json") if task.workflow else None,
+                },
+            ]
+        )
+        rendering = canonical(rendered)
+        return DeterministicInstructionBundle(
+            bundle_id=str(uuid4()),
+            initiating_principal_id=actor.principal_id,
+            project_id=task.project_id,
+            task_id=task.task_id,
+            task_revision=task.revision,
+            production=ProductionInstructionProvenance.model_validate(
+                {
+                    "installation_revision": installation.revision,
+                    "installation_manifest": installation.manifest_digest,
+                    "installation_provenance": installation.provenance,
+                    "project_instruction_revision": binding.revision,
+                    "project_tree_hash": binding.tree_hash,
+                    "root_id": binding.root_id,
+                    "root_revision": binding.root_revision,
+                }
+            ),
+            components=refs,
+            rendering=rendering,
+            content_digest=hashlib.sha256(rendering.encode()).hexdigest(),
+            byte_count=len(rendering.encode()),
+        )

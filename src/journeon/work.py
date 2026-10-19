@@ -76,6 +76,11 @@ def task_view(row: Task) -> TaskView:
     return view
 
 
+def require_settled_task(view: TaskView) -> None:
+    if view.state in ("RUNNING", "REVIEW", "DONE", "CANCELLED", "ARCHIVED"):
+        raise DomainError("REVISION_CONFLICT", "Task requires settlement before this change")
+
+
 def authorized_work_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -> TaskReceipt:
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
@@ -442,10 +447,7 @@ class WorkService:
             view = task_view(row)
             if view.revision != command.expected_revision:
                 raise DomainError("REVISION_CONFLICT", "Task changed; refresh its revision")
-            if view.state in ("RUNNING", "REVIEW", "DONE", "CANCELLED", "ARCHIVED"):
-                raise DomainError(
-                    "REVISION_CONFLICT", "Task requires settlement before this change"
-                )
+            require_settled_task(view)
             policy = current_policy(db, actor, view.project_id)
             values = view.model_dump(mode="json")
             now = datetime.now(UTC).isoformat()

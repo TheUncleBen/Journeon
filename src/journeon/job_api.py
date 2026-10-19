@@ -22,11 +22,16 @@ from journeon.job_contracts import (
 from journeon.jobs import JobService, authorize
 from journeon.models import Attention, Job, OutboxEvent, Receipt, StoreIdentity
 from journeon.permissions import AuthenticatedContext
-from journeon.receipts import authorized_receipt
+from journeon.receipts import authorized_receipt, check_receipt_configuration
 from journeon.sessions import current_session
 
 
-def replay(engine: Engine, actor: AuthenticatedContext, query: ReplayQuery) -> ReplayPage:
+def replay(
+    engine: Engine,
+    actor: AuthenticatedContext,
+    query: ReplayQuery,
+    configuration: InstructionConfiguration | None = None,
+) -> ReplayPage:
     with transaction(engine) as db:
         current_session(
             db,
@@ -80,6 +85,7 @@ def replay(engine: Engine, actor: AuthenticatedContext, query: ReplayQuery) -> R
             ):
                 continue
             try:
+                check_receipt_configuration(db, actor, receipt, engine, configuration)
                 result = authorized_receipt(db, actor, receipt)
                 from pydantic import TypeAdapter
 
@@ -169,7 +175,7 @@ def bind_job_api(
     def events(
         command: ReplayQuery, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
     ) -> ReplayPage:
-        return replay(engine, actor, command)
+        return replay(engine, actor, command, configuration)
 
     @app.get(
         "/api/v1/jobs/{identity}/attention",

@@ -10,6 +10,9 @@ from sqlalchemy import create_engine
 
 from journeon.api import create_app
 from journeon.contracts import (
+    AttemptPrepare,
+    AttemptReceipt,
+    AttemptView,
     BotCreate,
     BotRevise,
     BotView,
@@ -20,6 +23,10 @@ from journeon.contracts import (
     EffectivePermission,
     EffectiveSettings,
     ErrorEnvelope,
+    ExecutionReceipt,
+    ExecutionStart,
+    ExecutionStop,
+    ExecutionView,
     LegacyPlan,
     LegacyPreview,
     OperationReceipt,
@@ -68,6 +75,9 @@ def ts_type(schema: dict[str, Any]) -> str:
     if kind == "object":
         required = schema.get("required", [])
         properties = schema.get("properties", {})
+        additional = schema.get("additionalProperties")
+        if not properties and isinstance(additional, dict) and additional:
+            return f"Record<string, {ts_type(additional)}>"
         if not properties:
             raise ValueError("Unbounded object schema needs an explicit client binding")
         lines = ["{"]
@@ -125,6 +135,8 @@ def artifacts() -> dict[str, str]:
         "getEffectivePermission": ("GET", "/api/v1/permissions/effective"),
         "getWorkflowTemplates": ("GET", "/api/v1/tasks/workflow-templates"),
         "getTask": ("GET", "/api/v1/tasks/{task_id}"),
+        "prepareAttempt": ("POST", "/api/v1/attempts/prepare"),
+        "getAttempt": ("GET", "/api/v1/attempts/{attempt_id}"),
         "createTask": ("POST", "/api/v1/tasks"),
         "pauseTask": ("POST", "/api/v1/tasks/pause"),
         "resumeTask": ("POST", "/api/v1/tasks/resume"),
@@ -393,6 +405,15 @@ export class JourneonClient {
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
+  prepareAttempt(command: AttemptPrepare, csrfToken: string): Promise<AttemptReceipt> {
+    return this.request("/api/v1/attempts/prepare", {method: "POST", body: JSON.stringify(command),
+      headers: {"X-CSRF-Token": csrfToken}});
+  }
+
+  getAttempt(attemptId: string): Promise<AttemptView> {
+    return this.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`, {method: "GET"});
+  }
+
   configureVerification(command: VerificationPolicyConfigure,
     csrfToken?: string): Promise<VerificationPolicyReceipt> {
     return this.request("/api/v1/projects/verification",
@@ -446,6 +467,13 @@ export class JourneonClient {
             BundleView,
             BundleResult,
             ProjectCreate,
+            AttemptPrepare,
+            AttemptReceipt,
+            AttemptView,
+            ExecutionStart,
+            ExecutionStop,
+            ExecutionView,
+            ExecutionReceipt,
             TaskCreate,
             TaskRevise,
             TaskAssign,

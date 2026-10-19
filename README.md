@@ -160,3 +160,6 @@ inventory evidence and destination consent; it copies no memory. Migration
 `0007_identity_instructions` preserves existing Project, Task, authentication,
 receipt and event records. No worker, provider execution, native isolation or
 operational configuration interface is introduced.
+
+Local Task Attempt preparation and direct deterministic verification are described
+in [Local Attempt preparation and deterministic verification](docs/execution.md).

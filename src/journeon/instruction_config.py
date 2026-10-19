@@ -10,7 +10,9 @@ from typing import Literal, Self
 
 from pydantic import Field, model_validator
 
+from journeon.attempt_contracts import AttemptConfiguration
 from journeon.contracts import Contract, Identifier
+from journeon.execution_process import ExecutionConfiguration
 from journeon.job_contracts import JobConfiguration
 from journeon.restore_contracts import RestoreConfiguration
 
@@ -44,6 +46,8 @@ class ReleaseTrustConfiguration(Contract):
 
 
 class InstructionConfiguration(Contract):
+    executions: ExecutionConfiguration | None = None
+    attempts: AttemptConfiguration | None = None
     jobs: JobConfiguration | None = None
     restore: RestoreConfiguration | None = None
     release_trust: ReleaseTrustConfiguration | None = None
@@ -56,6 +60,29 @@ class InstructionConfiguration(Contract):
         if len({root.key for root in self.roots}) != len(self.roots):
             raise ValueError("Root keys must be distinct")
         paths = [Path(root.path) for root in self.roots]
+        if self.executions is not None:
+            execution_storage = Path(self.executions.storage_path)
+            if any(
+                execution_storage.is_relative_to(path) or path.is_relative_to(execution_storage)
+                for path in paths
+            ):
+                raise ValueError(
+                    "Execution evidence storage must remain outside admitted source roots"
+                )
+        if self.attempts is not None:
+            storage = Path(self.attempts.storage_path)
+            if any(storage.is_relative_to(path) or path.is_relative_to(storage) for path in paths):
+                raise ValueError(
+                    "Attempt evidence storage must remain outside admitted source roots"
+                )
+            for workspace in self.attempts.workspaces:
+                root = next((root for root in self.roots if root.key == workspace.root_key), None)
+                if (
+                    root is None
+                    or root.role != "PROJECT"
+                    or root.project_id != workspace.project_id
+                ):
+                    raise ValueError("Attempt workspaces require an exact configured Project root")
         for index, path in enumerate(paths):
             if any(
                 path.is_relative_to(other) or other.is_relative_to(path) for other in paths[:index]

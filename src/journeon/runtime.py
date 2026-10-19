@@ -119,7 +119,11 @@ def application(config: RuntimeConfig) -> FastAPI:
 
     import threading
 
+    from journeon.executions import ExecutionService
     from journeon.jobs import JobService
+
+    execution_service = ExecutionService(engine, config.instructions)
+    app.state.execution_service = execution_service
 
     stop = threading.Event()
     worker = None
@@ -158,6 +162,9 @@ def application(config: RuntimeConfig) -> FastAPI:
         try:
             with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as db:
                 startup_admission(path, db)
+            import asyncio
+
+            await asyncio.to_thread(execution_service.reconcile)
             if worker is not None:
                 worker.start()
                 started = True
@@ -168,6 +175,9 @@ def application(config: RuntimeConfig) -> FastAPI:
                 import asyncio
 
                 await asyncio.to_thread(worker.join)
+            import asyncio
+
+            await asyncio.to_thread(execution_service.shutdown)
             engine.dispose()
             os.close(maintenance)
             print(json.dumps({"status": "STOPPED"}), flush=True)

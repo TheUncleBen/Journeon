@@ -102,6 +102,11 @@ async function main() {
   await client.previewRestore({idempotency_key: "restore", snapshot: "saved", destination: "target", data_class: "PROJECT_INSTRUCTION_HISTORY", selection: [{project_id: "project", revisions: [1]}]}, "restore-csrf");
   assert.equal(calls.at(-1).url, "/api/v1/lifecycle/restore-preview");
   assert.equal(calls.at(-1).init.headers["X-CSRF-Token"], "restore-csrf");
+  await client.prepareAttempt({idempotency_key: "attempt"}, "attempt-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/attempts/prepare");
+  assert.equal(calls.at(-1).init.headers["X-CSRF-Token"], "attempt-csrf");
+  await client.getAttempt("encoded/attempt");
+  assert.equal(calls.at(-1).url, "/api/v1/attempts/encoded%2Fattempt");
   const denied = new JourneonClient("", async () => new Response(
     JSON.stringify({code: "PERMISSION_DENIED"}), {status: 403},
   ));

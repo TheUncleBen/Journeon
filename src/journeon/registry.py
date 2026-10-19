@@ -10,6 +10,7 @@ from fastapi.routing import APIRoute, iter_route_contexts
 from pydantic import BaseModel
 
 from journeon import instruction_contracts as instruction_dto
+from journeon.attempt_contracts import AttemptPrepare, AttemptReceipt, AttemptView
 from journeon.contracts import (
     BotCreate,
     BotRevise,
@@ -1000,10 +1001,81 @@ for admission_action, admission_model in (
         idempotent=True,
         verification="Current policy, assignment and Task revisions; no process execution",
     )
+
+COMMANDS["attempt.prepare.v1"] = CommandDefinition(
+    name="attempt.prepare.v1",
+    owner="work",
+    input_model=AttemptPrepare,
+    result_model=AttemptReceipt,
+    permissions=("attempt.prepare", "attempt.read", "attempt.receipt.read"),
+    risk="LOCAL_WORKSPACE_MUTATION",
+    external_effects=("Attempt workspace and snapshot storage",),
+    reversibility="Retain preparation evidence; no automatic workspace removal",
+    dry_run=False,
+    idempotent=True,
+    verification="Current Task inputs and immutable produced workspace snapshot",
+)
+CONFIGURATION_AUTHORIZATION["attempt.prepare.v1"] = {
+    "owner_only": False,
+    "grant_checks": [
+        grant_check(capability, "project_id", owner=False)
+        for capability in (
+            "attempt.prepare",
+            "attempt.read",
+            "attempt.receipt.read",
+            "task.read",
+            "execution.admit",
+            "project.verification.read",
+        )
+    ]
+    + [grant_check("project.instruction.read", "project_id", owner=False)],
+    "semantics": (
+        "Current original Principal, Task admission and exact accepted instruction inputs; "
+        "preparation grants no process authority"
+    ),
+}
+QUERIES["attempt.read.v1"] = {
+    "owner": "work",
+    "permissions": ("attempt.read", "task.read"),
+    "result_model": AttemptView,
+}
+CONFIGURATION_AUTHORIZATION["attempt.read.v1"] = {
+    "owner_only": False,
+    "grant_checks": [
+        grant_check(capability, "attempt.project_id", owner=False)
+        for capability in ("attempt.read", "task.read")
+    ],
+    "semantics": (
+        "Current originating Principal and Project grants before stored Attempt disclosure"
+    ),
+}
+MODULES["work"]["permissions"] += ("attempt.prepare", "attempt.read", "attempt.receipt.read")
+MODULES["work"]["tables"] += (
+    "attempts",
+    "attempt_manifests",
+    "attempt_effects",
+    "workspace_leases",
+)
+MODULES["work"]["api_prefixes"] += ("/api/v1/attempts",)
+MODULES["work"]["events_published"] += (
+    "attempt.prepared",
+    "execution.admitted",
+    "execution.stop_requested",
+)
+MODULES["work"]["tables"] += ("executions", "execution_manifests", "execution_effects")
+MODULES["work"]["permissions"] += (
+    "execution.start",
+    "execution.read",
+    "execution.stop",
+    "execution.drain",
+    "execution.complete",
+    "execution.receipt.read",
+)
+
 MODULES["work"]["permissions"] += ("task.revise", "task.assign", "task.admit", "execution.admit")
 MODULES["work"]["tables"] += ("task_revisions",)
 MODULES["work"]["events_published"] += ("task.revised", "task.assigned", "task.admission.checked")
-MODULES["work"]["migration"] = "0011_task_admission"
+MODULES["work"]["migration"] = "0012_attempt_execution"
 MODULES["projects"]["tables"] += ("verification_policy_revisions",)
 MODULES["projects"]["permissions"] += (
     "project.verification.configure",
@@ -1128,6 +1200,41 @@ INSTRUCTION_SURFACES = {
         "authorization": "Public trusted static stylesheet",
     },
 }
+
+
+def execution_service_manifest() -> dict[str, Any]:
+    from inspect import signature
+
+    from journeon.contracts import ExecutionReceipt, ExecutionStart, ExecutionStop
+    from journeon.executions import ExecutionService
+
+    operations = []
+    for name, input_model in (("start", ExecutionStart), ("stop", ExecutionStop)):
+        method = getattr(ExecutionService, name)
+        binding = signature(method)
+        if (
+            binding.parameters["command"].annotation is not input_model
+            or binding.return_annotation is not ExecutionReceipt
+        ):
+            raise ValueError("Execution service operation contract differs from its owner")
+        operations.append(
+            {
+                "command": "execution." + name + ".v1",
+                "method": method.__qualname__,
+                "input_model": input_model.__name__,
+                "result_model": "ExecutionReceipt",
+                "permissions": ["execution." + name, "execution.read", "execution.receipt.read"],
+                "origin": "DIRECT_VERIFICATION",
+                "transport": "IN_PROCESS",
+            }
+        )
+    return {
+        "owner": "work",
+        "service": "journeon.executions.ExecutionService",
+        "operations": operations,
+        "doctor": "ExecutionService.doctor",
+        "reconciliation": "ExecutionService.reconcile",
+    }
 
 
 def registry_manifest(app: FastAPI) -> dict[str, Any]:
@@ -1339,4 +1446,5 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
             for authentication in AUTHENTICATION.values()
         ],
         "api_operations": operations,
+        "internal_services": [execution_service_manifest()],
     }

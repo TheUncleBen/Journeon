@@ -76,7 +76,8 @@ def require_grant(
             and grant.resource_id == project_id
         )
         exact = (
-            resource_kind in {"profile", "bot", "team", "instruction_bundle", "legacy_collection"}
+            resource_kind
+            in {"project", "profile", "bot", "team", "instruction_bundle", "legacy_collection"}
             and resource_id is not None
             and grant.resource_kind == resource_kind
             and grant.resource_id == resource_id

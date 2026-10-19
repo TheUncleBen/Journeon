@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Bound command and module metadata; not a second permission authority."""
+"Bound command and module metadata; not a second permission authority."
 
 from dataclasses import asdict, dataclass, replace
 from typing import Any
@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute, iter_route_contexts
 from pydantic import BaseModel
 
+from journeon import instruction_contracts as instruction_dto
 from journeon.contracts import (
     BotCreate,
     BotRevise,
@@ -39,6 +40,7 @@ from journeon.contracts import (
     TeamView,
 )
 from journeon.health import schema_and_database
+from journeon.instruction_config import RootObservation
 from journeon.migrate import configuration
 from journeon.models import Base
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
@@ -567,6 +569,323 @@ def configuration_metadata(name: str) -> dict[str, Any]:
     }
 
 
+# Production instruction services retain their own scoped authorization contract.
+
+INSTRUCTION_ROUTES: dict[str, tuple[str, type[BaseModel], type[BaseModel], str | None]] = {
+    "inspectInstructionRoot": (
+        "project.root.inspect.v1",
+        instruction_dto.RootInspect,
+        RootObservation,
+        None,
+    ),
+    "prepareInstructionEffect": (
+        "instruction.protected.prepare.v1",
+        instruction_dto.ProtectedPrepare,
+        instruction_dto.ProtectedIdentity,
+        None,
+    ),
+    "previewInstructionEffect": (
+        "instruction.protected.preview.v1",
+        instruction_dto.ProtectedIdentity,
+        instruction_dto.OfficialPreview,
+        None,
+    ),
+    "confirmInstructionEffect": (
+        "instruction.protected.confirm.v1",
+        instruction_dto.ExactConfirmation,
+        instruction_dto.InstructionReceipt,
+        None,
+    ),
+    "cancelInstructionEffect": (
+        "instruction.protected.cancel.v1",
+        instruction_dto.ProtectedIdentity,
+        instruction_dto.ProtectedState,
+        None,
+    ),
+    "bindProjectInstructions": (
+        "project.instructions.bind.v1",
+        instruction_dto.InstructionBind,
+        instruction_dto.InstructionReceipt,
+        "bind",
+    ),
+    "proposeProjectInstructions": (
+        "project.instructions.propose.v1",
+        instruction_dto.InstructionPropose,
+        instruction_dto.CandidateView,
+        "propose",
+    ),
+    "previewProjectInstructions": (
+        "project.instructions.preview.v1",
+        instruction_dto.CandidateReference,
+        instruction_dto.CandidateView,
+        "read",
+    ),
+    "evaluateProjectInstructions": (
+        "project.instructions.evaluate.v1",
+        instruction_dto.CandidateReference,
+        instruction_dto.EvidenceIdentity,
+        "evaluate",
+    ),
+    "reviewProjectInstructions": (
+        "project.instructions.review.v1",
+        instruction_dto.InstructionReview,
+        instruction_dto.EvidenceIdentity,
+        "review",
+    ),
+    "acceptProjectInstructions": (
+        "project.instructions.accept.v1",
+        instruction_dto.InstructionAccept,
+        instruction_dto.InstructionReceipt,
+        "accept",
+    ),
+    "restoreProjectInstructions": (
+        "project.instructions.restore.v1",
+        instruction_dto.InstructionRestore,
+        instruction_dto.CandidateView,
+        "propose",
+    ),
+    "projectInstructionProjection": (
+        "project.instructions.projection.v1",
+        instruction_dto.ProjectionCommand,
+        instruction_dto.ProjectionView,
+        "projection",
+    ),
+    "prepareInstructionPolicy": (
+        "project.instructions.policy.prepare.v1",
+        instruction_dto.PolicyConfigure,
+        instruction_dto.ProtectedIdentity,
+        None,
+    ),
+    "verifyInstalledRelease": (
+        "release.evidence.verify.v1",
+        instruction_dto.ReleaseVerify,
+        instruction_dto.EvidenceIdentity,
+        None,
+    ),
+}
+INSTRUCTION_ROUTES.update(
+    {
+        "inspectInstructionRecovery": (
+            "project.instructions.recovery.inspect.v1",
+            instruction_dto.RecoveryInspect,
+            instruction_dto.RecoveryTarget,
+            "accept",
+        ),
+        "previewInstructionBinding": (
+            "project.instructions.binding.preview.v1",
+            instruction_dto.BindingPreview,
+            instruction_dto.BindingImpact,
+            "bind",
+        ),
+        "readInstructionHistory": (
+            "project.instructions.history.v1",
+            instruction_dto.HistoryRead,
+            instruction_dto.HistoryView,
+            "read",
+        ),
+        "readInstructionDocument": (
+            "project.instructions.document.v1",
+            instruction_dto.DocumentRead,
+            instruction_dto.Document,
+            "read",
+        ),
+    }
+)
+for operation_id, (name, input_model, result_model, action) in INSTRUCTION_ROUTES.items():
+    permissions = ("project.instruction." + action,) if action else ()
+    checks = [grant_check(permission, "project_id", owner=False) for permission in permissions]
+    if action in {"bind", "accept", "propose", "projection", "review", "evaluate"}:
+        checks.append(grant_check("project.instruction.read", "project_id", owner=False))
+    if action in {"bind", "accept", "propose"} and operation_id not in {
+        "previewInstructionBinding",
+        "inspectInstructionRecovery",
+    }:
+        checks.append(
+            grant_check(
+                "project.instruction.receipt.read",
+                "project_id",
+                "canonical publication response",
+                owner=False,
+            )
+        )
+        checks.append(
+            grant_check(
+                "project.instruction.accept",
+                "project_id",
+                "publication or qualifying automatic candidate",
+                owner=False,
+            )
+        )
+    if operation_id == "proposeProjectInstructions":
+        checks.append(
+            grant_check(
+                "project.instruction.evaluate",
+                "project_id",
+                "qualifying automatic candidate",
+                owner=False,
+            )
+        )
+    if action == "projection":
+        checks.append(
+            grant_check(
+                "project.instruction.receipt.read",
+                "project_id",
+                "materialize or reconcile its journal",
+                owner=False,
+            )
+        )
+    if operation_id in {
+        "prepareInstructionEffect",
+        "previewInstructionEffect",
+        "confirmInstructionEffect",
+        "cancelInstructionEffect",
+    }:
+        for capability in ("read", "accept"):
+            checks.append(
+                grant_check(
+                    "project.instruction." + capability,
+                    "trusted instruction request scope.project_id",
+                    "Project instruction acceptance or recovery variant",
+                    owner=False,
+                )
+            )
+    if operation_id == "confirmInstructionEffect":
+        for capability in ("read", "receipt.read"):
+            checks.append(
+                grant_check(
+                    "project.instruction." + capability,
+                    "effect.project_id",
+                    "Project policy, acceptance or recovery canonical receipt",
+                    owner=False,
+                )
+            )
+    if operation_id in {
+        "inspectInstructionRecovery",
+        "prepareInstructionEffect",
+        "previewInstructionEffect",
+        "confirmInstructionEffect",
+        "cancelInstructionEffect",
+    }:
+        checks.append(
+            grant_check(
+                "project.instruction.projection",
+                "trusted publication Project scope",
+                "projection recovery variant",
+                owner=False,
+            )
+        )
+    authorization = {
+        "owner_only": action is None or operation_id == "inspectInstructionRecovery",
+        "authentication": (
+            "current session and Principal epoch; protected operations additio"
+            "nally require official audience and recent strong authentication"
+        ),
+        "grant_checks": checks,
+        "semantics": (
+            "exact Project grants and admitted roots; no authority follows from metadata"
+        ),
+    }
+    CONFIGURATION_AUTHORIZATION[name] = authorization
+    permissions = tuple(dict.fromkeys(check["capability"] for check in checks))
+    COMMANDS[name] = CommandDefinition(
+        name=name,
+        owner="project_instructions",
+        input_model=input_model,
+        result_model=result_model,
+        permissions=permissions,
+        risk="SCOPED_INSTRUCTION_OPERATION",
+        external_effects=("CONFIGURED_RELEASE_BACKUP",)
+        if operation_id == "verifyInstalledRelease"
+        else ("ADMITTED_LOCAL_FILESYSTEM",)
+        if operation_id
+        in {
+            "bindProjectInstructions",
+            "proposeProjectInstructions",
+            "acceptProjectInstructions",
+            "projectInstructionProjection",
+            "confirmInstructionEffect",
+        }
+        else (),
+        reversibility="Versioned candidates and scoped journal reconciliation",
+        dry_run=operation_id
+        in {
+            "inspectInstructionRoot",
+            "previewProjectInstructions",
+            "previewInstructionBinding",
+            "readInstructionHistory",
+            "readInstructionDocument",
+            "inspectInstructionRecovery",
+        },
+        idempotent="idempotency_key" in input_model.model_fields,
+        verification="Exact current operands; canonical commit only after observed bytes agree",
+    )
+CONFIGURATION_AUTHORIZATION["project.instructions.read.v1"] = {
+    "owner_only": False,
+    "authentication": "current session and Principal epoch",
+    "grant_checks": [grant_check("project.instruction.read", "project_id", owner=False)],
+    "semantics": "current canonical tree and admitted root; selected fragments only",
+}
+QUERIES["project.instructions.read.v1"] = {
+    "owner": "project_instructions",
+    "permissions": ("project.instruction.read",),
+    "result_model": instruction_dto.InstructionView,
+}
+MODULES["project_instructions"] = {
+    "core": True,
+    "dashboards": (),
+    "events_published": (
+        "project.instructions.projection.committed",
+        "project.instructions.projection.abandoned",
+        "project.instructions.bind.abandoned",
+        "project.instructions.accept.abandoned",
+        "project.instructions.bind.committed",
+        "project.instructions.accept.committed",
+        "project.instructions.policy.configure.committed",
+        "project.root.admit.committed",
+        "project.root.revoke.committed",
+        "instruction.candidate.register.committed",
+        "instruction.release.install.committed",
+    ),
+    "events_consumed": (),
+    "api_prefixes": (
+        "/api/v1/project-roots",
+        "/api/v1/protected-operations",
+        "/api/v1/projects",
+        "/api/v1/releases",
+    ),
+    "tables": (
+        "instruction_request_scopes",
+        "instruction_roots",
+        "project_instruction_bindings",
+        "project_instruction_revisions",
+        "project_instruction_policies",
+        "instruction_candidates",
+        "instruction_evidence",
+        "instruction_publications",
+        "instruction_installations",
+        "installed_release_evidence",
+        "instruction_projections",
+    ),
+    "backup_class": "R0",
+    "health": "schema_and_database",
+    "permissions": tuple(
+        sorted(
+            {
+                permission
+                for command in COMMANDS.values()
+                if command.owner == "project_instructions"
+                for permission in command.permissions
+            }
+        )
+    ),
+    "migration": "0009_instruction_scope",
+    "settings": (),
+    "environment_migrations": (),
+}
+for module in ("projects", "identity", "operations", "instructions"):
+    MODULES[module]["migration"] = "0009_instruction_scope"
+
+
 @dataclass(frozen=True)
 class AuthenticationDefinition:
     name: str
@@ -584,8 +903,34 @@ AUTHENTICATION = {
 }
 
 
+INSTRUCTION_SURFACES = {
+    "instructionConfirmationPage": {
+        "path": "/instructions/confirmation/{request_id}",
+        "authorization": (
+            "Current Owner official session, strong authentication and "
+            "exact stored request scopes; nonce issuance"
+        ),
+    },
+    "instructionAuthenticationPage": {
+        "path": "/instructions/authenticate",
+        "authorization": (
+            "Public trusted authentication controls; authentication and "
+            "step-up require their existing API checks"
+        ),
+    },
+    "instructionSurfaceScript": {
+        "path": "/instructions/surface.js",
+        "authorization": "Public trusted static script",
+    },
+    "instructionSurfaceStyles": {
+        "path": "/instructions/surface.css",
+        "authorization": "Public trusted static stylesheet",
+    },
+}
+
+
 def registry_manifest(app: FastAPI) -> dict[str, Any]:
-    """Validate actual service bindings before generating an inspectable manifest."""
+    "Validate actual service bindings before generating an inspectable manifest."
     tables = [table for module in MODULES.values() for table in module["tables"]]
     if len(tables) != len(set(tables)) or set(tables) != set(Base.metadata.tables):
         raise ValueError("Every canonical table requires exactly one registered owner")
@@ -615,6 +960,7 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         ):
             raise ValueError("Command effect and verification metadata is incomplete")
     operations = []
+    bound_surfaces: set[str] = set()
     bound_commands: set[str] = set()
     bound_queries: set[str] = set()
     bound_authentication: set[str] = set()
@@ -627,6 +973,23 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         if route.path is None or route.endpoint is None:
             raise ValueError("API operation requires a path and endpoint")
         metadata = route.openapi_extra or {}
+        surface = metadata.get("x-journeon-surface")
+        if surface:
+            declaration = INSTRUCTION_SURFACES.get(surface)
+            if (
+                declaration is None
+                or surface in bound_surfaces
+                or route.path != declaration["path"]
+                or route.operation_id != surface
+                or route.methods != {"GET"}
+                or route.original_route.include_in_schema
+                or route.endpoint.__module__ != "journeon.instruction_surface"
+                or metadata
+                != {"x-journeon-surface": surface, "x-journeon-owner": "project_instructions"}
+            ):
+                raise ValueError("Instruction surface differs from its registered binding")
+            bound_surfaces.add(surface)
+            continue
         owner = metadata.get("x-journeon-owner")
         if owner not in MODULES:
             raise ValueError("API operation has no registered module owner")
@@ -720,11 +1083,17 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 "endpoint": f"{route.endpoint.__module__}.{route.endpoint.__qualname__}",
             }
         )
+    if bound_surfaces != set(INSTRUCTION_SURFACES):
+        raise ValueError("Instruction surfaces require actual registered bindings")
     if bound_commands != set(COMMANDS) or bound_queries != set(QUERIES):
         raise ValueError("Registered commands and queries must have actual API bindings")
     if bound_authentication != set(AUTHENTICATION):
         raise ValueError("Registered authentication operations must have actual API bindings")
     return {
+        "surfaces": [
+            {"operation_id": name, "owner": "project_instructions", **definition}
+            for name, definition in sorted(INSTRUCTION_SURFACES.items())
+        ],
         "modules": [
             {
                 "module_id": name,

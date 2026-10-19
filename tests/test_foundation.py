@@ -65,7 +65,16 @@ def test_registry_owns_every_canonical_table_and_api(database):
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0007_identity_instructions"
+            "0009_instruction_scope"
+            if set(module["tables"])
+            & {
+                "projects",
+                "browser_sessions",
+                "operation_receipts",
+                "instruction_assets",
+                "instruction_roots",
+            }
+            else "0007_identity_instructions"
             if set(module["tables"])
             & {"agent_profiles", "instruction_assets", "access_grants", "operation_receipts"}
             else "0006_work"
@@ -81,7 +90,20 @@ def test_registry_owns_every_canonical_table_and_api(database):
             if command_name := operation.get("x-journeon-command"):
                 command = COMMANDS[command_name]
                 assert command.owner == operation["x-journeon-owner"]
-                assert command.external_effects == ()
+                assert command.external_effects == (
+                    ("CONFIGURED_RELEASE_BACKUP",)
+                    if operation["operationId"] == "verifyInstalledRelease"
+                    else ("ADMITTED_LOCAL_FILESYSTEM",)
+                    if operation["operationId"]
+                    in {
+                        "bindProjectInstructions",
+                        "proposeProjectInstructions",
+                        "acceptProjectInstructions",
+                        "projectInstructionProjection",
+                        "confirmInstructionEffect",
+                    }
+                    else ()
+                )
                 assert command.stability == "INTERNAL"
 
 

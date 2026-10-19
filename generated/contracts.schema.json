@@ -1,4 +1,181 @@
 {
+  "BindingImpact": {
+    "additionalProperties": false,
+    "properties": {
+      "binding_digest": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Binding Digest",
+        "type": "string"
+      },
+      "diff": {
+        "title": "Diff",
+        "type": "string"
+      },
+      "existing_tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Existing Tree Hash",
+        "type": "string"
+      },
+      "previous_owner": {
+        "anyOf": [
+          {
+            "enum": [
+              "ENVIRONMENT",
+              "PROJECT"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Previous Owner"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "proposed_owner": {
+        "enum": [
+          "ENVIRONMENT",
+          "PROJECT"
+        ],
+        "title": "Proposed Owner",
+        "type": "string"
+      },
+      "proposed_tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Proposed Tree Hash",
+        "type": "string"
+      },
+      "root_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Root Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id",
+      "root_id",
+      "previous_owner",
+      "proposed_owner",
+      "existing_tree_hash",
+      "proposed_tree_hash",
+      "diff",
+      "binding_digest"
+    ],
+    "title": "BindingImpact",
+    "type": "object"
+  },
+  "BindingPreview": {
+    "$defs": {
+      "Document": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 65536,
+            "title": "Content",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "title": "Document",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "documents": {
+        "items": {
+          "$ref": "#/$defs/Document"
+        },
+        "maxItems": 256,
+        "title": "Documents",
+        "type": "array"
+      },
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_project_revision": {
+        "minimum": 0,
+        "title": "Expected Project Revision",
+        "type": "integer"
+      },
+      "expected_root_revision": {
+        "minimum": 0,
+        "title": "Expected Root Revision",
+        "type": "integer"
+      },
+      "expected_tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Tree Hash",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "owner": {
+        "enum": [
+          "ENVIRONMENT",
+          "PROJECT"
+        ],
+        "title": "Owner",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "required_fragments": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Required Fragments",
+        "type": "array"
+      },
+      "root_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Root Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "project_id",
+      "expected_project_revision",
+      "expected_binding_revision",
+      "root_id",
+      "expected_root_revision",
+      "expected_tree_hash",
+      "owner",
+      "documents",
+      "required_fragments",
+      "reason"
+    ],
+    "title": "BindingPreview",
+    "type": "object"
+  },
   "BotCreate": {
     "$defs": {
       "InstructionTemplate": {
@@ -832,6 +1009,17 @@
           "origin": {
             "$ref": "#/$defs/BundleOrigin"
           },
+          "production": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProductionInstructionProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "profile_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
             "title": "Profile Id",
@@ -969,6 +1157,60 @@
         ],
         "title": "ConfigurationReceipt",
         "type": "object"
+      },
+      "ProductionInstructionProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "installation_manifest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Installation Manifest",
+            "type": "string"
+          },
+          "installation_provenance": {
+            "enum": [
+              "DEVELOPMENT_CANDIDATE",
+              "VERIFIED_RELEASE"
+            ],
+            "title": "Installation Provenance",
+            "type": "string"
+          },
+          "installation_revision": {
+            "minimum": 1,
+            "title": "Installation Revision",
+            "type": "integer"
+          },
+          "project_instruction_revision": {
+            "minimum": 1,
+            "title": "Project Instruction Revision",
+            "type": "integer"
+          },
+          "project_tree_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Project Tree Hash",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "installation_revision",
+          "installation_manifest",
+          "installation_provenance",
+          "project_instruction_revision",
+          "project_tree_hash",
+          "root_id",
+          "root_revision"
+        ],
+        "title": "ProductionInstructionProvenance",
+        "type": "object"
       }
     },
     "additionalProperties": false,
@@ -1092,6 +1334,60 @@
         ],
         "title": "ComponentRef",
         "type": "object"
+      },
+      "ProductionInstructionProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "installation_manifest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Installation Manifest",
+            "type": "string"
+          },
+          "installation_provenance": {
+            "enum": [
+              "DEVELOPMENT_CANDIDATE",
+              "VERIFIED_RELEASE"
+            ],
+            "title": "Installation Provenance",
+            "type": "string"
+          },
+          "installation_revision": {
+            "minimum": 1,
+            "title": "Installation Revision",
+            "type": "integer"
+          },
+          "project_instruction_revision": {
+            "minimum": 1,
+            "title": "Project Instruction Revision",
+            "type": "integer"
+          },
+          "project_tree_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Project Tree Hash",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "installation_revision",
+          "installation_manifest",
+          "installation_provenance",
+          "project_instruction_revision",
+          "project_tree_hash",
+          "root_id",
+          "root_revision"
+        ],
+        "title": "ProductionInstructionProvenance",
+        "type": "object"
       }
     },
     "additionalProperties": false,
@@ -1123,6 +1419,17 @@
       },
       "origin": {
         "$ref": "#/$defs/BundleOrigin"
+      },
+      "production": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ProductionInstructionProvenance"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
       },
       "profile_id": {
         "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
@@ -1158,6 +1465,134 @@
       "byte_count"
     ],
     "title": "BundleView",
+    "type": "object"
+  },
+  "CandidateReference": {
+    "additionalProperties": false,
+    "properties": {
+      "candidate_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Candidate Hash",
+        "type": "string"
+      },
+      "candidate_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Candidate Id",
+        "type": "string"
+      },
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_policy_revision": {
+        "minimum": 0,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id",
+      "candidate_id",
+      "candidate_hash",
+      "expected_binding_revision",
+      "expected_policy_revision"
+    ],
+    "title": "CandidateReference",
+    "type": "object"
+  },
+  "CandidateView": {
+    "additionalProperties": false,
+    "properties": {
+      "author": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Author",
+        "type": "string"
+      },
+      "automatic": {
+        "title": "Automatic",
+        "type": "boolean"
+      },
+      "byte_count": {
+        "title": "Byte Count",
+        "type": "integer"
+      },
+      "candidate_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Candidate Hash",
+        "type": "string"
+      },
+      "candidate_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Candidate Id",
+        "type": "string"
+      },
+      "category": {
+        "title": "Category",
+        "type": "string"
+      },
+      "diff": {
+        "title": "Diff",
+        "type": "string"
+      },
+      "duplicate_segments": {
+        "title": "Duplicate Segments",
+        "type": "integer"
+      },
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_policy_revision": {
+        "minimum": 0,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "growth_bytes": {
+        "title": "Growth Bytes",
+        "type": "integer"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "required_evals": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Required Evals",
+        "type": "array"
+      },
+      "tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Tree Hash",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id",
+      "candidate_id",
+      "candidate_hash",
+      "expected_binding_revision",
+      "expected_policy_revision",
+      "author",
+      "category",
+      "diff",
+      "tree_hash",
+      "automatic",
+      "required_evals",
+      "byte_count",
+      "growth_bytes",
+      "duplicate_segments"
+    ],
+    "title": "CandidateView",
     "type": "object"
   },
   "ConfigurationReceipt": {
@@ -1234,6 +1669,56 @@
       "revision"
     ],
     "title": "ConfigurationReceipt",
+    "type": "object"
+  },
+  "Document": {
+    "additionalProperties": false,
+    "properties": {
+      "content": {
+        "maxLength": 65536,
+        "title": "Content",
+        "type": "string"
+      },
+      "path": {
+        "maxLength": 240,
+        "minLength": 1,
+        "title": "Path",
+        "type": "string"
+      }
+    },
+    "required": [
+      "path",
+      "content"
+    ],
+    "title": "Document",
+    "type": "object"
+  },
+  "DocumentRead": {
+    "additionalProperties": false,
+    "properties": {
+      "path": {
+        "maxLength": 240,
+        "minLength": 1,
+        "title": "Path",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "project_id",
+      "revision",
+      "path"
+    ],
+    "title": "DocumentRead",
     "type": "object"
   },
   "EffectivePermission": {
@@ -1466,6 +1951,618 @@
     "title": "ErrorEnvelope",
     "type": "object"
   },
+  "EvidenceIdentity": {
+    "additionalProperties": false,
+    "properties": {
+      "evidence_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Evidence Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "evidence_id"
+    ],
+    "title": "EvidenceIdentity",
+    "type": "object"
+  },
+  "ExactConfirmation": {
+    "additionalProperties": false,
+    "properties": {
+      "nonce": {
+        "maxLength": 43,
+        "minLength": 43,
+        "title": "Nonce",
+        "type": "string"
+      },
+      "request_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Request Hash",
+        "type": "string"
+      },
+      "request_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Request Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "request_id",
+      "nonce",
+      "request_hash"
+    ],
+    "title": "ExactConfirmation",
+    "type": "object"
+  },
+  "HistoryRead": {
+    "additionalProperties": false,
+    "properties": {
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "project_id",
+      "revision"
+    ],
+    "title": "HistoryRead",
+    "type": "object"
+  },
+  "HistoryView": {
+    "additionalProperties": false,
+    "properties": {
+      "author": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Author",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "reason": {
+        "title": "Reason",
+        "type": "string"
+      },
+      "required_fragments": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Required Fragments",
+        "type": "array"
+      },
+      "revision": {
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Tree Hash",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id",
+      "revision",
+      "tree_hash",
+      "author",
+      "reason",
+      "required_fragments"
+    ],
+    "title": "HistoryView",
+    "type": "object"
+  },
+  "InstructionAccept": {
+    "additionalProperties": false,
+    "properties": {
+      "candidate_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Candidate Hash",
+        "type": "string"
+      },
+      "candidate_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Candidate Id",
+        "type": "string"
+      },
+      "consent_request_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Consent Request Id"
+      },
+      "eval_ids": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Eval Ids",
+        "type": "array"
+      },
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_policy_revision": {
+        "minimum": 0,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "review_ids": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Review Ids",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "candidate_id",
+      "candidate_hash",
+      "expected_binding_revision",
+      "expected_policy_revision",
+      "idempotency_key",
+      "review_ids",
+      "eval_ids"
+    ],
+    "title": "InstructionAccept",
+    "type": "object"
+  },
+  "InstructionBind": {
+    "$defs": {
+      "Document": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 65536,
+            "title": "Content",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "title": "Document",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "documents": {
+        "items": {
+          "$ref": "#/$defs/Document"
+        },
+        "maxItems": 256,
+        "title": "Documents",
+        "type": "array"
+      },
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_project_revision": {
+        "minimum": 0,
+        "title": "Expected Project Revision",
+        "type": "integer"
+      },
+      "expected_root_revision": {
+        "minimum": 0,
+        "title": "Expected Root Revision",
+        "type": "integer"
+      },
+      "expected_tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Tree Hash",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "owner": {
+        "enum": [
+          "ENVIRONMENT",
+          "PROJECT"
+        ],
+        "title": "Owner",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "required_fragments": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Required Fragments",
+        "type": "array"
+      },
+      "root_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Root Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "project_id",
+      "expected_project_revision",
+      "expected_binding_revision",
+      "root_id",
+      "expected_root_revision",
+      "expected_tree_hash",
+      "owner",
+      "documents",
+      "required_fragments",
+      "reason"
+    ],
+    "title": "InstructionBind",
+    "type": "object"
+  },
+  "InstructionPropose": {
+    "$defs": {
+      "Document": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 65536,
+            "title": "Content",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "title": "Document",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "category": {
+        "enum": [
+          "NAVIGATION_REPAIR",
+          "ORDINARY",
+          "SECURITY",
+          "DEPLOYMENT",
+          "PERMISSIONS",
+          "DESTRUCTIVE",
+          "ARCHITECTURE",
+          "GLOSSARY"
+        ],
+        "title": "Category",
+        "type": "string"
+      },
+      "documents": {
+        "items": {
+          "$ref": "#/$defs/Document"
+        },
+        "maxItems": 256,
+        "title": "Documents",
+        "type": "array"
+      },
+      "expected_revision": {
+        "minimum": 0,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "expected_tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Tree Hash",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "required_fragments": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Required Fragments",
+        "type": "array"
+      },
+      "source_refs": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Source Refs",
+        "type": "array"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "project_id",
+      "expected_revision",
+      "expected_tree_hash",
+      "documents",
+      "required_fragments",
+      "reason",
+      "source_refs",
+      "category"
+    ],
+    "title": "InstructionPropose",
+    "type": "object"
+  },
+  "InstructionReceipt": {
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "title": "Command",
+        "type": "string"
+      },
+      "committed_at": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Committed At"
+      },
+      "content_hash": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Content Hash"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "provenance": {
+        "enum": [
+          "PROJECT",
+          "DEVELOPMENT_CANDIDATE",
+          "VERIFIED_RELEASE",
+          "ROOT"
+        ],
+        "title": "Provenance",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "status": {
+        "enum": [
+          "CANONICAL_COMMITTED",
+          "PENDING",
+          "RECOVERY_NEEDED",
+          "CONFLICT",
+          "ABANDONED"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "target_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Target Id",
+        "type": "string"
+      },
+      "target_kind": {
+        "enum": [
+          "instruction_root",
+          "project_instructions",
+          "instruction_install"
+        ],
+        "title": "Target Kind",
+        "type": "string"
+      }
+    },
+    "required": [
+      "operation_id",
+      "command",
+      "target_kind",
+      "target_id",
+      "revision",
+      "status",
+      "committed_at",
+      "content_hash",
+      "provenance"
+    ],
+    "title": "InstructionReceipt",
+    "type": "object"
+  },
+  "InstructionRestore": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_revision": {
+        "minimum": 0,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "expected_tree_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Tree Hash",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 0,
+        "title": "Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "project_id",
+      "revision",
+      "expected_revision",
+      "expected_tree_hash",
+      "reason"
+    ],
+    "title": "InstructionRestore",
+    "type": "object"
+  },
+  "InstructionReview": {
+    "additionalProperties": false,
+    "properties": {
+      "candidate_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Candidate Hash",
+        "type": "string"
+      },
+      "candidate_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Candidate Id",
+        "type": "string"
+      },
+      "coverage": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Coverage",
+        "type": "string"
+      },
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_policy_revision": {
+        "minimum": 0,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "findings": {
+        "items": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "title": "Findings",
+        "type": "array"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "limitations": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Limitations",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "verdict": {
+        "enum": [
+          "PASS",
+          "FAIL"
+        ],
+        "title": "Verdict",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id",
+      "candidate_id",
+      "candidate_hash",
+      "expected_binding_revision",
+      "expected_policy_revision",
+      "idempotency_key",
+      "verdict",
+      "coverage",
+      "limitations",
+      "findings"
+    ],
+    "title": "InstructionReview",
+    "type": "object"
+  },
   "LegacyPlan": {
     "$defs": {
       "LegacyMapping": {
@@ -1638,6 +2735,515 @@
       "unmapped"
     ],
     "title": "LegacyPreview",
+    "type": "object"
+  },
+  "OfficialPreview": {
+    "$defs": {
+      "CandidateRegister": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "instruction.candidate.register.v1",
+            "default": "instruction.candidate.register.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manifest_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Manifest Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "manifest_digest",
+          "expected_revision"
+        ],
+        "title": "CandidateRegister",
+        "type": "object"
+      },
+      "InstructionChangeConsent": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Candidate Hash",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "expected_binding_revision": {
+            "minimum": 0,
+            "title": "Expected Binding Revision",
+            "type": "integer"
+          },
+          "expected_policy_revision": {
+            "minimum": 0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.instructions.accept.v1",
+            "default": "project.instructions.accept.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "review_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Review Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "project_id",
+          "candidate_id",
+          "candidate_hash",
+          "expected_binding_revision",
+          "expected_policy_revision",
+          "review_ids",
+          "eval_ids"
+        ],
+        "title": "InstructionChangeConsent",
+        "type": "object"
+      },
+      "InstructionPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "authorized_categories": {
+            "items": {
+              "enum": [
+                "NAVIGATION_REPAIR",
+                "ORDINARY",
+                "SECURITY",
+                "DEPLOYMENT",
+                "PERMISSIONS",
+                "DESTRUCTIVE",
+                "ARCHITECTURE",
+                "GLOSSARY"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Authorized Categories",
+            "type": "array"
+          },
+          "independent_review": {
+            "title": "Independent Review",
+            "type": "boolean"
+          },
+          "navigation_repairs": {
+            "title": "Navigation Repairs",
+            "type": "boolean"
+          },
+          "require_confirmation": {
+            "title": "Require Confirmation",
+            "type": "boolean"
+          },
+          "required_evals": {
+            "items": {
+              "const": "instruction-boundaries-v1",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Required Evals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "authorized_categories",
+          "navigation_repairs",
+          "independent_review",
+          "require_confirmation",
+          "required_evals"
+        ],
+        "title": "InstructionPolicy",
+        "type": "object"
+      },
+      "PolicyConfigure": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_binding_revision": {
+            "minimum": 0,
+            "title": "Expected Binding Revision",
+            "type": "integer"
+          },
+          "expected_policy_revision": {
+            "minimum": 0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "expected_project_revision": {
+            "minimum": 0,
+            "title": "Expected Project Revision",
+            "type": "integer"
+          },
+          "expected_root_revision": {
+            "minimum": 0,
+            "title": "Expected Root Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.instructions.policy.configure.v1",
+            "default": "project.instructions.policy.configure.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/$defs/InstructionPolicy"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "project_id",
+          "expected_project_revision",
+          "expected_binding_revision",
+          "expected_root_revision",
+          "expected_policy_revision",
+          "policy"
+        ],
+        "title": "PolicyConfigure",
+        "type": "object"
+      },
+      "PublicationRecovery": {
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "enum": [
+              "FINISH_TARGET",
+              "RESTORE_BASE"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "expected_binding_revision": {
+            "minimum": 0,
+            "title": "Expected Binding Revision",
+            "type": "integer"
+          },
+          "expected_generation": {
+            "minimum": 0,
+            "title": "Expected Generation",
+            "type": "integer"
+          },
+          "expected_policy_revision": {
+            "minimum": 0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.instructions.recover.v1",
+            "default": "project.instructions.recover.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "publication_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Publication Hash",
+            "type": "string"
+          },
+          "root_revisions": {
+            "items": {
+              "$ref": "#/$defs/RecoveryRootRevision"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Root Revisions",
+            "type": "array"
+          },
+          "target_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Target Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_revisions",
+          "project_id",
+          "operation_id",
+          "expected_generation",
+          "expected_binding_revision",
+          "expected_policy_revision",
+          "publication_hash",
+          "target_hash",
+          "disposition",
+          "idempotency_key"
+        ],
+        "title": "PublicationRecovery",
+        "type": "object"
+      },
+      "RecoveryRootRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "revision": {
+            "minimum": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_id",
+          "revision"
+        ],
+        "title": "RecoveryRootRevision",
+        "type": "object"
+      },
+      "ReleaseInstall": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "instruction.release.install.v1",
+            "default": "instruction.release.install.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manifest_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Manifest Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "evidence_id",
+          "manifest_digest",
+          "expected_revision"
+        ],
+        "title": "ReleaseInstall",
+        "type": "object"
+      },
+      "RootAdmit": {
+        "additionalProperties": false,
+        "properties": {
+          "config_revision": {
+            "minimum": 0,
+            "title": "Config Revision",
+            "type": "integer"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "inspection_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Inspection Digest",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.root.admit.v1",
+            "default": "project.root.admit.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "root_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_key",
+          "config_revision",
+          "idempotency_key",
+          "inspection_digest",
+          "expected_revision"
+        ],
+        "title": "RootAdmit",
+        "type": "object"
+      },
+      "RootRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.root.revoke.v1",
+            "default": "project.root.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "root_id",
+          "expected_revision"
+        ],
+        "title": "RootRevoke",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "deadline": {
+        "title": "Deadline",
+        "type": "integer"
+      },
+      "effect": {
+        "discriminator": {
+          "mapping": {
+            "instruction.candidate.register.v1": "#/$defs/CandidateRegister",
+            "instruction.release.install.v1": "#/$defs/ReleaseInstall",
+            "project.instructions.accept.v1": "#/$defs/InstructionChangeConsent",
+            "project.instructions.policy.configure.v1": "#/$defs/PolicyConfigure",
+            "project.instructions.recover.v1": "#/$defs/PublicationRecovery",
+            "project.root.admit.v1": "#/$defs/RootAdmit",
+            "project.root.revoke.v1": "#/$defs/RootRevoke"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/RootAdmit"
+          },
+          {
+            "$ref": "#/$defs/RootRevoke"
+          },
+          {
+            "$ref": "#/$defs/PolicyConfigure"
+          },
+          {
+            "$ref": "#/$defs/CandidateRegister"
+          },
+          {
+            "$ref": "#/$defs/ReleaseInstall"
+          },
+          {
+            "$ref": "#/$defs/InstructionChangeConsent"
+          },
+          {
+            "$ref": "#/$defs/PublicationRecovery"
+          }
+        ],
+        "title": "Effect"
+      },
+      "nonce": {
+        "title": "Nonce",
+        "type": "string"
+      },
+      "provenance": {
+        "const": "OFFICIAL_EXACT_EFFECT",
+        "default": "OFFICIAL_EXACT_EFFECT",
+        "title": "Provenance",
+        "type": "string"
+      },
+      "request_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Request Hash",
+        "type": "string"
+      },
+      "request_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Request Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "request_id",
+      "request_hash",
+      "effect",
+      "deadline",
+      "nonce"
+    ],
+    "title": "OfficialPreview",
     "type": "object"
   },
   "OperationReceipt": {
@@ -2023,6 +3629,117 @@
       "passkey"
     ],
     "title": "PasskeyMutationReceipt",
+    "type": "object"
+  },
+  "PolicyConfigure": {
+    "$defs": {
+      "InstructionPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "authorized_categories": {
+            "items": {
+              "enum": [
+                "NAVIGATION_REPAIR",
+                "ORDINARY",
+                "SECURITY",
+                "DEPLOYMENT",
+                "PERMISSIONS",
+                "DESTRUCTIVE",
+                "ARCHITECTURE",
+                "GLOSSARY"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Authorized Categories",
+            "type": "array"
+          },
+          "independent_review": {
+            "title": "Independent Review",
+            "type": "boolean"
+          },
+          "navigation_repairs": {
+            "title": "Navigation Repairs",
+            "type": "boolean"
+          },
+          "require_confirmation": {
+            "title": "Require Confirmation",
+            "type": "boolean"
+          },
+          "required_evals": {
+            "items": {
+              "const": "instruction-boundaries-v1",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Required Evals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "authorized_categories",
+          "navigation_repairs",
+          "independent_review",
+          "require_confirmation",
+          "required_evals"
+        ],
+        "title": "InstructionPolicy",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_policy_revision": {
+        "minimum": 0,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "expected_project_revision": {
+        "minimum": 0,
+        "title": "Expected Project Revision",
+        "type": "integer"
+      },
+      "expected_root_revision": {
+        "minimum": 0,
+        "title": "Expected Root Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "kind": {
+        "const": "project.instructions.policy.configure.v1",
+        "default": "project.instructions.policy.configure.v1",
+        "title": "Kind",
+        "type": "string"
+      },
+      "policy": {
+        "$ref": "#/$defs/InstructionPolicy"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "project_id",
+      "expected_project_revision",
+      "expected_binding_revision",
+      "expected_root_revision",
+      "expected_policy_revision",
+      "policy"
+    ],
+    "title": "PolicyConfigure",
     "type": "object"
   },
   "ProfileCreate": {
@@ -2900,6 +4617,821 @@
       "expected_policy_revision"
     ],
     "title": "ProjectCreate",
+    "type": "object"
+  },
+  "ProjectionCommand": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_observed_hash": {
+        "anyOf": [
+          {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Expected Observed Hash"
+      },
+      "expected_revision": {
+        "minimum": 0,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "expected_root_revision": {
+        "minimum": 0,
+        "title": "Expected Root Revision",
+        "type": "integer"
+      },
+      "filename": {
+        "enum": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "GEMINI.md"
+        ],
+        "title": "Filename",
+        "type": "string"
+      },
+      "format_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Format Version",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "root_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Root Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "project_id",
+      "expected_revision",
+      "root_id",
+      "expected_root_revision",
+      "filename",
+      "expected_observed_hash"
+    ],
+    "title": "ProjectionCommand",
+    "type": "object"
+  },
+  "ProjectionView": {
+    "additionalProperties": false,
+    "properties": {
+      "content": {
+        "title": "Content",
+        "type": "string"
+      },
+      "desired_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Desired Hash",
+        "type": "string"
+      },
+      "observed_hash": {
+        "anyOf": [
+          {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Observed Hash"
+      },
+      "owned": {
+        "title": "Owned",
+        "type": "boolean"
+      },
+      "status": {
+        "enum": [
+          "MATCH",
+          "DRIFT",
+          "UNMANAGED",
+          "ABSENT"
+        ],
+        "title": "Status",
+        "type": "string"
+      }
+    },
+    "required": [
+      "desired_hash",
+      "observed_hash",
+      "owned",
+      "content",
+      "status"
+    ],
+    "title": "ProjectionView",
+    "type": "object"
+  },
+  "ProtectedIdentity": {
+    "additionalProperties": false,
+    "properties": {
+      "request_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Request Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "request_id"
+    ],
+    "title": "ProtectedIdentity",
+    "type": "object"
+  },
+  "ProtectedPrepare": {
+    "$defs": {
+      "CandidateRegister": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "instruction.candidate.register.v1",
+            "default": "instruction.candidate.register.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manifest_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Manifest Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "manifest_digest",
+          "expected_revision"
+        ],
+        "title": "CandidateRegister",
+        "type": "object"
+      },
+      "InstructionChangeConsent": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Candidate Hash",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "expected_binding_revision": {
+            "minimum": 0,
+            "title": "Expected Binding Revision",
+            "type": "integer"
+          },
+          "expected_policy_revision": {
+            "minimum": 0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.instructions.accept.v1",
+            "default": "project.instructions.accept.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "review_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Review Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "project_id",
+          "candidate_id",
+          "candidate_hash",
+          "expected_binding_revision",
+          "expected_policy_revision",
+          "review_ids",
+          "eval_ids"
+        ],
+        "title": "InstructionChangeConsent",
+        "type": "object"
+      },
+      "InstructionPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "authorized_categories": {
+            "items": {
+              "enum": [
+                "NAVIGATION_REPAIR",
+                "ORDINARY",
+                "SECURITY",
+                "DEPLOYMENT",
+                "PERMISSIONS",
+                "DESTRUCTIVE",
+                "ARCHITECTURE",
+                "GLOSSARY"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Authorized Categories",
+            "type": "array"
+          },
+          "independent_review": {
+            "title": "Independent Review",
+            "type": "boolean"
+          },
+          "navigation_repairs": {
+            "title": "Navigation Repairs",
+            "type": "boolean"
+          },
+          "require_confirmation": {
+            "title": "Require Confirmation",
+            "type": "boolean"
+          },
+          "required_evals": {
+            "items": {
+              "const": "instruction-boundaries-v1",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Required Evals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "authorized_categories",
+          "navigation_repairs",
+          "independent_review",
+          "require_confirmation",
+          "required_evals"
+        ],
+        "title": "InstructionPolicy",
+        "type": "object"
+      },
+      "PolicyConfigure": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_binding_revision": {
+            "minimum": 0,
+            "title": "Expected Binding Revision",
+            "type": "integer"
+          },
+          "expected_policy_revision": {
+            "minimum": 0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "expected_project_revision": {
+            "minimum": 0,
+            "title": "Expected Project Revision",
+            "type": "integer"
+          },
+          "expected_root_revision": {
+            "minimum": 0,
+            "title": "Expected Root Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.instructions.policy.configure.v1",
+            "default": "project.instructions.policy.configure.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/$defs/InstructionPolicy"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "project_id",
+          "expected_project_revision",
+          "expected_binding_revision",
+          "expected_root_revision",
+          "expected_policy_revision",
+          "policy"
+        ],
+        "title": "PolicyConfigure",
+        "type": "object"
+      },
+      "PublicationRecovery": {
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "enum": [
+              "FINISH_TARGET",
+              "RESTORE_BASE"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "expected_binding_revision": {
+            "minimum": 0,
+            "title": "Expected Binding Revision",
+            "type": "integer"
+          },
+          "expected_generation": {
+            "minimum": 0,
+            "title": "Expected Generation",
+            "type": "integer"
+          },
+          "expected_policy_revision": {
+            "minimum": 0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.instructions.recover.v1",
+            "default": "project.instructions.recover.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "publication_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Publication Hash",
+            "type": "string"
+          },
+          "root_revisions": {
+            "items": {
+              "$ref": "#/$defs/RecoveryRootRevision"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Root Revisions",
+            "type": "array"
+          },
+          "target_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Target Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_revisions",
+          "project_id",
+          "operation_id",
+          "expected_generation",
+          "expected_binding_revision",
+          "expected_policy_revision",
+          "publication_hash",
+          "target_hash",
+          "disposition",
+          "idempotency_key"
+        ],
+        "title": "PublicationRecovery",
+        "type": "object"
+      },
+      "RecoveryRootRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "revision": {
+            "minimum": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_id",
+          "revision"
+        ],
+        "title": "RecoveryRootRevision",
+        "type": "object"
+      },
+      "ReleaseInstall": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "instruction.release.install.v1",
+            "default": "instruction.release.install.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manifest_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Manifest Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "evidence_id",
+          "manifest_digest",
+          "expected_revision"
+        ],
+        "title": "ReleaseInstall",
+        "type": "object"
+      },
+      "RootAdmit": {
+        "additionalProperties": false,
+        "properties": {
+          "config_revision": {
+            "minimum": 0,
+            "title": "Config Revision",
+            "type": "integer"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "inspection_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Inspection Digest",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.root.admit.v1",
+            "default": "project.root.admit.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "root_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_key",
+          "config_revision",
+          "idempotency_key",
+          "inspection_digest",
+          "expected_revision"
+        ],
+        "title": "RootAdmit",
+        "type": "object"
+      },
+      "RootRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "project.root.revoke.v1",
+            "default": "project.root.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "root_id",
+          "expected_revision"
+        ],
+        "title": "RootRevoke",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "effect": {
+        "discriminator": {
+          "mapping": {
+            "instruction.candidate.register.v1": "#/$defs/CandidateRegister",
+            "instruction.release.install.v1": "#/$defs/ReleaseInstall",
+            "project.instructions.accept.v1": "#/$defs/InstructionChangeConsent",
+            "project.instructions.policy.configure.v1": "#/$defs/PolicyConfigure",
+            "project.instructions.recover.v1": "#/$defs/PublicationRecovery",
+            "project.root.admit.v1": "#/$defs/RootAdmit",
+            "project.root.revoke.v1": "#/$defs/RootRevoke"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/RootAdmit"
+          },
+          {
+            "$ref": "#/$defs/RootRevoke"
+          },
+          {
+            "$ref": "#/$defs/PolicyConfigure"
+          },
+          {
+            "$ref": "#/$defs/CandidateRegister"
+          },
+          {
+            "$ref": "#/$defs/ReleaseInstall"
+          },
+          {
+            "$ref": "#/$defs/InstructionChangeConsent"
+          },
+          {
+            "$ref": "#/$defs/PublicationRecovery"
+          }
+        ],
+        "title": "Effect"
+      }
+    },
+    "required": [
+      "effect"
+    ],
+    "title": "ProtectedPrepare",
+    "type": "object"
+  },
+  "ProtectedState": {
+    "additionalProperties": false,
+    "properties": {
+      "state": {
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "COMMITTED",
+          "CANCELLED",
+          "EXPIRED",
+          "INVALIDATED"
+        ],
+        "title": "State",
+        "type": "string"
+      }
+    },
+    "required": [
+      "state"
+    ],
+    "title": "ProtectedState",
+    "type": "object"
+  },
+  "RecoveryInspect": {
+    "additionalProperties": false,
+    "properties": {
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id"
+    ],
+    "title": "RecoveryInspect",
+    "type": "object"
+  },
+  "RecoveryTarget": {
+    "$defs": {
+      "RecoveryRootRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "revision": {
+            "minimum": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root_id",
+          "revision"
+        ],
+        "title": "RecoveryRootRevision",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "expected_binding_revision": {
+        "minimum": 0,
+        "title": "Expected Binding Revision",
+        "type": "integer"
+      },
+      "expected_generation": {
+        "minimum": 0,
+        "title": "Expected Generation",
+        "type": "integer"
+      },
+      "expected_policy_revision": {
+        "minimum": 0,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "publication_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Publication Hash",
+        "type": "string"
+      },
+      "root_revisions": {
+        "items": {
+          "$ref": "#/$defs/RecoveryRootRevision"
+        },
+        "maxItems": 2,
+        "minItems": 1,
+        "title": "Root Revisions",
+        "type": "array"
+      },
+      "target_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Target Hash",
+        "type": "string"
+      }
+    },
+    "required": [
+      "root_revisions",
+      "project_id",
+      "operation_id",
+      "expected_generation",
+      "expected_binding_revision",
+      "expected_policy_revision",
+      "publication_hash",
+      "target_hash"
+    ],
+    "title": "RecoveryTarget",
+    "type": "object"
+  },
+  "ReleaseVerify": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_manifest_digest": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Manifest Digest",
+        "type": "string"
+      }
+    },
+    "required": [
+      "expected_manifest_digest"
+    ],
+    "title": "ReleaseVerify",
+    "type": "object"
+  },
+  "RootInspect": {
+    "additionalProperties": false,
+    "properties": {
+      "config_revision": {
+        "minimum": 0,
+        "title": "Config Revision",
+        "type": "integer"
+      },
+      "root_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Root Key",
+        "type": "string"
+      }
+    },
+    "required": [
+      "root_key",
+      "config_revision"
+    ],
+    "title": "RootInspect",
+    "type": "object"
+  },
+  "RootObservation": {
+    "additionalProperties": false,
+    "properties": {
+      "device": {
+        "title": "Device",
+        "type": "integer"
+      },
+      "digest": {
+        "title": "Digest",
+        "type": "string"
+      },
+      "git_identity": {
+        "title": "Git Identity",
+        "type": "string"
+      },
+      "inode": {
+        "title": "Inode",
+        "type": "integer"
+      },
+      "key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Key",
+        "type": "string"
+      },
+      "revision": {
+        "title": "Revision",
+        "type": "integer"
+      },
+      "tree_hash": {
+        "title": "Tree Hash",
+        "type": "string"
+      }
+    },
+    "required": [
+      "key",
+      "revision",
+      "device",
+      "inode",
+      "tree_hash",
+      "git_identity",
+      "digest"
+    ],
+    "title": "RootObservation",
     "type": "object"
   },
   "TaskControl": {

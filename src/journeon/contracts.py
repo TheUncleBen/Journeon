@@ -489,7 +489,18 @@ class BundleResolve(Contract):
     variables: list[VariableBinding]
 
 
+class ProductionInstructionProvenance(Contract):
+    installation_revision: PositiveRevision
+    installation_manifest: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    installation_provenance: Literal["DEVELOPMENT_CANDIDATE", "VERIFIED_RELEASE"]
+    project_instruction_revision: PositiveRevision
+    project_tree_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    root_id: Identifier
+    root_revision: PositiveRevision
+
+
 class BundleView(Contract):
+    production: ProductionInstructionProvenance | None = None
     bundle_id: Identifier
     initiating_principal_id: Identifier
     profile_id: Identifier
@@ -508,4 +519,22 @@ class BundleResult(Contract):
     rendering: str
 
 
-CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt
+class InstructionReceipt(Contract):
+    operation_id: Identifier
+    command: str
+    target_kind: Literal["instruction_root", "project_instructions", "instruction_install"]
+    target_id: Identifier
+    revision: Annotated[int, Field(ge=0)]
+    status: Literal["CANONICAL_COMMITTED", "PENDING", "RECOVERY_NEEDED", "CONFLICT", "ABANDONED"]
+    committed_at: str | None
+    content_hash: str | None
+    provenance: Literal["PROJECT", "DEVELOPMENT_CANDIDATE", "VERIFIED_RELEASE", "ROOT"]
+
+
+CanonicalReceipt = (
+    OperationReceipt
+    | PasskeyMutationReceipt
+    | TaskReceipt
+    | ConfigurationReceipt
+    | InstructionReceipt
+)

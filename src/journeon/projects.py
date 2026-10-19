@@ -150,6 +150,9 @@ class ProjectService:
                     )
                 )
                 session.flush()
+                from journeon.project_instructions import initialize_project_policy
+
+                initialize_project_policy(session, actor, project_id)
                 session.add(
                     Receipt(
                         id=operation_id,

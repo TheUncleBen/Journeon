@@ -199,6 +199,8 @@ app.state.engine.dispose()
         == tomllib.loads((release / "pyproject.toml").read_text())["project"]["version"]
     )
     assert data["revisions"] == [
+        "0009_instruction_scope",
+        "0008_project_instructions",
         "0007_identity_instructions",
         "0006_work",
         "0005_protected_operations",
@@ -208,6 +210,10 @@ app.state.engine.dispose()
         "0001_foundation",
     ]
     assert data["modules"] >= 15
+    for name in ("core.md", "navigation.md"):
+        assert (release / "src" / "journeon" / "assets" / "instructions" / name).read_bytes() == (
+            ROOT / "src" / "journeon" / "assets" / "instructions" / name
+        ).read_bytes()
     BUILD["verify"](release)
 
 

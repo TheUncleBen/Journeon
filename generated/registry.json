@@ -788,6 +788,747 @@
       "path": "/api/v1/auth/passkeys/finish",
       "permissions": [],
       "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.root.inspect.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.inspect",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "inspectInstructionRoot",
+      "owner": "project_instructions",
+      "path": "/api/v1/project-roots/inspect",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "instruction.protected.prepare.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.prepare",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "prepareInstructionEffect",
+      "owner": "project_instructions",
+      "path": "/api/v1/protected-operations/prepare",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.projection"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "instruction.protected.preview.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.preview",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewInstructionEffect",
+      "owner": "project_instructions",
+      "path": "/api/v1/protected-operations/preview",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.projection"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "effect.project_id",
+            "when": "Project policy, acceptance or recovery canonical receipt"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "effect.project_id",
+            "when": "Project policy, acceptance or recovery canonical receipt"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "instruction.protected.confirm.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.confirm",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "confirmInstructionEffect",
+      "owner": "project_instructions",
+      "path": "/api/v1/protected-operations/confirm",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.receipt.read",
+        "project.instruction.projection"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "instruction.protected.cancel.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.cancel",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "cancelInstructionEffect",
+      "owner": "project_instructions",
+      "path": "/api/v1/protected-operations/cancel",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.projection"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.recovery.inspect.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.recovery",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "inspectInstructionRecovery",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/recovery",
+      "permissions": [
+        "project.instruction.accept",
+        "project.instruction.read",
+        "project.instruction.projection"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.bind",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.bind.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.bind",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "bindProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/binding",
+      "permissions": [
+        "project.instruction.bind",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.accept"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.bind",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.binding.preview.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.binding_preview",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewInstructionBinding",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/binding-preview",
+      "permissions": [
+        "project.instruction.bind",
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.history.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.history",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "readInstructionHistory",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/history",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.document.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.document",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "readInstructionDocument",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/document",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "current canonical tree and admitted root; selected fragments only"
+      },
+      "command": null,
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "readProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": "project.instructions.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.propose",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          },
+          {
+            "capability": "project.instruction.evaluate",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.propose.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.propose",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "proposeProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/candidates",
+      "permissions": [
+        "project.instruction.propose",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.accept",
+        "project.instruction.evaluate"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.preview.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.candidate_preview",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/preview",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.evaluate",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.evaluate.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.evaluate",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "evaluateProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/evals",
+      "permissions": [
+        "project.instruction.evaluate",
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.review",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.review.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.review",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "reviewProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/reviews",
+      "permissions": [
+        "project.instruction.review",
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.accept.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.accept",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "acceptProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/accept",
+      "permissions": [
+        "project.instruction.accept",
+        "project.instruction.read",
+        "project.instruction.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.propose",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.restore.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.restore",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "restoreProjectInstructions",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/restore",
+      "permissions": [
+        "project.instruction.propose",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.accept"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "release.evidence.verify.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.verify",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "verifyInstalledRelease",
+      "owner": "project_instructions",
+      "path": "/api/v1/releases/evidence/verify",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "materialize or reconcile its journal"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.projection.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.projection",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "projectInstructionProjection",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/projections/{action}",
+      "permissions": [
+        "project.instruction.projection",
+        "project.instruction.read",
+        "project.instruction.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "command": "project.instructions.policy.prepare.v1",
+      "endpoint": "journeon.instruction_api.bind_instruction_api.<locals>.policy",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "prepareInstructionPolicy",
+      "owner": "project_instructions",
+      "path": "/api/v1/projects/{identity}/instructions/policy",
+      "permissions": [],
+      "query": null
     }
   ],
   "authentication": [
@@ -1305,6 +2046,750 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "RootInspect",
+      "name": "project.root.inspect.v1",
+      "owner": "project_instructions",
+      "permissions": [],
+      "result_model": "RootObservation",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "ProtectedPrepare",
+      "name": "instruction.protected.prepare.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.projection"
+      ],
+      "result_model": "ProtectedIdentity",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "ProtectedIdentity",
+      "name": "instruction.protected.preview.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.projection"
+      ],
+      "result_model": "OfficialPreview",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "effect.project_id",
+            "when": "Project policy, acceptance or recovery canonical receipt"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "effect.project_id",
+            "when": "Project policy, acceptance or recovery canonical receipt"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "ADMITTED_LOCAL_FILESYSTEM"
+      ],
+      "idempotent": false,
+      "input_model": "ExactConfirmation",
+      "name": "instruction.protected.confirm.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.receipt.read",
+        "project.instruction.projection"
+      ],
+      "result_model": "InstructionReceipt",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "trusted instruction request scope.project_id",
+            "when": "Project instruction acceptance or recovery variant"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "ProtectedIdentity",
+      "name": "instruction.protected.cancel.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.projection"
+      ],
+      "result_model": "ProtectedState",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.bind",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "ADMITTED_LOCAL_FILESYSTEM"
+      ],
+      "idempotent": true,
+      "input_model": "InstructionBind",
+      "name": "project.instructions.bind.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.bind",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.accept"
+      ],
+      "result_model": "InstructionReceipt",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.propose",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          },
+          {
+            "capability": "project.instruction.evaluate",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "ADMITTED_LOCAL_FILESYSTEM"
+      ],
+      "idempotent": true,
+      "input_model": "InstructionPropose",
+      "name": "project.instructions.propose.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.propose",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.accept",
+        "project.instruction.evaluate"
+      ],
+      "result_model": "CandidateView",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "CandidateReference",
+      "name": "project.instructions.preview.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "CandidateView",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.evaluate",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "CandidateReference",
+      "name": "project.instructions.evaluate.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.evaluate",
+        "project.instruction.read"
+      ],
+      "result_model": "EvidenceIdentity",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.review",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "InstructionReview",
+      "name": "project.instructions.review.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.review",
+        "project.instruction.read"
+      ],
+      "result_model": "EvidenceIdentity",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "ADMITTED_LOCAL_FILESYSTEM"
+      ],
+      "idempotent": true,
+      "input_model": "InstructionAccept",
+      "name": "project.instructions.accept.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.accept",
+        "project.instruction.read",
+        "project.instruction.receipt.read"
+      ],
+      "result_model": "InstructionReceipt",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.propose",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "canonical publication response"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "publication or qualifying automatic candidate"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "InstructionRestore",
+      "name": "project.instructions.restore.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.propose",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.accept"
+      ],
+      "result_model": "CandidateView",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "materialize or reconcile its journal"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "ADMITTED_LOCAL_FILESYSTEM"
+      ],
+      "idempotent": true,
+      "input_model": "ProjectionCommand",
+      "name": "project.instructions.projection.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.projection",
+        "project.instruction.read",
+        "project.instruction.receipt.read"
+      ],
+      "result_model": "ProjectionView",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "PolicyConfigure",
+      "name": "project.instructions.policy.prepare.v1",
+      "owner": "project_instructions",
+      "permissions": [],
+      "result_model": "ProtectedIdentity",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [
+        "CONFIGURED_RELEASE_BACKUP"
+      ],
+      "idempotent": false,
+      "input_model": "ReleaseVerify",
+      "name": "release.evidence.verify.v1",
+      "owner": "project_instructions",
+      "permissions": [],
+      "result_model": "EvidenceIdentity",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.projection",
+            "owner_configuration_authority": false,
+            "resource": "trusted publication Project scope",
+            "when": "projection recovery variant"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "RecoveryInspect",
+      "name": "project.instructions.recovery.inspect.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.accept",
+        "project.instruction.read",
+        "project.instruction.projection"
+      ],
+      "result_model": "RecoveryTarget",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.bind",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BindingPreview",
+      "name": "project.instructions.binding.preview.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.bind",
+        "project.instruction.read"
+      ],
+      "result_model": "BindingImpact",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "HistoryRead",
+      "name": "project.instructions.history.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "HistoryView",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch; protected operations additionally require official audience and recent strong authentication",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "DocumentRead",
+      "name": "project.instructions.document.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "Document",
+      "reversibility": "Versioned candidates and scoped journal reconciliation",
+      "risk": "SCOPED_INSTRUCTION_OPERATION",
+      "stability": "INTERNAL",
+      "verification": "Exact current operands; canonical commit only after observed bytes agree"
     }
   ],
   "modules": [
@@ -1388,7 +2873,7 @@
         "passkey.labelled"
       ],
       "health": "schema_and_database",
-      "migration": "0005_protected_operations",
+      "migration": "0009_instruction_scope",
       "module_id": "identity",
       "permission_namespaces": [
         "passkey"
@@ -1422,7 +2907,7 @@
         "instruction.bundle.resolve.committed"
       ],
       "health": "schema_and_database",
-      "migration": "0007_identity_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "instructions",
       "permission_namespaces": [
         "bot",
@@ -1460,7 +2945,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0007_identity_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -1512,6 +2997,63 @@
     },
     {
       "api_prefixes": [
+        "/api/v1/project-roots",
+        "/api/v1/protected-operations",
+        "/api/v1/projects",
+        "/api/v1/releases"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "project.instructions.projection.committed",
+        "project.instructions.projection.abandoned",
+        "project.instructions.bind.abandoned",
+        "project.instructions.accept.abandoned",
+        "project.instructions.bind.committed",
+        "project.instructions.accept.committed",
+        "project.instructions.policy.configure.committed",
+        "project.root.admit.committed",
+        "project.root.revoke.committed",
+        "instruction.candidate.register.committed",
+        "instruction.release.install.committed"
+      ],
+      "health": "schema_and_database",
+      "migration": "0009_instruction_scope",
+      "module_id": "project_instructions",
+      "permission_namespaces": [
+        "project"
+      ],
+      "permissions": [
+        "project.instruction.accept",
+        "project.instruction.bind",
+        "project.instruction.evaluate",
+        "project.instruction.projection",
+        "project.instruction.propose",
+        "project.instruction.read",
+        "project.instruction.receipt.read",
+        "project.instruction.review"
+      ],
+      "settings": [],
+      "tables": [
+        "instruction_request_scopes",
+        "instruction_roots",
+        "project_instruction_bindings",
+        "project_instruction_revisions",
+        "project_instruction_policies",
+        "instruction_candidates",
+        "instruction_evidence",
+        "instruction_publications",
+        "instruction_installations",
+        "installed_release_evidence",
+        "instruction_projections"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
         "/api/v1/projects"
       ],
       "backup_class": "R0",
@@ -1523,7 +3065,7 @@
         "project.created"
       ],
       "health": "schema_and_database",
-      "migration": "0001_foundation",
+      "migration": "0009_instruction_scope",
       "module_id": "projects",
       "permission_namespaces": [
         "project"
@@ -1794,6 +3336,53 @@
         "task.read"
       ],
       "result_model": "EffectivePermission"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "current canonical tree and admitted root; selected fragments only"
+      },
+      "name": "project.instructions.read.v1",
+      "owner": "project_instructions",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "InstructionView"
+    }
+  ],
+  "surfaces": [
+    {
+      "authorization": "Public trusted authentication controls; authentication and step-up require their existing API checks",
+      "operation_id": "instructionAuthenticationPage",
+      "owner": "project_instructions",
+      "path": "/instructions/authenticate"
+    },
+    {
+      "authorization": "Current Owner official session, strong authentication and exact stored request scopes; nonce issuance",
+      "operation_id": "instructionConfirmationPage",
+      "owner": "project_instructions",
+      "path": "/instructions/confirmation/{request_id}"
+    },
+    {
+      "authorization": "Public trusted static script",
+      "operation_id": "instructionSurfaceScript",
+      "owner": "project_instructions",
+      "path": "/instructions/surface.js"
+    },
+    {
+      "authorization": "Public trusted static stylesheet",
+      "operation_id": "instructionSurfaceStyles",
+      "owner": "project_instructions",
+      "path": "/instructions/surface.css"
     }
   ]
 }

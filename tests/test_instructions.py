@@ -152,6 +152,50 @@ def configured_bundle(database, actor, named=True):
                 )
             )
         refs.append(ComponentRef(asset_id=identity, revision=1, content_hash=digest(content)))
+    from journeon.models import InstructionInstallation, InstructionRoot, ProjectInstructionBinding
+
+    with transaction(database[0]) as db:
+        db.add(
+            InstructionRoot(
+                id="fixture-root",
+                root_key="fixture-root",
+                revision=1,
+                config_revision=1,
+                project_id=project.project_id,
+                role="PROJECT",
+                device=0,
+                inode=0,
+                git_identity="a" * 64,
+                enabled=True,
+            )
+        )
+        db.flush()
+        db.add(
+            ProjectInstructionBinding(
+                project_id=project.project_id,
+                root_id="fixture-root",
+                root_revision=1,
+                owner="PROJECT",
+                revision=1,
+                tree_hash="a" * 64,
+                policy_revision=1,
+                generation=1,
+                active_operation=None,
+                entry_asset_id="fixture-project",
+            )
+        )
+        db.add(
+            InstructionInstallation(
+                id=1,
+                revision=1,
+                manifest_digest="b" * 64,
+                provenance="DEVELOPMENT_CANDIDATE",
+                snapshot={
+                    "components": [ref.model_dump(mode="json") for ref in refs[:2]],
+                    "fixture_only": True,
+                },
+            )
+        )
     command = BundleResolve(
         idempotency_key="bundle",
         profile_id=profile.profile_id,

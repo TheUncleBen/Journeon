@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, defer
 
 from journeon.contracts import CanonicalReceipt, DomainError, PasskeyMutationReceipt
 from journeon.database import require_compatible_schema, transaction
+from journeon.instruction_config import InstructionConfiguration
 from journeon.models import Passkey, Receipt
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import _authorized_receipt
@@ -26,6 +27,10 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     )
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
+    if row.owner == "project_instructions":
+        from journeon.instruction_operations import authorized
+
+        return authorized(db, actor, row)
     if row.owner in {"agents", "instructions"}:
         from journeon.agents import authorized_configuration_receipt
 
@@ -55,8 +60,11 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
 
 
 class OperationService:
-    def __init__(self, engine: Engine) -> None:
+    def __init__(
+        self, engine: Engine, configuration: InstructionConfiguration | None = None
+    ) -> None:
         self.engine = engine
+        self.configuration = configuration
 
     def receipt(self, actor: AuthenticatedContext, operation_id: str) -> CanonicalReceipt:
         try:
@@ -71,6 +79,19 @@ class OperationService:
                 row = db.get(Receipt, operation_id, options=[defer(Receipt.result)])
                 if row is None:
                     raise DomainError("NOT_FOUND", "Operation is unavailable")
+                if (
+                    self.configuration is not None
+                    and row.principal_id == actor.principal_id
+                    and row.project_id is not None
+                    and row.owner in {"instructions", "project_instructions"}
+                ):
+                    from journeon.models import ProjectInstructionBinding
+                    from journeon.project_instructions import ProjectInstructionService
+
+                    if db.get(ProjectInstructionBinding, row.project_id) is not None:
+                        ProjectInstructionService(self.engine, self.configuration).binding(
+                            db, actor, row.project_id
+                        )
                 return authorized_receipt(db, actor, row)
         except (ValidationError, json.JSONDecodeError):
             raise DomainError(

@@ -445,3 +445,76 @@ def test_dark_focus_outline_has_nontext_contrast(official):
     outline = luminance(colors[-1])
     background = luminance("#171717")
     assert (max(outline, background) + 0.05) / (min(outline, background) + 0.05) >= 3
+
+
+@pytest.mark.parametrize(
+    ("boundary", "change"),
+    [
+        (boundary, change)
+        for boundary in ("signed", "backup")
+        for change in ("tree", "root", "backup")
+    ]
+    + [("health", "backup"), ("admission", "generation")],
+)
+def test_release_install_rejects_late_external_changes(
+    official, tmp_path, monkeypatch, boundary, change
+):
+    from sqlalchemy import select
+    from test_production_instructions import (
+        test_signed_installed_evidence_uses_disposable_authority_and_rejects_tampering,
+    )
+
+    from journeon import release_evidence, release_qualification
+    from journeon.contracts import DomainError
+    from journeon.database import transaction
+    from journeon.instruction_admin import InstructionAdministration
+    from journeon.instruction_contracts import ReleaseInstall
+    from journeon.models import InstructionInstallation, ProjectInstructionBinding
+
+    engine, client, headers, config = official
+    project, base, path = bound_instructions(official)
+    triggered = False
+    calls = 0
+
+    def change_external():
+        nonlocal triggered
+        triggered = True
+        if change == "tree":
+            (path / "rules.md").write_text("Unaccepted local edit during observation.\n")
+        elif change == "root":
+            root = Path(config.roots[0].path)
+            root.rename(root.with_name("previous-root"))
+            root.mkdir()
+        elif change == "generation":
+            with transaction(engine) as db:
+                db.get(ProjectInstructionBinding, project).generation += 1
+        else:
+            backup = next(tmp_path.glob("backup.db.qualification-*"))
+            (backup / "trees.json").write_text("{}")
+
+    target, name = {
+        "signed": (release_evidence, "verified_snapshot"),
+        "backup": (release_qualification, "validate_snapshot"),
+        "health": (release_qualification, "health"),
+        "admission": (InstructionAdministration, "observe"),
+    }[boundary]
+    original = getattr(target, name)
+
+    def observe_then_change(*args):
+        nonlocal calls
+        result = original(*args)
+        if boundary == "admission" and not isinstance(args[2], ReleaseInstall):
+            return result
+        calls += 1
+        if calls == {"signed": 2, "backup": 1, "health": 3, "admission": 1}[boundary]:
+            change_external()
+        return result
+
+    monkeypatch.setattr(target, name, observe_then_change)
+    with pytest.raises((AssertionError, DomainError)):
+        test_signed_installed_evidence_uses_disposable_authority_and_rejects_tampering(
+            official, tmp_path
+        )
+    assert triggered
+    with transaction(engine) as db:
+        assert db.scalar(select(InstructionInstallation)) is None

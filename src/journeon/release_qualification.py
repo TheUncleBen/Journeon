@@ -219,14 +219,12 @@ def verify(
     config: InstructionConfiguration,
     evidence: dict[str, Any],
     actor: AuthenticatedContext,
-) -> None:
+) -> str:
     from journeon.release_evidence import regular_bytes
 
+    with transaction(engine) as db:
+        current_owner(db, actor)
     try:
-        current = health(engine, config, actor)
-        trees = current.pop("trees")
-        if current != evidence["health"]:
-            raise ValueError("Health evidence is stale")
         directory = Path(evidence["backup"]["directory"])
         trust = config.release_trust
         if (
@@ -235,17 +233,36 @@ def verify(
             or not directory.name.startswith(Path(trust.backup_path).name + ".qualification-")
         ):
             raise ValueError("Backup identity differs")
-        descriptor = open_directory(directory)
-        os.close(descriptor)
+        before = backup_identity(directory)
         if validate_snapshot(directory) != evidence["backup"]["database"]:
             raise ValueError("Database backup changed")
         raw = regular_bytes(str(directory / "trees.json"), 512 * 1024 * 1024)
-        if (
-            hashlib.sha256(raw).hexdigest() != evidence["backup"]["trees_hash"]
-            or json.loads(raw) != trees
-        ):
+        if hashlib.sha256(raw).hexdigest() != evidence["backup"]["trees_hash"]:
             raise ValueError("External tree backup changed")
+        current = health(engine, config, actor)
+        trees = current.pop("trees")
+        if current != evidence["health"] or json.loads(raw) != trees:
+            raise ValueError("Health evidence is stale")
+        if backup_identity(directory) != before:
+            raise ValueError("Backup changed during current health observation")
+        return str(current["state"])
     except (KeyError, TypeError, ValueError, OSError):
         raise DomainError(
             "PERMISSION_DENIED", "Current coherent release qualification is required"
         ) from None
+
+
+def backup_identity(directory: Path) -> list[tuple[int, int, int, int, int]]:
+    """Fence backup reads with identities and change times, without copying files."""
+    descriptor = open_directory(directory)
+    try:
+        identities = [os.fstat(descriptor)] + [
+            os.stat(name, dir_fd=descriptor, follow_symlinks=False)
+            for name in ("database.sqlite", "manifest.json", "trees.json")
+        ]
+        return [
+            (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns, item.st_ctime_ns)
+            for item in identities
+        ]
+    finally:
+        os.close(descriptor)

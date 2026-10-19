@@ -118,14 +118,14 @@ def verify_current_evidence(
     config: InstructionConfiguration,
     stored: dict[str, Any],
     actor: AuthenticatedContext,
-) -> None:
+) -> str:
     from journeon.release_qualification import verify
 
-    verify(engine, config, stored.get("qualification", {}), actor)
     if verified_snapshot(config) != {
         key: value for key, value in stored.items() if key != "qualification"
     }:
         raise DomainError("PERMISSION_DENIED", "Installed release evidence changed")
+    return verify(engine, config, stored.get("qualification", {}), actor)
 
 
 def verify_release(

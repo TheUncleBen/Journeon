@@ -45,6 +45,7 @@ class InstructionAdministration:
         self.engine = engine
         self.configuration = configuration
         self.release_observation: dict[str, Any] | None = None
+        self.release_state: str | None = None
 
     def root_configuration(self, key: str) -> RootConfiguration:
         for root in self.configuration.roots:
@@ -81,9 +82,12 @@ class InstructionAdministration:
                 stored = evidence.snapshot
             from journeon.release_evidence import verify_current_evidence
 
-            verify_current_evidence(self.engine, self.configuration, stored, actor)
+            package = candidate_manifest()
+            self.release_state = verify_current_evidence(
+                self.engine, self.configuration, stored, actor
+            )
             self.release_observation = stored
-            return candidate_manifest()
+            return package
         if isinstance(effect, CandidateRegister):
             return candidate_manifest()
         return None
@@ -251,7 +255,7 @@ class InstructionAdministration:
                 )
             from journeon.release_qualification import state
 
-            if state(db) != evidence.snapshot["qualification"]["health"]["state"]:
+            if state(db) != self.release_state:
                 raise DomainError(
                     "PERMISSION_DENIED", "Release qualification changed before installation"
                 )

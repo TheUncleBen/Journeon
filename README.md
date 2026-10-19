@@ -80,3 +80,38 @@ Migration `0006_work` preserves prior Project/passkey operations and the event s
 allocation ceiling, including pruned sequence numbers. Event delivery, replay cursors,
 restore-incarnation invalidation, execution, Attempts, Jobs, review, completion evidence,
 Bot assignment and operational Work UI remain unavailable in this increment.
+
+## Identity configuration and instruction provenance
+
+Authenticated configuration routes under `/api/v1/profiles`, `/api/v1/bots` and
+`/api/v1/teams` create stable identities and immutable revision history. The current
+Owner may administer this configuration. Shared Users need explicit exact resource
+and action grants; this increment supplies no public grant administration route.
+Bot creation requires an explicit personal-memory choice and allocates a distinct
+namespace identity. It does not create a working memory collection. Team creation
+atomically creates its members and selects one of those members as lead.
+
+Profile revision requires a non-mutating `/api/v1/profiles/preview-revision` result.
+The commit rechecks the proposed payload, current Profile revision and authorized
+Bot impact. The preview reports only authorized Bots. Profile preferences propagate
+where a Bot has no override; resetting an override restores inheritance. Visual
+references are independent creation-time copies. Effective settings remain
+unqualified reference selections, and eligibility references confer no authority.
+
+`/api/v1/instruction-bundles` resolves registered immutable component revisions into
+a candidate bundle with deterministic rendering, a digest and byte count. Literal
+`{{name}}` variables must exactly match their declarations and are encoded as
+separate lower-trust data segments. Rendered variable values are returned transiently,
+not retained in the bundle, receipt or event. Identical accepted retries render
+the accepted immutable revisions under current constituent disclosure authority;
+new operation keys require current revisions. Bundle provenance does not confer
+execution permission or establish adoption by a native context. Protected core,
+navigation, Project and Skill instruction registration still require their owning
+services; an unconfigured installation returns a missing-dependency error. No
+protected assets are seeded by this increment.
+
+`/api/v1/legacy-memory/preview` validates supplied mappings against exact authorized
+inventory evidence and destination consent; it copies no memory. Migration
+`0007_identity_instructions` preserves existing Project, Task, authentication,
+receipt and event records. No worker, provider execution, native isolation or
+operational configuration interface is introduced.

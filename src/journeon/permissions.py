@@ -43,6 +43,8 @@ def require_grant(
     capability: str,
     *,
     project_id: str | None = None,
+    resource_kind: str | None = None,
+    resource_id: str | None = None,
 ) -> None:
     current_session(
         session,
@@ -73,6 +75,12 @@ def require_grant(
             and grant.resource_kind == "project"
             and grant.resource_id == project_id
         )
-        if deployment or project:
+        exact = (
+            resource_kind in {"profile", "bot", "team", "instruction_bundle", "legacy_collection"}
+            and resource_id is not None
+            and grant.resource_kind == resource_kind
+            and grant.resource_id == resource_id
+        )
+        if exact or (resource_kind is None and resource_id is None and (deployment or project)):
             return
     raise DomainError("PERMISSION_DENIED", "The current operation grant is missing or expired")

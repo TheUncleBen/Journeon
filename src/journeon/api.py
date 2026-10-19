@@ -3,7 +3,7 @@
 
 import tomllib
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -11,29 +11,51 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
+from journeon.agents import AgentService
 from journeon.body_limit import BodyLimitMiddleware
 from journeon.browser_auth import BrowserAuth
 from journeon.contracts import (
     ERROR_HTTP_STATUS,
+    BotCreate,
+    BotRevise,
+    BotView,
+    BundleResolve,
+    BundleResult,
+    BundleView,
     CanonicalReceipt,
+    ConfigurationKind,
+    ConfigurationReceipt,
     DomainError,
+    EffectivePermission,
+    EffectiveSettings,
     ErrorEnvelope,
     Identifier,
+    LegacyPlan,
+    LegacyPreview,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
+    ProfileCreate,
+    ProfileImpact,
+    ProfileRevise,
+    ProfileRevisionPreview,
+    ProfileView,
     ProjectCreate,
     TaskControl,
     TaskCreate,
     TaskReceipt,
     TaskView,
+    TeamCreate,
+    TeamView,
 )
 from journeon.factors import FactorService
+from journeon.instructions import InstructionService
 from journeon.passkey_api import routes as passkey_routes
 from journeon.passkeys import PasskeyService, RejectedPasskeyInput
 from journeon.permissions import AuthenticatedContext
 from journeon.projects import ProjectService
 from journeon.receipts import OperationService
+from journeon.registry import configuration_metadata
 from journeon.work import WorkService
 
 
@@ -243,6 +265,182 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> TaskReceipt:
         return WorkService(engine).control(actor, "cancel", command)
+
+    @app.post(
+        "/api/v1/profiles",
+        response_model=ConfigurationReceipt,
+        operation_id="createProfile",
+        responses=errors,
+        openapi_extra=configuration_metadata("profile.create.v1"),
+    )
+    def create_profile_configuration(
+        command: ProfileCreate,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ConfigurationReceipt:
+        return AgentService(engine).create_profile(actor, command)
+
+    @app.post(
+        "/api/v1/profiles/preview-revision",
+        response_model=ProfileImpact,
+        operation_id="previewProfileRevision",
+        responses=errors,
+        openapi_extra=configuration_metadata("profile.preview-revision.v1"),
+    )
+    def preview_profile_configuration(
+        command: ProfileRevisionPreview,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ProfileImpact:
+        return AgentService(engine).preview_profile(actor, command)
+
+    @app.post(
+        "/api/v1/profiles/revise",
+        response_model=ConfigurationReceipt,
+        operation_id="reviseProfile",
+        responses=errors,
+        openapi_extra=configuration_metadata("profile.revise.v1"),
+    )
+    def revise_profile_configuration(
+        command: ProfileRevise,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ConfigurationReceipt:
+        return AgentService(engine).revise_profile(actor, command)
+
+    @app.post(
+        "/api/v1/bots",
+        response_model=ConfigurationReceipt,
+        operation_id="createBot",
+        responses=errors,
+        openapi_extra=configuration_metadata("bot.create.v1"),
+    )
+    def create_bot_configuration(
+        command: BotCreate, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> ConfigurationReceipt:
+        return AgentService(engine).create_bot(actor, command)
+
+    @app.post(
+        "/api/v1/bots/revise",
+        response_model=ConfigurationReceipt,
+        operation_id="reviseBot",
+        responses=errors,
+        openapi_extra=configuration_metadata("bot.revise.v1"),
+    )
+    def revise_bot_configuration(
+        command: BotRevise, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> ConfigurationReceipt:
+        return AgentService(engine).revise_bot(actor, command)
+
+    @app.post(
+        "/api/v1/teams",
+        response_model=ConfigurationReceipt,
+        operation_id="createTeam",
+        responses=errors,
+        openapi_extra=configuration_metadata("team.create.v1"),
+    )
+    def create_team_configuration(
+        command: TeamCreate, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> ConfigurationReceipt:
+        return AgentService(engine).create_team(actor, command)
+
+    @app.post(
+        "/api/v1/legacy-memory/preview",
+        response_model=LegacyPlan,
+        operation_id="previewLegacyMemory",
+        responses=errors,
+        openapi_extra=configuration_metadata("legacy-memory.preview.v1"),
+    )
+    def legacy_preview_configuration(
+        command: LegacyPreview,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> LegacyPlan:
+        return AgentService(engine).legacy_preview(actor, command)
+
+    @app.post(
+        "/api/v1/instruction-bundles",
+        response_model=BundleResult,
+        operation_id="resolveInstructionBundle",
+        responses=errors,
+        openapi_extra=configuration_metadata("instruction.bundle.resolve.v1"),
+    )
+    def resolve_configuration(
+        command: BundleResolve,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> BundleResult:
+        return InstructionService(engine).resolve(actor, command)
+
+    @app.get(
+        "/api/v1/profiles/{identity}",
+        response_model=ProfileView,
+        operation_id="getProfile",
+        responses=errors,
+        openapi_extra=configuration_metadata("profile.read.v1"),
+    )
+    def profile_configuration_read(
+        identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> ProfileView:
+        return AgentService(engine).profile(actor, identity)
+
+    @app.get(
+        "/api/v1/bots/{identity}",
+        response_model=BotView,
+        operation_id="getBot",
+        responses=errors,
+        openapi_extra=configuration_metadata("bot.read.v1"),
+    )
+    def bot_configuration_read(
+        identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> BotView:
+        return AgentService(engine).bot(actor, identity)
+
+    @app.get(
+        "/api/v1/teams/{identity}",
+        response_model=TeamView,
+        operation_id="getTeam",
+        responses=errors,
+        openapi_extra=configuration_metadata("team.read.v1"),
+    )
+    def team_configuration_read(
+        identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> TeamView:
+        return AgentService(engine).team(actor, identity)
+
+    @app.get(
+        "/api/v1/bots/{identity}/effective-settings",
+        response_model=EffectiveSettings,
+        operation_id="getBotSettings",
+        responses=errors,
+        openapi_extra=configuration_metadata("bot.settings.read.v1"),
+    )
+    def settings_configuration_read(
+        identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> EffectiveSettings:
+        return AgentService(engine).settings(actor, identity)
+
+    @app.get(
+        "/api/v1/instruction-bundles/{identity}",
+        response_model=BundleView,
+        operation_id="getInstructionBundle",
+        responses=errors,
+        openapi_extra=configuration_metadata("instruction.bundle.read.v1"),
+    )
+    def read_configuration_read(
+        identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> BundleView:
+        return InstructionService(engine).read(actor, identity)
+
+    @app.get(
+        "/api/v1/permissions/effective",
+        response_model=EffectivePermission,
+        operation_id="getEffectivePermission",
+        responses=errors,
+        openapi_extra=configuration_metadata("permission.effective.v1"),
+    )
+    def effective_permission(
+        resource_kind: ConfigurationKind,
+        resource_id: Identifier,
+        action: Literal["read", "revise", "use", "receipt.read"],
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> EffectivePermission:
+        return AgentService(engine).permission(actor, resource_kind, resource_id, action)
 
     app.include_router(passkey_routes(passkeys, browser_auth))
     return app

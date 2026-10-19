@@ -48,3 +48,52 @@ Every canonical table has one module owner with explicit backup classification, 
 
 
 Passkey bootstrap, login and step-up use separately identified authentication-ceremony routes rather than invented resource grants. Exact-origin checks apply before ceremony work. Step-up additionally resolves the current session and CSRF proof, binds the challenge to that session and revalidates it before rotation. Public login options are discoverable and do not accept an account identifier. Failed cryptographic verification returns a uniform denial. A durable identity clock fence and per-ceremony attempts survive rejected verification while the outer SQLite writer lock remains held. This records observed service time; it does not detect unobserved physical clock changes.
+
+## Identity and instruction configuration
+
+Profile, Bot and Team configuration uses current Owner administration authority or
+explicit exact resource/action grants for supported Shared User operations.
+Deployment grants do not act as wildcards for these resources. Team views expand
+only separately readable Bots; Bot settings require Profile read authority before
+returning inherited values. Receipt lookups retain the initiating human boundary.
+Profile, Bot and Team creation is Owner-only. Permission metadata describes each
+check with its resource scope and condition; its inventory is not an all-required
+grant list. Profile previews require Profile read and revise authority. Effective
+permission diagnostics use the authenticated caller’s current authority without
+a separate diagnostic grant.
+
+Profile revision previews bind the proposed payload, current Profile revision/hash
+and sorted authorized Bot revisions and inherited-field changes. Hidden Bots do not
+contribute identities, counts or fingerprints. Commit recomputes this binding inside
+the write transaction. Preview performs no domain, receipt or event mutation;
+existing session security-clock bookkeeping still applies.
+
+Instruction templates are owned by versioned instruction assets. Configuration
+snapshots reference those revisions. Profile and Bot histories and bundle snapshots
+reject updates/deletions at the database boundary. Team lead membership is a deferred
+composite foreign key. Bot namespaces are unique and bound to their stable IDs;
+trusted Researcher/Librarian designations cannot enable personal memory and are not
+accepted in client commands.
+
+Legacy inventory evidence is bound by an exact `legacy_collection` capability named
+`legacy_collection.preview:<version>:<hash>:<provenance-reference>`. The hash must
+be a lowercase 64-character SHA-256 hexadecimal digest; provenance references may
+contain colons. The fixed hash syntax prevents ambiguous evidence bindings. Such evidence
+must be supplied by authorized inventory/grant services; there is no public issuance
+route or legacy store discovery in this increment. Mappings require readable and
+revisable destination Bots, enabled memory, current destination revisions and
+explicit destination consent. Duplicate source mappings are rejected.
+
+Bundle assembly requires registered core, navigation, Profile, optional named-Bot,
+Project and Skill layers in that order, with Task/workflow layers for Task Attempts.
+The initiating human comes from the authenticated context. One-off Profile origins
+contain no Bot or private-memory namespace. These origin records establish candidate
+provenance only; Chat admission, runtime lane isolation and native context adoption
+remain separate dependencies. All registry data retains the coherent database
+recovery boundary; no prompt retention or new grant policy is introduced.
+
+Bundle reads, receipt lookups and retries check current Profile, optional Bot,
+Project and optional Task disclosure authority before decoding stored results.
+An accepted retry with identical input renders its immutable accepted component
+revisions, even if current configuration has advanced. New operation keys still
+require current revisions. Neither retry path retains rendered variable values.

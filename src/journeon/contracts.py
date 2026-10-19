@@ -209,9 +209,6 @@ class TaskReceipt(Contract):
     task: TaskView
 
 
-CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt
-
-
 class ErrorEnvelope(Contract):
     schema_version: SchemaVersion = 1
     code: ErrorCode
@@ -235,3 +232,280 @@ ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
     "SCHEMA_UNSUPPORTED": 422,
     "NOT_FOUND": 404,
 }
+
+
+PreferenceKey = Literal["harness", "model", "provider", "host"]
+ConfigurationKind = Literal["profile", "bot", "team", "instruction_bundle"]
+
+
+class Preferences(Contract):
+    harness: Identifier | None = None
+    model: Identifier | None = None
+    provider: Identifier | None = None
+    host: Identifier | None = None
+
+
+class InstructionTemplate(Contract):
+    template_id: Identifier
+    template: Annotated[str, StringConstraints(max_length=65536)]
+    required_variables: list[Identifier]
+    eval_ids: list[Identifier]
+
+
+class ProfileCreate(Contract):
+    idempotency_key: Identifier
+    name: Name
+    baseline: InstructionTemplate
+    preferences: Preferences
+    eligibility: list[Identifier]
+    visual_ref: Identifier | None = None
+
+
+class ProfileRevisionPreview(ProfileCreate):
+    profile_id: Identifier
+    expected_revision: PositiveRevision
+    expected_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    reason: Name
+
+
+class BotImpact(Contract):
+    bot_id: Identifier
+    revision: PositiveRevision
+    changed_inherited_fields: list[PreferenceKey]
+    baseline_changed: bool
+
+
+class ProfileImpact(Contract):
+    digest: str
+    profile_revision: PositiveRevision
+    affected_bots: list[BotImpact]
+    disclosure_scope: Literal["AUTHORIZED_BOTS_ONLY"] = "AUTHORIZED_BOTS_ONLY"
+
+
+class ProfileRevise(ProfileRevisionPreview):
+    preview_digest: str
+    expected_affected_bots: list[BotImpact]
+
+
+class BotCreate(Contract):
+    idempotency_key: Identifier
+    name: Name
+    profile_id: Identifier
+    expected_profile_revision: PositiveRevision
+    additive: InstructionTemplate
+    memory_enabled: bool
+    overrides: Preferences
+
+
+class BotRevise(Contract):
+    idempotency_key: Identifier
+    bot_id: Identifier
+    expected_revision: PositiveRevision
+    expected_hash: str
+    name: Name
+    additive: InstructionTemplate
+    overrides: Preferences
+    reset_to_inherit: list[PreferenceKey]
+    visual_ref: Identifier | None
+    reason: Name
+
+
+class TeamMember(Contract):
+    key: Identifier
+    bot: BotCreate
+
+
+class TeamCreate(Contract):
+    idempotency_key: Identifier
+    name: Name
+    members: Annotated[list[TeamMember], Field(min_length=1, max_length=128)]
+    lead_key: Identifier
+
+    @model_validator(mode="after")
+    def valid_members(self) -> "TeamCreate":
+        keys = [member.key for member in self.members]
+        if len(keys) != len(set(keys)) or self.lead_key not in keys:
+            raise ValueError("Team requires unique members and a member lead")
+        return self
+
+
+class ProfileView(Contract):
+    profile_id: Identifier
+    revision: PositiveRevision
+    name: Name
+    baseline_asset_id: Identifier
+    baseline_revision: PositiveRevision
+    baseline_hash: str
+    baseline: InstructionTemplate
+    preferences: Preferences
+    eligibility: list[Identifier]
+    visual_ref: Identifier | None
+
+
+class BotView(Contract):
+    bot_id: Identifier
+    revision: PositiveRevision
+    name: Name
+    profile_id: Identifier
+    team_id: Identifier | None
+    additive_asset_id: Identifier
+    additive_revision: PositiveRevision
+    additive_hash: str
+    additive: InstructionTemplate
+    memory_enabled: bool
+    namespace_ref: Identifier
+    overrides: Preferences
+    visual_ref: Identifier | None
+    builtin_role: Literal["RESEARCHER", "LIBRARIAN"] | None
+
+
+class TeamView(Contract):
+    team_id: Identifier
+    revision: PositiveRevision
+    name: Name
+    authorized_members: list[BotView]
+    authorized_lead_id: Identifier | None
+
+
+class EffectiveField(Contract):
+    field: PreferenceKey
+    value: Identifier | None
+    source: Literal["PROFILE", "BOT_OVERRIDE"]
+    source_revision: PositiveRevision
+    schema_type: Literal["optional-reference"] = "optional-reference"
+    applicability: Literal["NEXT_QUALIFIED_TRANSITION"] = "NEXT_QUALIFIED_TRANSITION"
+    portability: Literal["REFERENCE_ONLY"] = "REFERENCE_ONLY"
+    secret_classification: Literal["NON_SECRET_REFERENCE"] = "NON_SECRET_REFERENCE"
+    execution_qualified: Literal[False] = False
+
+
+class EffectiveSettings(Contract):
+    bot_id: Identifier
+    fields: list[EffectiveField]
+    visual_ref: Identifier | None
+    eligibility: list[Identifier]
+    eligibility_grants_authority: Literal[False] = False
+
+
+class ConfigurationReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal[
+        "profile.create.v1",
+        "profile.revise.v1",
+        "bot.create.v1",
+        "bot.revise.v1",
+        "team.create.v1",
+        "instruction.bundle.resolve.v1",
+    ]
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    target_kind: ConfigurationKind
+    target_id: Identifier
+    revision: PositiveRevision
+    member_ids: list[Identifier] = Field(default_factory=list)
+
+
+class EffectivePermission(Contract):
+    allowed: bool
+    resource_kind: ConfigurationKind
+    resource_id: Identifier
+    action: Literal["read", "revise", "use", "receipt.read"]
+    checked_revision: PositiveRevision | None
+    reason: Literal["CURRENT_AUTHORITY", "UNAVAILABLE"]
+
+
+def explicit_consent(value: object) -> object:
+    if value is not True:
+        raise ValueError("Explicit destination consent is required")
+    return value
+
+
+class LegacyMapping(Contract):
+    collection_id: Identifier
+    version: PositiveRevision
+    content_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    provenance_ref: Identifier
+    bot_id: Identifier
+    expected_bot_revision: PositiveRevision
+    memory_enabled: bool
+    destination_consent: Annotated[Literal[True], BeforeValidator(explicit_consent)]
+
+
+class LegacyPreview(Contract):
+    mappings: list[LegacyMapping]
+    unmapped: list[Identifier]
+
+
+class LegacyPlan(Contract):
+    mappings: list[LegacyMapping]
+    unmapped: list[Identifier]
+    execution: Literal["PREVIEW_ONLY_NO_BYTES_COPIED"] = "PREVIEW_ONLY_NO_BYTES_COPIED"
+
+
+class ComponentRef(Contract):
+    asset_id: Identifier
+    revision: PositiveRevision
+    content_hash: str
+
+
+class VariableBinding(Contract):
+    asset_id: Identifier
+    name: Identifier
+    value: Annotated[str, StringConstraints(max_length=65536)]
+
+
+class BundleOrigin(Contract):
+    kind: Literal["NAMED_BOT", "ONE_OFF_PROFILE"]
+    source_kind: Literal["CHAT", "TASK_ATTEMPT", "OTHER"]
+    source_id: Identifier
+    task_id: Identifier | None = None
+    bot_id: Identifier | None = None
+    bot_revision: PositiveRevision | None = None
+
+    @model_validator(mode="after")
+    def legal_origin(self) -> "BundleOrigin":
+        if (self.kind == "NAMED_BOT") != (
+            self.bot_id is not None and self.bot_revision is not None
+        ):
+            raise ValueError("Origin requires its exact Bot variant")
+        if self.kind == "ONE_OFF_PROFILE" and (
+            self.bot_id is not None or self.bot_revision is not None
+        ):
+            raise ValueError("One-off origin cannot contain Bot identity")
+        if (self.source_kind == "TASK_ATTEMPT") != (self.task_id is not None):
+            raise ValueError("Task Attempt requires Task identity")
+        return self
+
+
+class BundleResolve(Contract):
+    idempotency_key: Identifier
+    profile_id: Identifier
+    profile_revision: PositiveRevision
+    project_id: Identifier
+    project_revision: PositiveRevision
+    origin: BundleOrigin
+    components: list[ComponentRef]
+    variables: list[VariableBinding]
+
+
+class BundleView(Contract):
+    bundle_id: Identifier
+    initiating_principal_id: Identifier
+    profile_id: Identifier
+    profile_revision: PositiveRevision
+    project_id: Identifier
+    project_revision: PositiveRevision
+    origin: BundleOrigin
+    components: list[ComponentRef]
+    content_digest: str
+    byte_count: int
+
+
+class BundleResult(Contract):
+    receipt: ConfigurationReceipt
+    bundle: BundleView
+    rendering: str
+
+
+CanonicalReceipt = OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt

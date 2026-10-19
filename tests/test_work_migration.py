@@ -7,13 +7,12 @@ from pathlib import Path
 
 import pytest
 from alembic import command
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from test_operation_migration import legacy_store  # noqa: F401
 
 from journeon.contracts import DomainError, PasskeyMutationReceipt, PasskeySummary
 from journeon.database import transaction
 from journeon.migrate import configuration, upgrade
-from journeon.models import Base
 from journeon.permissions import AuthenticatedContext
 from journeon.receipts import OperationService
 
@@ -54,8 +53,8 @@ def populated_0005(request):
         db.execute(text("UPDATE sqlite_sequence SET seq=100 WHERE name='outbox_events'"))
         snapshot = {
             name: db.execute(text(f"SELECT * FROM {name}")).all()
-            for name in Base.metadata.tables
-            if name not in ("outbox_events", "tasks")
+            for name in inspect(db).get_table_names()
+            if name not in ("outbox_events", "tasks", "alembic_version")
         }
     return engine, path, project_receipt, result, snapshot
 

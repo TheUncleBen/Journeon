@@ -1,4 +1,1436 @@
 {
+  "BotCreate": {
+    "$defs": {
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "additive": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "expected_profile_revision": {
+        "minimum": 1,
+        "title": "Expected Profile Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "memory_enabled": {
+        "title": "Memory Enabled",
+        "type": "boolean"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "overrides": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "name",
+      "profile_id",
+      "expected_profile_revision",
+      "additive",
+      "memory_enabled",
+      "overrides"
+    ],
+    "title": "BotCreate",
+    "type": "object"
+  },
+  "BotRevise": {
+    "$defs": {
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "additive": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "bot_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Bot Id",
+        "type": "string"
+      },
+      "expected_hash": {
+        "title": "Expected Hash",
+        "type": "string"
+      },
+      "expected_revision": {
+        "minimum": 1,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "overrides": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "reset_to_inherit": {
+        "items": {
+          "enum": [
+            "harness",
+            "model",
+            "provider",
+            "host"
+          ],
+          "type": "string"
+        },
+        "title": "Reset To Inherit",
+        "type": "array"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "bot_id",
+      "expected_revision",
+      "expected_hash",
+      "name",
+      "additive",
+      "overrides",
+      "reset_to_inherit",
+      "visual_ref",
+      "reason"
+    ],
+    "title": "BotRevise",
+    "type": "object"
+  },
+  "BotView": {
+    "$defs": {
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "additive": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "additive_asset_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Additive Asset Id",
+        "type": "string"
+      },
+      "additive_hash": {
+        "title": "Additive Hash",
+        "type": "string"
+      },
+      "additive_revision": {
+        "minimum": 1,
+        "title": "Additive Revision",
+        "type": "integer"
+      },
+      "bot_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Bot Id",
+        "type": "string"
+      },
+      "builtin_role": {
+        "anyOf": [
+          {
+            "enum": [
+              "RESEARCHER",
+              "LIBRARIAN"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Builtin Role"
+      },
+      "memory_enabled": {
+        "title": "Memory Enabled",
+        "type": "boolean"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "namespace_ref": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Namespace Ref",
+        "type": "string"
+      },
+      "overrides": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "team_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Team Id"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "bot_id",
+      "revision",
+      "name",
+      "profile_id",
+      "team_id",
+      "additive_asset_id",
+      "additive_revision",
+      "additive_hash",
+      "additive",
+      "memory_enabled",
+      "namespace_ref",
+      "overrides",
+      "visual_ref",
+      "builtin_role"
+    ],
+    "title": "BotView",
+    "type": "object"
+  },
+  "BundleResolve": {
+    "$defs": {
+      "BundleOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Id"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Revision"
+          },
+          "kind": {
+            "enum": [
+              "NAMED_BOT",
+              "ONE_OFF_PROFILE"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_kind": {
+            "enum": [
+              "CHAT",
+              "TASK_ATTEMPT",
+              "OTHER"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "kind",
+          "source_kind",
+          "source_id"
+        ],
+        "title": "BundleOrigin",
+        "type": "object"
+      },
+      "ComponentRef": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ComponentRef",
+        "type": "object"
+      },
+      "VariableBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "name": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 65536,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "name",
+          "value"
+        ],
+        "title": "VariableBinding",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "components": {
+        "items": {
+          "$ref": "#/$defs/ComponentRef"
+        },
+        "title": "Components",
+        "type": "array"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "origin": {
+        "$ref": "#/$defs/BundleOrigin"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      },
+      "profile_revision": {
+        "minimum": 1,
+        "title": "Profile Revision",
+        "type": "integer"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "variables": {
+        "items": {
+          "$ref": "#/$defs/VariableBinding"
+        },
+        "title": "Variables",
+        "type": "array"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "profile_id",
+      "profile_revision",
+      "project_id",
+      "project_revision",
+      "origin",
+      "components",
+      "variables"
+    ],
+    "title": "BundleResolve",
+    "type": "object"
+  },
+  "BundleResult": {
+    "$defs": {
+      "BundleOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Id"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Revision"
+          },
+          "kind": {
+            "enum": [
+              "NAMED_BOT",
+              "ONE_OFF_PROFILE"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_kind": {
+            "enum": [
+              "CHAT",
+              "TASK_ATTEMPT",
+              "OTHER"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "kind",
+          "source_kind",
+          "source_id"
+        ],
+        "title": "BundleOrigin",
+        "type": "object"
+      },
+      "BundleView": {
+        "additionalProperties": false,
+        "properties": {
+          "bundle_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bundle Id",
+            "type": "string"
+          },
+          "byte_count": {
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/$defs/ComponentRef"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/$defs/BundleOrigin"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "profile_revision": {
+            "minimum": 1,
+            "title": "Profile Revision",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1,
+            "title": "Project Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bundle_id",
+          "initiating_principal_id",
+          "profile_id",
+          "profile_revision",
+          "project_id",
+          "project_revision",
+          "origin",
+          "components",
+          "content_digest",
+          "byte_count"
+        ],
+        "title": "BundleView",
+        "type": "object"
+      },
+      "ComponentRef": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ComponentRef",
+        "type": "object"
+      },
+      "ConfigurationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "profile.create.v1",
+              "profile.revise.v1",
+              "bot.create.v1",
+              "bot.revise.v1",
+              "team.create.v1",
+              "instruction.bundle.resolve.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "member_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Member Ids",
+            "type": "array"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "enum": [
+              "profile",
+              "bot",
+              "team",
+              "instruction_bundle"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "committed_at",
+          "target_kind",
+          "target_id",
+          "revision"
+        ],
+        "title": "ConfigurationReceipt",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "bundle": {
+        "$ref": "#/$defs/BundleView"
+      },
+      "receipt": {
+        "$ref": "#/$defs/ConfigurationReceipt"
+      },
+      "rendering": {
+        "title": "Rendering",
+        "type": "string"
+      }
+    },
+    "required": [
+      "receipt",
+      "bundle",
+      "rendering"
+    ],
+    "title": "BundleResult",
+    "type": "object"
+  },
+  "BundleView": {
+    "$defs": {
+      "BundleOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Id"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Revision"
+          },
+          "kind": {
+            "enum": [
+              "NAMED_BOT",
+              "ONE_OFF_PROFILE"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_kind": {
+            "enum": [
+              "CHAT",
+              "TASK_ATTEMPT",
+              "OTHER"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "kind",
+          "source_kind",
+          "source_id"
+        ],
+        "title": "BundleOrigin",
+        "type": "object"
+      },
+      "ComponentRef": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ComponentRef",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "bundle_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Bundle Id",
+        "type": "string"
+      },
+      "byte_count": {
+        "title": "Byte Count",
+        "type": "integer"
+      },
+      "components": {
+        "items": {
+          "$ref": "#/$defs/ComponentRef"
+        },
+        "title": "Components",
+        "type": "array"
+      },
+      "content_digest": {
+        "title": "Content Digest",
+        "type": "string"
+      },
+      "initiating_principal_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Initiating Principal Id",
+        "type": "string"
+      },
+      "origin": {
+        "$ref": "#/$defs/BundleOrigin"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      },
+      "profile_revision": {
+        "minimum": 1,
+        "title": "Profile Revision",
+        "type": "integer"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "bundle_id",
+      "initiating_principal_id",
+      "profile_id",
+      "profile_revision",
+      "project_id",
+      "project_revision",
+      "origin",
+      "components",
+      "content_digest",
+      "byte_count"
+    ],
+    "title": "BundleView",
+    "type": "object"
+  },
+  "ConfigurationReceipt": {
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "enum": [
+          "profile.create.v1",
+          "profile.revise.v1",
+          "bot.create.v1",
+          "bot.revise.v1",
+          "team.create.v1",
+          "instruction.bundle.resolve.v1"
+        ],
+        "title": "Command",
+        "type": "string"
+      },
+      "committed_at": {
+        "title": "Committed At",
+        "type": "string"
+      },
+      "member_ids": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Member Ids",
+        "type": "array"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "outcome": {
+        "const": "CANONICAL_COMMITTED",
+        "default": "CANONICAL_COMMITTED",
+        "title": "Outcome",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "target_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Target Id",
+        "type": "string"
+      },
+      "target_kind": {
+        "enum": [
+          "profile",
+          "bot",
+          "team",
+          "instruction_bundle"
+        ],
+        "title": "Target Kind",
+        "type": "string"
+      }
+    },
+    "required": [
+      "operation_id",
+      "command",
+      "committed_at",
+      "target_kind",
+      "target_id",
+      "revision"
+    ],
+    "title": "ConfigurationReceipt",
+    "type": "object"
+  },
+  "EffectivePermission": {
+    "additionalProperties": false,
+    "properties": {
+      "action": {
+        "enum": [
+          "read",
+          "revise",
+          "use",
+          "receipt.read"
+        ],
+        "title": "Action",
+        "type": "string"
+      },
+      "allowed": {
+        "title": "Allowed",
+        "type": "boolean"
+      },
+      "checked_revision": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Checked Revision"
+      },
+      "reason": {
+        "enum": [
+          "CURRENT_AUTHORITY",
+          "UNAVAILABLE"
+        ],
+        "title": "Reason",
+        "type": "string"
+      },
+      "resource_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Resource Id",
+        "type": "string"
+      },
+      "resource_kind": {
+        "enum": [
+          "profile",
+          "bot",
+          "team",
+          "instruction_bundle"
+        ],
+        "title": "Resource Kind",
+        "type": "string"
+      }
+    },
+    "required": [
+      "allowed",
+      "resource_kind",
+      "resource_id",
+      "action",
+      "checked_revision",
+      "reason"
+    ],
+    "title": "EffectivePermission",
+    "type": "object"
+  },
+  "EffectiveSettings": {
+    "$defs": {
+      "EffectiveField": {
+        "additionalProperties": false,
+        "properties": {
+          "applicability": {
+            "const": "NEXT_QUALIFIED_TRANSITION",
+            "default": "NEXT_QUALIFIED_TRANSITION",
+            "title": "Applicability",
+            "type": "string"
+          },
+          "execution_qualified": {
+            "const": false,
+            "default": false,
+            "title": "Execution Qualified",
+            "type": "boolean"
+          },
+          "field": {
+            "enum": [
+              "harness",
+              "model",
+              "provider",
+              "host"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "portability": {
+            "const": "REFERENCE_ONLY",
+            "default": "REFERENCE_ONLY",
+            "title": "Portability",
+            "type": "string"
+          },
+          "schema_type": {
+            "const": "optional-reference",
+            "default": "optional-reference",
+            "title": "Schema Type",
+            "type": "string"
+          },
+          "secret_classification": {
+            "const": "NON_SECRET_REFERENCE",
+            "default": "NON_SECRET_REFERENCE",
+            "title": "Secret Classification",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "PROFILE",
+              "BOT_OVERRIDE"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "source_revision": {
+            "minimum": 1,
+            "title": "Source Revision",
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "source",
+          "source_revision"
+        ],
+        "title": "EffectiveField",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "bot_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Bot Id",
+        "type": "string"
+      },
+      "eligibility": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Eligibility",
+        "type": "array"
+      },
+      "eligibility_grants_authority": {
+        "const": false,
+        "default": false,
+        "title": "Eligibility Grants Authority",
+        "type": "boolean"
+      },
+      "fields": {
+        "items": {
+          "$ref": "#/$defs/EffectiveField"
+        },
+        "title": "Fields",
+        "type": "array"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "bot_id",
+      "fields",
+      "visual_ref",
+      "eligibility"
+    ],
+    "title": "EffectiveSettings",
+    "type": "object"
+  },
   "ErrorEnvelope": {
     "additionalProperties": false,
     "properties": {
@@ -32,6 +1464,180 @@
       "reason"
     ],
     "title": "ErrorEnvelope",
+    "type": "object"
+  },
+  "LegacyPlan": {
+    "$defs": {
+      "LegacyMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "collection_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Collection Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "destination_consent": {
+            "const": true,
+            "title": "Destination Consent",
+            "type": "boolean"
+          },
+          "expected_bot_revision": {
+            "minimum": 1,
+            "title": "Expected Bot Revision",
+            "type": "integer"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "provenance_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Provenance Ref",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "collection_id",
+          "version",
+          "content_hash",
+          "provenance_ref",
+          "bot_id",
+          "expected_bot_revision",
+          "memory_enabled",
+          "destination_consent"
+        ],
+        "title": "LegacyMapping",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "execution": {
+        "const": "PREVIEW_ONLY_NO_BYTES_COPIED",
+        "default": "PREVIEW_ONLY_NO_BYTES_COPIED",
+        "title": "Execution",
+        "type": "string"
+      },
+      "mappings": {
+        "items": {
+          "$ref": "#/$defs/LegacyMapping"
+        },
+        "title": "Mappings",
+        "type": "array"
+      },
+      "unmapped": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Unmapped",
+        "type": "array"
+      }
+    },
+    "required": [
+      "mappings",
+      "unmapped"
+    ],
+    "title": "LegacyPlan",
+    "type": "object"
+  },
+  "LegacyPreview": {
+    "$defs": {
+      "LegacyMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "collection_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Collection Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "destination_consent": {
+            "const": true,
+            "title": "Destination Consent",
+            "type": "boolean"
+          },
+          "expected_bot_revision": {
+            "minimum": 1,
+            "title": "Expected Bot Revision",
+            "type": "integer"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "provenance_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Provenance Ref",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "collection_id",
+          "version",
+          "content_hash",
+          "provenance_ref",
+          "bot_id",
+          "expected_bot_revision",
+          "memory_enabled",
+          "destination_consent"
+        ],
+        "title": "LegacyMapping",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "mappings": {
+        "items": {
+          "$ref": "#/$defs/LegacyMapping"
+        },
+        "title": "Mappings",
+        "type": "array"
+      },
+      "unmapped": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Unmapped",
+        "type": "array"
+      }
+    },
+    "required": [
+      "mappings",
+      "unmapped"
+    ],
+    "title": "LegacyPreview",
     "type": "object"
   },
   "OperationReceipt": {
@@ -417,6 +2023,816 @@
       "passkey"
     ],
     "title": "PasskeyMutationReceipt",
+    "type": "object"
+  },
+  "ProfileCreate": {
+    "$defs": {
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "baseline": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "eligibility": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Eligibility",
+        "type": "array"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "preferences": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "name",
+      "baseline",
+      "preferences",
+      "eligibility"
+    ],
+    "title": "ProfileCreate",
+    "type": "object"
+  },
+  "ProfileImpact": {
+    "$defs": {
+      "BotImpact": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_changed": {
+            "title": "Baseline Changed",
+            "type": "boolean"
+          },
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "changed_inherited_fields": {
+            "items": {
+              "enum": [
+                "harness",
+                "model",
+                "provider",
+                "host"
+              ],
+              "type": "string"
+            },
+            "title": "Changed Inherited Fields",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bot_id",
+          "revision",
+          "changed_inherited_fields",
+          "baseline_changed"
+        ],
+        "title": "BotImpact",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "affected_bots": {
+        "items": {
+          "$ref": "#/$defs/BotImpact"
+        },
+        "title": "Affected Bots",
+        "type": "array"
+      },
+      "digest": {
+        "title": "Digest",
+        "type": "string"
+      },
+      "disclosure_scope": {
+        "const": "AUTHORIZED_BOTS_ONLY",
+        "default": "AUTHORIZED_BOTS_ONLY",
+        "title": "Disclosure Scope",
+        "type": "string"
+      },
+      "profile_revision": {
+        "minimum": 1,
+        "title": "Profile Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "digest",
+      "profile_revision",
+      "affected_bots"
+    ],
+    "title": "ProfileImpact",
+    "type": "object"
+  },
+  "ProfileRevise": {
+    "$defs": {
+      "BotImpact": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_changed": {
+            "title": "Baseline Changed",
+            "type": "boolean"
+          },
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "changed_inherited_fields": {
+            "items": {
+              "enum": [
+                "harness",
+                "model",
+                "provider",
+                "host"
+              ],
+              "type": "string"
+            },
+            "title": "Changed Inherited Fields",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bot_id",
+          "revision",
+          "changed_inherited_fields",
+          "baseline_changed"
+        ],
+        "title": "BotImpact",
+        "type": "object"
+      },
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "baseline": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "eligibility": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Eligibility",
+        "type": "array"
+      },
+      "expected_affected_bots": {
+        "items": {
+          "$ref": "#/$defs/BotImpact"
+        },
+        "title": "Expected Affected Bots",
+        "type": "array"
+      },
+      "expected_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Hash",
+        "type": "string"
+      },
+      "expected_revision": {
+        "minimum": 1,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "preferences": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "preview_digest": {
+        "title": "Preview Digest",
+        "type": "string"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "name",
+      "baseline",
+      "preferences",
+      "eligibility",
+      "profile_id",
+      "expected_revision",
+      "expected_hash",
+      "reason",
+      "preview_digest",
+      "expected_affected_bots"
+    ],
+    "title": "ProfileRevise",
+    "type": "object"
+  },
+  "ProfileRevisionPreview": {
+    "$defs": {
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "baseline": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "eligibility": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Eligibility",
+        "type": "array"
+      },
+      "expected_hash": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Hash",
+        "type": "string"
+      },
+      "expected_revision": {
+        "minimum": 1,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "preferences": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      },
+      "reason": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reason",
+        "type": "string"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "name",
+      "baseline",
+      "preferences",
+      "eligibility",
+      "profile_id",
+      "expected_revision",
+      "expected_hash",
+      "reason"
+    ],
+    "title": "ProfileRevisionPreview",
+    "type": "object"
+  },
+  "ProfileView": {
+    "$defs": {
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "baseline": {
+        "$ref": "#/$defs/InstructionTemplate"
+      },
+      "baseline_asset_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Baseline Asset Id",
+        "type": "string"
+      },
+      "baseline_hash": {
+        "title": "Baseline Hash",
+        "type": "string"
+      },
+      "baseline_revision": {
+        "minimum": 1,
+        "title": "Baseline Revision",
+        "type": "integer"
+      },
+      "eligibility": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Eligibility",
+        "type": "array"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "preferences": {
+        "$ref": "#/$defs/Preferences"
+      },
+      "profile_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Profile Id",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "visual_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Visual Ref"
+      }
+    },
+    "required": [
+      "profile_id",
+      "revision",
+      "name",
+      "baseline_asset_id",
+      "baseline_revision",
+      "baseline_hash",
+      "baseline",
+      "preferences",
+      "eligibility",
+      "visual_ref"
+    ],
+    "title": "ProfileView",
     "type": "object"
   },
   "ProjectCreate": {
@@ -1201,6 +3617,471 @@
       "updated_at"
     ],
     "title": "TaskView",
+    "type": "object"
+  },
+  "TeamCreate": {
+    "$defs": {
+      "BotCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "additive": {
+            "$ref": "#/$defs/InstructionTemplate"
+          },
+          "expected_profile_revision": {
+            "minimum": 1,
+            "title": "Expected Profile Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "overrides": {
+            "$ref": "#/$defs/Preferences"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "name",
+          "profile_id",
+          "expected_profile_revision",
+          "additive",
+          "memory_enabled",
+          "overrides"
+        ],
+        "title": "BotCreate",
+        "type": "object"
+      },
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      },
+      "TeamMember": {
+        "additionalProperties": false,
+        "properties": {
+          "bot": {
+            "$ref": "#/$defs/BotCreate"
+          },
+          "key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "bot"
+        ],
+        "title": "TeamMember",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "lead_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Lead Key",
+        "type": "string"
+      },
+      "members": {
+        "items": {
+          "$ref": "#/$defs/TeamMember"
+        },
+        "maxItems": 128,
+        "minItems": 1,
+        "title": "Members",
+        "type": "array"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "name",
+      "members",
+      "lead_key"
+    ],
+    "title": "TeamCreate",
+    "type": "object"
+  },
+  "TeamView": {
+    "$defs": {
+      "BotView": {
+        "additionalProperties": false,
+        "properties": {
+          "additive": {
+            "$ref": "#/$defs/InstructionTemplate"
+          },
+          "additive_asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Additive Asset Id",
+            "type": "string"
+          },
+          "additive_hash": {
+            "title": "Additive Hash",
+            "type": "string"
+          },
+          "additive_revision": {
+            "minimum": 1,
+            "title": "Additive Revision",
+            "type": "integer"
+          },
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "builtin_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "RESEARCHER",
+                  "LIBRARIAN"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Builtin Role"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "namespace_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Namespace Ref",
+            "type": "string"
+          },
+          "overrides": {
+            "$ref": "#/$defs/Preferences"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "bot_id",
+          "revision",
+          "name",
+          "profile_id",
+          "team_id",
+          "additive_asset_id",
+          "additive_revision",
+          "additive_hash",
+          "additive",
+          "memory_enabled",
+          "namespace_ref",
+          "overrides",
+          "visual_ref",
+          "builtin_role"
+        ],
+        "title": "BotView",
+        "type": "object"
+      },
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "authorized_lead_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Authorized Lead Id"
+      },
+      "authorized_members": {
+        "items": {
+          "$ref": "#/$defs/BotView"
+        },
+        "title": "Authorized Members",
+        "type": "array"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "team_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Team Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "team_id",
+      "revision",
+      "name",
+      "authorized_members",
+      "authorized_lead_id"
+    ],
+    "title": "TeamView",
     "type": "object"
   }
 }

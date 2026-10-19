@@ -130,6 +130,640 @@
       "query": null
     },
     {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "profile.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_profile_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createProfile",
+      "owner": "agents",
+      "path": "/api/v1/profiles",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.revise",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "affected Bot.id",
+            "when": "filter disclosed Bots; absence does not deny preview"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "profile.preview-revision.v1",
+      "endpoint": "journeon.api.create_app.<locals>.preview_profile_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewProfileRevision",
+      "owner": "agents",
+      "path": "/api/v1/profiles/preview-revision",
+      "permissions": [
+        "profile.revise",
+        "profile.read",
+        "bot.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.revise",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "affected Bot.id",
+            "when": "new commit: filter disclosed impact; absence does not deny revision"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "profile.revise.v1",
+      "endpoint": "journeon.api.create_app.<locals>.revise_profile_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "reviseProfile",
+      "owner": "agents",
+      "path": "/api/v1/profiles/revise",
+      "permissions": [
+        "profile.revise",
+        "profile.read",
+        "profile.receipt.read",
+        "bot.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Bot.id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Bot.id",
+            "when": "always"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "bot.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_bot_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createBot",
+      "owner": "agents",
+      "path": "/api/v1/bots",
+      "permissions": [
+        "profile.read",
+        "profile.use",
+        "bot.read",
+        "bot.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "bot.revise",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "bot.revise.v1",
+      "endpoint": "journeon.api.create_app.<locals>.revise_bot_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "reviseBot",
+      "owner": "agents",
+      "path": "/api/v1/bots/revise",
+      "permissions": [
+        "bot.revise",
+        "bot.read",
+        "bot.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "each new member.profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "each new member.profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "team.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Team.id",
+            "when": "always"
+          },
+          {
+            "capability": "team.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Team.id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "each accepted member.id",
+            "when": "accepted receipt retry"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "team.create.v1",
+      "endpoint": "journeon.api.create_app.<locals>.create_team_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "createTeam",
+      "owner": "agents",
+      "path": "/api/v1/teams",
+      "permissions": [
+        "profile.read",
+        "profile.use",
+        "team.read",
+        "team.receipt.read",
+        "bot.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "legacy_collection.preview:{version}:{content_hash}:{provenance_ref}",
+            "owner_configuration_authority": false,
+            "resource": "mapping.collection_id",
+            "when": "each mapping; hash is 64 lowercase SHA-256 hex characters"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "mapping.bot_id",
+            "when": "each mapping"
+          },
+          {
+            "capability": "bot.revise",
+            "owner_configuration_authority": true,
+            "resource": "mapping.bot_id",
+            "when": "each mapping"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "legacy-memory.preview.v1",
+      "endpoint": "journeon.api.create_app.<locals>.legacy_preview_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewLegacyMemory",
+      "owner": "agents",
+      "path": "/api/v1/legacy-memory/preview",
+      "permissions": [
+        "bot.read",
+        "bot.revise"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "instruction_bundle.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.bot_id",
+            "when": "named Bot"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "instruction_bundle.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted bundle.id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "new construction only"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "origin.bot_id",
+            "when": "new named-Bot construction only"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "component.owner_id",
+            "when": "all rendering: Profile-owned component"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "component.owner_id",
+            "when": "all rendering: Bot-owned component"
+          }
+        ],
+        "initiating_human": "accepted bundle and Task origin must belong to actor",
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": "instruction.bundle.resolve.v1",
+      "endpoint": "journeon.api.create_app.<locals>.resolve_configuration",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "resolveInstructionBundle",
+      "owner": "instructions",
+      "path": "/api/v1/instruction-bundles",
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read",
+        "instruction_bundle.receipt.read",
+        "profile.use",
+        "bot.use"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.profile_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getProfile",
+      "owner": "agents",
+      "path": "/api/v1/profiles/{identity}",
+      "permissions": [
+        "profile.read"
+      ],
+      "query": "profile.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.bot_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getBot",
+      "owner": "agents",
+      "path": "/api/v1/bots/{identity}",
+      "permissions": [
+        "bot.read"
+      ],
+      "query": "bot.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "team.read",
+            "owner_configuration_authority": true,
+            "resource": "team_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "member.id",
+            "when": "filter expanded members and lead; absence does not deny Team read"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.team_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getTeam",
+      "owner": "agents",
+      "path": "/api/v1/teams/{identity}",
+      "permissions": [
+        "team.read",
+        "bot.read"
+      ],
+      "query": "team.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "Bot.profile_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.settings_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getBotSettings",
+      "owner": "agents",
+      "path": "/api/v1/bots/{identity}/effective-settings",
+      "permissions": [
+        "bot.read",
+        "profile.read"
+      ],
+      "query": "bot.settings.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "instruction_bundle.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.bot_id",
+            "when": "named Bot"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "Task origin"
+          }
+        ],
+        "initiating_human": "bundle must belong to actor",
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.read_configuration_read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getInstructionBundle",
+      "owner": "instructions",
+      "path": "/api/v1/instruction-bundles/{identity}",
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read"
+      ],
+      "query": "instruction.bundle.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "diagnostic_only": true,
+        "grant_checks": [
+          {
+            "capability": "{resource_kind}.{action}",
+            "owner_configuration_authority": true,
+            "resource": "resource_id",
+            "when": "evaluate supported requested action for authenticated actor; no permission.effective grant"
+          },
+          {
+            "capability": "instruction_bundle.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.id",
+            "when": "instruction_bundle diagnostic: always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.profile_id",
+            "when": "instruction_bundle diagnostic: always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.bot_id",
+            "when": "instruction_bundle diagnostic: named Bot"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "instruction_bundle diagnostic: always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "instruction_bundle diagnostic: Task origin"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.effective_permission",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getEffectivePermission",
+      "owner": "permissions",
+      "path": "/api/v1/permissions/effective",
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read"
+      ],
+      "query": "permission.effective.v1"
+    },
+    {
       "authentication": "passkey.begin.v1",
       "command": null,
       "endpoint": "journeon.passkey_api.routes.<locals>.begin",
@@ -275,9 +909,453 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Atomic versioned Task, receipt and event; current Project grants"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ProfileCreate",
+      "name": "profile.create.v1",
+      "owner": "agents",
+      "permissions": [],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.revise",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "affected Bot.id",
+            "when": "filter disclosed Bots; absence does not deny preview"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "ProfileRevisionPreview",
+      "name": "profile.preview-revision.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.revise",
+        "profile.read",
+        "bot.read"
+      ],
+      "result_model": "ProfileImpact",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "READ_ONLY_PREVIEW",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.revise",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "affected Bot.id",
+            "when": "new commit: filter disclosed impact; absence does not deny revision"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ProfileRevise",
+      "name": "profile.revise.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.revise",
+        "profile.read",
+        "profile.receipt.read",
+        "bot.read"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Bot.id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Bot.id",
+            "when": "always"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BotCreate",
+      "name": "bot.create.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.read",
+        "profile.use",
+        "bot.read",
+        "bot.receipt.read"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "bot.revise",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BotRevise",
+      "name": "bot.revise.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.revise",
+        "bot.read",
+        "bot.receipt.read"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "each new member.profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "each new member.profile_id",
+            "when": "new creation"
+          },
+          {
+            "capability": "team.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Team.id",
+            "when": "always"
+          },
+          {
+            "capability": "team.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted Team.id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "each accepted member.id",
+            "when": "accepted receipt retry"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TeamCreate",
+      "name": "team.create.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.read",
+        "profile.use",
+        "team.read",
+        "team.receipt.read",
+        "bot.read"
+      ],
+      "result_model": "ConfigurationReceipt",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "legacy_collection.preview:{version}:{content_hash}:{provenance_ref}",
+            "owner_configuration_authority": false,
+            "resource": "mapping.collection_id",
+            "when": "each mapping; hash is 64 lowercase SHA-256 hex characters"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "mapping.bot_id",
+            "when": "each mapping"
+          },
+          {
+            "capability": "bot.revise",
+            "owner_configuration_authority": true,
+            "resource": "mapping.bot_id",
+            "when": "each mapping"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": false,
+      "input_model": "LegacyPreview",
+      "name": "legacy-memory.preview.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.read",
+        "bot.revise"
+      ],
+      "result_model": "LegacyPlan",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "READ_ONLY_PREVIEW",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "instruction_bundle.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.bot_id",
+            "when": "named Bot"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "instruction_bundle.receipt.read",
+            "owner_configuration_authority": true,
+            "resource": "new or accepted bundle.id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "new construction only"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "origin.bot_id",
+            "when": "new named-Bot construction only"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "component.owner_id",
+            "when": "all rendering: Profile-owned component"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "component.owner_id",
+            "when": "all rendering: Bot-owned component"
+          }
+        ],
+        "initiating_human": "accepted bundle and Task origin must belong to actor",
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "BundleResolve",
+      "name": "instruction.bundle.resolve.v1",
+      "owner": "instructions",
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read",
+        "instruction_bundle.receipt.read",
+        "profile.use",
+        "bot.use"
+      ],
+      "result_model": "BundleResult",
+      "reversibility": "Immutable history; changes require another authorized command",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact authority and transaction checks"
     }
   ],
   "modules": [
+    {
+      "api_prefixes": [
+        "/api/v1/profiles",
+        "/api/v1/bots",
+        "/api/v1/teams",
+        "/api/v1/legacy-memory"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "profile.create.committed",
+        "profile.revise.committed",
+        "bot.create.committed",
+        "bot.revise.committed",
+        "team.create.committed"
+      ],
+      "health": "schema_and_database",
+      "migration": "0007_identity_instructions",
+      "module_id": "agents",
+      "permission_namespaces": [
+        "bot",
+        "profile",
+        "team"
+      ],
+      "permissions": [
+        "profile.revise",
+        "profile.read",
+        "bot.read",
+        "profile.receipt.read",
+        "profile.use",
+        "bot.receipt.read",
+        "bot.revise",
+        "team.read",
+        "team.receipt.read"
+      ],
+      "settings": [],
+      "tables": [
+        "agent_profiles",
+        "profile_revisions",
+        "bots",
+        "bot_revisions",
+        "teams"
+      ],
+      "version": "0.0.0.dev1"
+    },
     {
       "api_prefixes": [],
       "backup_class": "R0",
@@ -333,6 +1411,46 @@
     },
     {
       "api_prefixes": [
+        "/api/v1/instruction-bundles"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "instruction.bundle.resolve.committed"
+      ],
+      "health": "schema_and_database",
+      "migration": "0007_identity_instructions",
+      "module_id": "instructions",
+      "permission_namespaces": [
+        "bot",
+        "instruction_bundle",
+        "profile",
+        "project",
+        "task"
+      ],
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read",
+        "instruction_bundle.receipt.read",
+        "profile.use",
+        "bot.use"
+      ],
+      "settings": [],
+      "tables": [
+        "instruction_assets",
+        "instruction_revisions",
+        "instruction_bundles"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
         "/api/v1/operations"
       ],
       "backup_class": "R1",
@@ -342,7 +1460,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0006_work",
+      "migration": "0007_identity_instructions",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -358,7 +1476,9 @@
       "version": "0.0.0.dev1"
     },
     {
-      "api_prefixes": [],
+      "api_prefixes": [
+        "/api/v1/permissions"
+      ],
       "backup_class": "R0",
       "core": true,
       "dashboards": [],
@@ -366,14 +1486,23 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0001_foundation",
+      "migration": "0007_identity_instructions",
       "module_id": "permissions",
       "permission_namespaces": [
-        "project"
+        "bot",
+        "instruction_bundle",
+        "profile",
+        "project",
+        "task"
       ],
       "permissions": [
         "project.create",
-        "project.receipt.read"
+        "project.receipt.read",
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read"
       ],
       "settings": [],
       "tables": [
@@ -461,6 +1590,210 @@
         "operation.receipt.read"
       ],
       "result_model": "CanonicalReceipt"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "profile_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "name": "profile.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "profile.read"
+      ],
+      "result_model": "ProfileView"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "name": "bot.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.read"
+      ],
+      "result_model": "BotView"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "team.read",
+            "owner_configuration_authority": true,
+            "resource": "team_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "member.id",
+            "when": "filter expanded members and lead; absence does not deny Team read"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "name": "team.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "team.read",
+        "bot.read"
+      ],
+      "result_model": "TeamView"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bot_id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "Bot.profile_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "name": "bot.settings.read.v1",
+      "owner": "agents",
+      "permissions": [
+        "bot.read",
+        "profile.read"
+      ],
+      "result_model": "EffectiveSettings"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "grant_checks": [
+          {
+            "capability": "instruction_bundle.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.id",
+            "when": "always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.profile_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.bot_id",
+            "when": "named Bot"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "Task origin"
+          }
+        ],
+        "initiating_human": "bundle must belong to actor",
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "name": "instruction.bundle.read.v1",
+      "owner": "instructions",
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read"
+      ],
+      "result_model": "BundleView"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch",
+        "diagnostic_only": true,
+        "grant_checks": [
+          {
+            "capability": "{resource_kind}.{action}",
+            "owner_configuration_authority": true,
+            "resource": "resource_id",
+            "when": "evaluate supported requested action for authenticated actor; no permission.effective grant"
+          },
+          {
+            "capability": "instruction_bundle.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.id",
+            "when": "instruction_bundle diagnostic: always"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.profile_id",
+            "when": "instruction_bundle diagnostic: always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "bundle.bot_id",
+            "when": "instruction_bundle diagnostic: named Bot"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "instruction_bundle diagnostic: always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "bundle.project_id",
+            "when": "instruction_bundle diagnostic: Task origin"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "scoped checks, with conditions; no rights follow from metadata"
+      },
+      "name": "permission.effective.v1",
+      "owner": "permissions",
+      "permissions": [
+        "instruction_bundle.read",
+        "profile.read",
+        "bot.read",
+        "project.instruction.read",
+        "task.read"
+      ],
+      "result_model": "EffectivePermission"
     }
   ]
 }

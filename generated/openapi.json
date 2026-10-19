@@ -1,6 +1,799 @@
 {
   "components": {
     "schemas": {
+      "BotCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "additive": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "expected_profile_revision": {
+            "minimum": 1.0,
+            "title": "Expected Profile Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "overrides": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "name",
+          "profile_id",
+          "expected_profile_revision",
+          "additive",
+          "memory_enabled",
+          "overrides"
+        ],
+        "title": "BotCreate",
+        "type": "object"
+      },
+      "BotImpact": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_changed": {
+            "title": "Baseline Changed",
+            "type": "boolean"
+          },
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "changed_inherited_fields": {
+            "items": {
+              "enum": [
+                "harness",
+                "model",
+                "provider",
+                "host"
+              ],
+              "type": "string"
+            },
+            "title": "Changed Inherited Fields",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bot_id",
+          "revision",
+          "changed_inherited_fields",
+          "baseline_changed"
+        ],
+        "title": "BotImpact",
+        "type": "object"
+      },
+      "BotRevise": {
+        "additionalProperties": false,
+        "properties": {
+          "additive": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "expected_hash": {
+            "title": "Expected Hash",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "overrides": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "reset_to_inherit": {
+            "items": {
+              "enum": [
+                "harness",
+                "model",
+                "provider",
+                "host"
+              ],
+              "type": "string"
+            },
+            "title": "Reset To Inherit",
+            "type": "array"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "bot_id",
+          "expected_revision",
+          "expected_hash",
+          "name",
+          "additive",
+          "overrides",
+          "reset_to_inherit",
+          "visual_ref",
+          "reason"
+        ],
+        "title": "BotRevise",
+        "type": "object"
+      },
+      "BotView": {
+        "additionalProperties": false,
+        "properties": {
+          "additive": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "additive_asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Additive Asset Id",
+            "type": "string"
+          },
+          "additive_hash": {
+            "title": "Additive Hash",
+            "type": "string"
+          },
+          "additive_revision": {
+            "minimum": 1.0,
+            "title": "Additive Revision",
+            "type": "integer"
+          },
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "builtin_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "RESEARCHER",
+                  "LIBRARIAN"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Builtin Role"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "namespace_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Namespace Ref",
+            "type": "string"
+          },
+          "overrides": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "bot_id",
+          "revision",
+          "name",
+          "profile_id",
+          "team_id",
+          "additive_asset_id",
+          "additive_revision",
+          "additive_hash",
+          "additive",
+          "memory_enabled",
+          "namespace_ref",
+          "overrides",
+          "visual_ref",
+          "builtin_role"
+        ],
+        "title": "BotView",
+        "type": "object"
+      },
+      "BundleOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Id"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Revision"
+          },
+          "kind": {
+            "enum": [
+              "NAMED_BOT",
+              "ONE_OFF_PROFILE"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_kind": {
+            "enum": [
+              "CHAT",
+              "TASK_ATTEMPT",
+              "OTHER"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "kind",
+          "source_kind",
+          "source_id"
+        ],
+        "title": "BundleOrigin",
+        "type": "object"
+      },
+      "BundleResolve": {
+        "additionalProperties": false,
+        "properties": {
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentRef"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/BundleOrigin"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "profile_revision": {
+            "minimum": 1.0,
+            "title": "Profile Revision",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1.0,
+            "title": "Project Revision",
+            "type": "integer"
+          },
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/VariableBinding"
+            },
+            "title": "Variables",
+            "type": "array"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "profile_id",
+          "profile_revision",
+          "project_id",
+          "project_revision",
+          "origin",
+          "components",
+          "variables"
+        ],
+        "title": "BundleResolve",
+        "type": "object"
+      },
+      "BundleResult": {
+        "additionalProperties": false,
+        "properties": {
+          "bundle": {
+            "$ref": "#/components/schemas/BundleView"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/ConfigurationReceipt"
+          },
+          "rendering": {
+            "title": "Rendering",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt",
+          "bundle",
+          "rendering"
+        ],
+        "title": "BundleResult",
+        "type": "object"
+      },
+      "BundleView": {
+        "additionalProperties": false,
+        "properties": {
+          "bundle_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bundle Id",
+            "type": "string"
+          },
+          "byte_count": {
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentRef"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/BundleOrigin"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "profile_revision": {
+            "minimum": 1.0,
+            "title": "Profile Revision",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1.0,
+            "title": "Project Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bundle_id",
+          "initiating_principal_id",
+          "profile_id",
+          "profile_revision",
+          "project_id",
+          "project_revision",
+          "origin",
+          "components",
+          "content_digest",
+          "byte_count"
+        ],
+        "title": "BundleView",
+        "type": "object"
+      },
+      "ComponentRef": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ComponentRef",
+        "type": "object"
+      },
+      "ConfigurationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "profile.create.v1",
+              "profile.revise.v1",
+              "bot.create.v1",
+              "bot.revise.v1",
+              "team.create.v1",
+              "instruction.bundle.resolve.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "member_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Member Ids",
+            "type": "array"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "enum": [
+              "profile",
+              "bot",
+              "team",
+              "instruction_bundle"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "committed_at",
+          "target_kind",
+          "target_id",
+          "revision"
+        ],
+        "title": "ConfigurationReceipt",
+        "type": "object"
+      },
+      "EffectiveField": {
+        "additionalProperties": false,
+        "properties": {
+          "applicability": {
+            "const": "NEXT_QUALIFIED_TRANSITION",
+            "default": "NEXT_QUALIFIED_TRANSITION",
+            "title": "Applicability",
+            "type": "string"
+          },
+          "execution_qualified": {
+            "const": false,
+            "default": false,
+            "title": "Execution Qualified",
+            "type": "boolean"
+          },
+          "field": {
+            "enum": [
+              "harness",
+              "model",
+              "provider",
+              "host"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "portability": {
+            "const": "REFERENCE_ONLY",
+            "default": "REFERENCE_ONLY",
+            "title": "Portability",
+            "type": "string"
+          },
+          "schema_type": {
+            "const": "optional-reference",
+            "default": "optional-reference",
+            "title": "Schema Type",
+            "type": "string"
+          },
+          "secret_classification": {
+            "const": "NON_SECRET_REFERENCE",
+            "default": "NON_SECRET_REFERENCE",
+            "title": "Secret Classification",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "PROFILE",
+              "BOT_OVERRIDE"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "source_revision": {
+            "minimum": 1.0,
+            "title": "Source Revision",
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "source",
+          "source_revision"
+        ],
+        "title": "EffectiveField",
+        "type": "object"
+      },
+      "EffectivePermission": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "read",
+              "revise",
+              "use",
+              "receipt.read"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "checked_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked Revision"
+          },
+          "reason": {
+            "enum": [
+              "CURRENT_AUTHORITY",
+              "UNAVAILABLE"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "resource_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_kind": {
+            "enum": [
+              "profile",
+              "bot",
+              "team",
+              "instruction_bundle"
+            ],
+            "title": "Resource Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed",
+          "resource_kind",
+          "resource_id",
+          "action",
+          "checked_revision",
+          "reason"
+        ],
+        "title": "EffectivePermission",
+        "type": "object"
+      },
+      "EffectiveSettings": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "eligibility": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
+          "eligibility_grants_authority": {
+            "const": false,
+            "default": false,
+            "title": "Eligibility Grants Authority",
+            "type": "boolean"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/EffectiveField"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "bot_id",
+          "fields",
+          "visual_ref",
+          "eligibility"
+        ],
+        "title": "EffectiveSettings",
+        "type": "object"
+      },
       "ErrorEnvelope": {
         "additionalProperties": false,
         "properties": {
@@ -34,6 +827,159 @@
           "reason"
         ],
         "title": "ErrorEnvelope",
+        "type": "object"
+      },
+      "InstructionTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "eval_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eval Ids",
+            "type": "array"
+          },
+          "required_variables": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Required Variables",
+            "type": "array"
+          },
+          "template": {
+            "maxLength": 65536,
+            "title": "Template",
+            "type": "string"
+          },
+          "template_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "template",
+          "required_variables",
+          "eval_ids"
+        ],
+        "title": "InstructionTemplate",
+        "type": "object"
+      },
+      "LegacyMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bot Id",
+            "type": "string"
+          },
+          "collection_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Collection Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "destination_consent": {
+            "const": true,
+            "title": "Destination Consent",
+            "type": "boolean"
+          },
+          "expected_bot_revision": {
+            "minimum": 1.0,
+            "title": "Expected Bot Revision",
+            "type": "integer"
+          },
+          "memory_enabled": {
+            "title": "Memory Enabled",
+            "type": "boolean"
+          },
+          "provenance_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Provenance Ref",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "collection_id",
+          "version",
+          "content_hash",
+          "provenance_ref",
+          "bot_id",
+          "expected_bot_revision",
+          "memory_enabled",
+          "destination_consent"
+        ],
+        "title": "LegacyMapping",
+        "type": "object"
+      },
+      "LegacyPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "execution": {
+            "const": "PREVIEW_ONLY_NO_BYTES_COPIED",
+            "default": "PREVIEW_ONLY_NO_BYTES_COPIED",
+            "title": "Execution",
+            "type": "string"
+          },
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/LegacyMapping"
+            },
+            "title": "Mappings",
+            "type": "array"
+          },
+          "unmapped": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Unmapped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mappings",
+          "unmapped"
+        ],
+        "title": "LegacyPlan",
+        "type": "object"
+      },
+      "LegacyPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/LegacyMapping"
+            },
+            "title": "Mappings",
+            "type": "array"
+          },
+          "unmapped": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Unmapped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mappings",
+          "unmapped"
+        ],
+        "title": "LegacyPreview",
         "type": "object"
       },
       "OperationReceipt": {
@@ -289,6 +1235,386 @@
           "revoked"
         ],
         "title": "PasskeySummary",
+        "type": "object"
+      },
+      "Preferences": {
+        "additionalProperties": false,
+        "properties": {
+          "harness": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harness"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "title": "Preferences",
+        "type": "object"
+      },
+      "ProfileCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "eligibility": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "name",
+          "baseline",
+          "preferences",
+          "eligibility"
+        ],
+        "title": "ProfileCreate",
+        "type": "object"
+      },
+      "ProfileImpact": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_bots": {
+            "items": {
+              "$ref": "#/components/schemas/BotImpact"
+            },
+            "title": "Affected Bots",
+            "type": "array"
+          },
+          "digest": {
+            "title": "Digest",
+            "type": "string"
+          },
+          "disclosure_scope": {
+            "const": "AUTHORIZED_BOTS_ONLY",
+            "default": "AUTHORIZED_BOTS_ONLY",
+            "title": "Disclosure Scope",
+            "type": "string"
+          },
+          "profile_revision": {
+            "minimum": 1.0,
+            "title": "Profile Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "digest",
+          "profile_revision",
+          "affected_bots"
+        ],
+        "title": "ProfileImpact",
+        "type": "object"
+      },
+      "ProfileRevise": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "eligibility": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
+          "expected_affected_bots": {
+            "items": {
+              "$ref": "#/components/schemas/BotImpact"
+            },
+            "title": "Expected Affected Bots",
+            "type": "array"
+          },
+          "expected_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Hash",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "preview_digest": {
+            "title": "Preview Digest",
+            "type": "string"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "name",
+          "baseline",
+          "preferences",
+          "eligibility",
+          "profile_id",
+          "expected_revision",
+          "expected_hash",
+          "reason",
+          "preview_digest",
+          "expected_affected_bots"
+        ],
+        "title": "ProfileRevise",
+        "type": "object"
+      },
+      "ProfileRevisionPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "eligibility": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
+          "expected_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Hash",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "name",
+          "baseline",
+          "preferences",
+          "eligibility",
+          "profile_id",
+          "expected_revision",
+          "expected_hash",
+          "reason"
+        ],
+        "title": "ProfileRevisionPreview",
+        "type": "object"
+      },
+      "ProfileView": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/InstructionTemplate"
+          },
+          "baseline_asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Baseline Asset Id",
+            "type": "string"
+          },
+          "baseline_hash": {
+            "title": "Baseline Hash",
+            "type": "string"
+          },
+          "baseline_revision": {
+            "minimum": 1.0,
+            "title": "Baseline Revision",
+            "type": "integer"
+          },
+          "eligibility": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "profile_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "visual_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visual Ref"
+          }
+        },
+        "required": [
+          "profile_id",
+          "revision",
+          "name",
+          "baseline_asset_id",
+          "baseline_revision",
+          "baseline_hash",
+          "baseline",
+          "preferences",
+          "eligibility",
+          "visual_ref"
+        ],
+        "title": "ProfileView",
         "type": "object"
       },
       "ProjectCreate": {
@@ -915,6 +2241,139 @@
         ],
         "title": "TaskView",
         "type": "object"
+      },
+      "TeamCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "lead_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Lead Key",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMember"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Members",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "name",
+          "members",
+          "lead_key"
+        ],
+        "title": "TeamCreate",
+        "type": "object"
+      },
+      "TeamMember": {
+        "additionalProperties": false,
+        "properties": {
+          "bot": {
+            "$ref": "#/components/schemas/BotCreate"
+          },
+          "key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "bot"
+        ],
+        "title": "TeamMember",
+        "type": "object"
+      },
+      "TeamView": {
+        "additionalProperties": false,
+        "properties": {
+          "authorized_lead_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorized Lead Id"
+          },
+          "authorized_members": {
+            "items": {
+              "$ref": "#/components/schemas/BotView"
+            },
+            "title": "Authorized Members",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "team_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Team Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "team_id",
+          "revision",
+          "name",
+          "authorized_members",
+          "authorized_lead_id"
+        ],
+        "title": "TeamView",
+        "type": "object"
+      },
+      "VariableBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "name": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 65536,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "name",
+          "value"
+        ],
+        "title": "VariableBinding",
+        "type": "object"
       }
     }
   },
@@ -1167,6 +2626,970 @@
         ]
       }
     },
+    "/api/v1/bots": {
+      "post": {
+        "operationId": "createBot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BotCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Create Bot Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Bot.id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Bot.id",
+              "when": "always"
+            }
+          ],
+          "owner_only": true,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "bot.create.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "profile.read",
+          "profile.use",
+          "bot.read",
+          "bot.receipt.read"
+        ]
+      }
+    },
+    "/api/v1/bots/revise": {
+      "post": {
+        "operationId": "reviseBot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BotRevise"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Revise Bot Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "bot.revise",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "bot.revise.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "bot.revise",
+          "bot.read",
+          "bot.receipt.read"
+        ]
+      }
+    },
+    "/api/v1/bots/{identity}": {
+      "get": {
+        "operationId": "getBot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Bot Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "bot.read"
+        ],
+        "x-journeon-query": "bot.read.v1"
+      }
+    },
+    "/api/v1/bots/{identity}/effective-settings": {
+      "get": {
+        "operationId": "getBotSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Settings Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bot_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "Bot.profile_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "bot.read",
+          "profile.read"
+        ],
+        "x-journeon-query": "bot.settings.read.v1"
+      }
+    },
+    "/api/v1/instruction-bundles": {
+      "post": {
+        "operationId": "resolveInstructionBundle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BundleResolve"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Resolve Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "instruction_bundle.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.bot_id",
+              "when": "named Bot"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "instruction_bundle.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted bundle.id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "new construction only"
+            },
+            {
+              "capability": "bot.use",
+              "owner_configuration_authority": true,
+              "resource": "origin.bot_id",
+              "when": "new named-Bot construction only"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "component.owner_id",
+              "when": "all rendering: Profile-owned component"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "component.owner_id",
+              "when": "all rendering: Bot-owned component"
+            }
+          ],
+          "initiating_human": "accepted bundle and Task origin must belong to actor",
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "instruction.bundle.resolve.v1",
+        "x-journeon-owner": "instructions",
+        "x-journeon-permissions": [
+          "instruction_bundle.read",
+          "profile.read",
+          "bot.read",
+          "project.instruction.read",
+          "task.read",
+          "instruction_bundle.receipt.read",
+          "profile.use",
+          "bot.use"
+        ]
+      }
+    },
+    "/api/v1/instruction-bundles/{identity}": {
+      "get": {
+        "operationId": "getInstructionBundle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Read Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "instruction_bundle.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.bot_id",
+              "when": "named Bot"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "Task origin"
+            }
+          ],
+          "initiating_human": "bundle must belong to actor",
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-owner": "instructions",
+        "x-journeon-permissions": [
+          "instruction_bundle.read",
+          "profile.read",
+          "bot.read",
+          "project.instruction.read",
+          "task.read"
+        ],
+        "x-journeon-query": "instruction.bundle.read.v1"
+      }
+    },
+    "/api/v1/legacy-memory/preview": {
+      "post": {
+        "operationId": "previewLegacyMemory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegacyPreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyPlan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Legacy Preview Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "legacy_collection.preview:{version}:{content_hash}:{provenance_ref}",
+              "owner_configuration_authority": false,
+              "resource": "mapping.collection_id",
+              "when": "each mapping; hash is 64 lowercase SHA-256 hex characters"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "mapping.bot_id",
+              "when": "each mapping"
+            },
+            {
+              "capability": "bot.revise",
+              "owner_configuration_authority": true,
+              "resource": "mapping.bot_id",
+              "when": "each mapping"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "legacy-memory.preview.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "bot.read",
+          "bot.revise"
+        ]
+      }
+    },
     "/api/v1/operations/{operation_id}": {
       "get": {
         "operationId": "getOperationReceipt",
@@ -1196,6 +3619,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/TaskReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ConfigurationReceipt"
                     }
                   ],
                   "title": "Response Getoperationreceipt"
@@ -1281,6 +3707,681 @@
           "operation.receipt.read"
         ],
         "x-journeon-query": "operation.receipt.read.v1"
+      }
+    },
+    "/api/v1/permissions/effective": {
+      "get": {
+        "operationId": "getEffectivePermission",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "resource_kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "profile",
+                "bot",
+                "team",
+                "instruction_bundle"
+              ],
+              "title": "Resource Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Resource Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "read",
+                "revise",
+                "use",
+                "receipt.read"
+              ],
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectivePermission"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Effective Permission",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "diagnostic_only": true,
+          "grant_checks": [
+            {
+              "capability": "{resource_kind}.{action}",
+              "owner_configuration_authority": true,
+              "resource": "resource_id",
+              "when": "evaluate supported requested action for authenticated actor; no permission.effective grant"
+            },
+            {
+              "capability": "instruction_bundle.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.id",
+              "when": "instruction_bundle diagnostic: always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.profile_id",
+              "when": "instruction_bundle diagnostic: always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "bundle.bot_id",
+              "when": "instruction_bundle diagnostic: named Bot"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "instruction_bundle diagnostic: always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "bundle.project_id",
+              "when": "instruction_bundle diagnostic: Task origin"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-owner": "permissions",
+        "x-journeon-permissions": [
+          "instruction_bundle.read",
+          "profile.read",
+          "bot.read",
+          "project.instruction.read",
+          "task.read"
+        ],
+        "x-journeon-query": "permission.effective.v1"
+      }
+    },
+    "/api/v1/profiles": {
+      "post": {
+        "operationId": "createProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Create Profile Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "profile.create.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": []
+      }
+    },
+    "/api/v1/profiles/preview-revision": {
+      "post": {
+        "operationId": "previewProfileRevision",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileRevisionPreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileImpact"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Preview Profile Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.revise",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "affected Bot.id",
+              "when": "filter disclosed Bots; absence does not deny preview"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "profile.preview-revision.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "profile.revise",
+          "profile.read",
+          "bot.read"
+        ]
+      }
+    },
+    "/api/v1/profiles/revise": {
+      "post": {
+        "operationId": "reviseProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileRevise"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Revise Profile Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.revise",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "profile.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "affected Bot.id",
+              "when": "new commit: filter disclosed impact; absence does not deny revision"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "profile.revise.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "profile.revise",
+          "profile.read",
+          "profile.receipt.read",
+          "bot.read"
+        ]
+      }
+    },
+    "/api/v1/profiles/{identity}": {
+      "get": {
+        "operationId": "getProfile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Profile Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "profile_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "profile.read"
+        ],
+        "x-journeon-query": "profile.read.v1"
       }
     },
     "/api/v1/projects": {
@@ -1910,6 +5011,275 @@
           "task.read"
         ],
         "x-journeon-query": "task.read.v1"
+      }
+    },
+    "/api/v1/teams": {
+      "post": {
+        "operationId": "createTeam",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Create Team Configuration",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "each new member.profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "each new member.profile_id",
+              "when": "new creation"
+            },
+            {
+              "capability": "team.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Team.id",
+              "when": "always"
+            },
+            {
+              "capability": "team.receipt.read",
+              "owner_configuration_authority": true,
+              "resource": "new or accepted Team.id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "each accepted member.id",
+              "when": "accepted receipt retry"
+            }
+          ],
+          "owner_only": true,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-command": "team.create.v1",
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "profile.read",
+          "profile.use",
+          "team.read",
+          "team.receipt.read",
+          "bot.read"
+        ]
+      }
+    },
+    "/api/v1/teams/{identity}": {
+      "get": {
+        "operationId": "getTeam",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Team Configuration Read",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch",
+          "grant_checks": [
+            {
+              "capability": "team.read",
+              "owner_configuration_authority": true,
+              "resource": "team_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "member.id",
+              "when": "filter expanded members and lead; absence does not deny Team read"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "scoped checks, with conditions; no rights follow from metadata"
+        },
+        "x-journeon-owner": "agents",
+        "x-journeon-permissions": [
+          "team.read",
+          "bot.read"
+        ],
+        "x-journeon-query": "team.read.v1"
       }
     }
   }

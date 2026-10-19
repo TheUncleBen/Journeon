@@ -602,6 +602,18 @@ export type ProjectCreated = {
   "verification_policy_ref": string | null;
 };
 
+export type ProjectView = {
+  "description": string;
+  "instruction_authority_ref": string;
+  "instruction_owner": "ENVIRONMENT" | "PROJECT";
+  "name": string;
+  "project_id": string;
+  "provider_allowance_at_creation": ProviderSnapshot;
+  "resource_refs": Array<string>;
+  "revision": number;
+  "verification_policy_ref": string | null;
+};
+
 export type ProjectionCommand = {
   "expected_observed_hash": string | null;
   "expected_revision": number;
@@ -1227,6 +1239,10 @@ export class JourneonClient {
     return this.request("/api/v1/projects/verification",
       {method: "POST", body: JSON.stringify(command),
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  getProject(projectId: string): Promise<ProjectView> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}`, {method: "GET"});
   }
 
   getVerification(projectId: string): Promise<VerificationPolicy> {

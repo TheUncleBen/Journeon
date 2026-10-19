@@ -32,6 +32,7 @@ from journeon.contracts import (
     ProfileRevisionPreview,
     ProfileView,
     ProjectCreate,
+    ProjectView,
     TaskAdmission,
     TaskAssign,
     TaskControl,
@@ -1027,6 +1028,12 @@ COMMANDS["project.verification.configure.v1"] = CommandDefinition(
     idempotent=True,
     verification="Immutable proof definitions confer no execution authority",
 )
+MODULES["projects"]["permissions"] += ("project.read",)
+QUERIES["project.read.v1"] = {
+    "owner": "projects",
+    "permissions": ("project.read",),
+    "result_model": ProjectView,
+}
 QUERIES["project.verification.read.v1"] = {
     "owner": "projects",
     "permissions": ("project.verification.read",),

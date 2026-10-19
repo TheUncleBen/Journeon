@@ -100,3 +100,7 @@ void client.admitTask(admission, "csrf");
 // @ts-expect-error Admission cannot accept caller approval.
 const approvedAdmission: TaskAdmission = {...admission, approved: true};
 void approvedAdmission;
+
+import type { ProjectView } from "../generated/client.js";
+const currentProject: Promise<ProjectView> = client.getProject("project-fixture");
+void currentProject;

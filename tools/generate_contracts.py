@@ -31,6 +31,7 @@ from journeon.contracts import (
     ProfileRevisionPreview,
     ProfileView,
     ProjectCreate,
+    ProjectView,
     TaskAdmission,
     TaskAssign,
     TaskControl,
@@ -131,6 +132,7 @@ def artifacts() -> dict[str, str]:
         "assignTask": ("POST", "/api/v1/tasks/assign"),
         "admitTask": ("POST", "/api/v1/tasks/admit"),
         "configureVerification": ("POST", "/api/v1/projects/verification"),
+        "getProject": ("GET", "/api/v1/projects/{project_id}"),
         "getVerification": ("GET", "/api/v1/projects/{project_id}/verification"),
         "cancelTask": ("POST", "/api/v1/tasks/cancel"),
         "beginPasskey": ("POST", "/api/v1/auth/passkeys/begin"),
@@ -398,6 +400,10 @@ export class JourneonClient {
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
+  getProject(projectId: string): Promise<ProjectView> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}`, {method: "GET"});
+  }
+
   getVerification(projectId: string): Promise<VerificationPolicy> {
     return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}/verification`,
       {method: "GET"});
@@ -447,6 +453,7 @@ export class JourneonClient {
             VerificationPolicyConfigure,
             VerificationPolicyReceipt,
             VerificationPolicy,
+            ProjectView,
             TaskControl,
             TaskReceipt,
             TaskView,

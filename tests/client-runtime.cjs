@@ -24,6 +24,10 @@ async function main() {
     assert.equal(call.init.headers["X-CSRF-Token"], "csrf");
     assert.equal(call.init.credentials, "same-origin");
   }
+  await successor.getProject("encoded/project");
+  assert.equal(successorCalls.at(-1).url, "/api/v1/projects/encoded%2Fproject");
+  assert.equal(successorCalls.at(-1).init.method, "GET");
+  assert.equal(successorCalls.at(-1).init.credentials, "same-origin");
   await successor.getVerification("encoded/project");
   assert.equal(successorCalls.at(-1).url, "/api/v1/projects/encoded%2Fproject/verification");
   await successor.getWorkflowTemplates("encoded/project");

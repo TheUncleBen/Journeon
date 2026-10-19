@@ -19,6 +19,21 @@
     {
       "authentication": null,
       "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_project",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getProject",
+      "owner": "projects",
+      "path": "/api/v1/projects/{project_id}",
+      "permissions": [
+        "project.read"
+      ],
+      "query": "project.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
       "endpoint": "journeon.api.create_app.<locals>.get_receipt",
       "methods": [
         "GET"
@@ -3909,7 +3924,8 @@
         "project.create",
         "project.receipt.read",
         "project.verification.configure",
-        "project.verification.read"
+        "project.verification.read",
+        "project.read"
       ],
       "settings": [],
       "tables": [
@@ -4252,6 +4268,14 @@
         "project.instruction.read"
       ],
       "result_model": "AttentionList"
+    },
+    {
+      "name": "project.read.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.read"
+      ],
+      "result_model": "ProjectView"
     },
     {
       "name": "project.verification.read.v1",

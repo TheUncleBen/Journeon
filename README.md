@@ -79,6 +79,13 @@ Task changes, typed receipts and versioned event payloads commit in one transact
 Migration `0011_task_admission` retains existing records and adds immutable Task and
 verification-policy revisions. Earlier history remains in its original receipts.
 
+`GET /api/v1/projects/{project_id}` returns the current Project revision and
+configuration under an explicit `project.read` grant. Refresh this view after a
+revision conflict or another writer's change before submitting a revised command.
+A replayed creation or policy receipt remains historical; its revision does not
+establish the current Project revision. Provider allowance in the view is labelled
+as the historical creation snapshot and does not authorize current egress.
+
 `POST /api/v1/projects/verification` configures a versioned proof definition under
 `project.verification.configure`, `project.verification.read` and
 `project.receipt.read` grants. `GET /api/v1/projects/{project_id}/verification` reads it.

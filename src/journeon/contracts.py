@@ -73,6 +73,18 @@ class ProviderSnapshot(Contract):
     providers: list[Identifier]
 
 
+class ProjectView(Contract):
+    project_id: Identifier
+    revision: PositiveRevision
+    name: Name
+    description: Description
+    instruction_owner: Literal["ENVIRONMENT", "PROJECT"]
+    instruction_authority_ref: Identifier
+    provider_allowance_at_creation: ProviderSnapshot
+    verification_policy_ref: Identifier | None
+    resource_refs: list[Identifier]
+
+
 class ProjectCreated(Contract):
     project_id: Identifier
     revision: PositiveRevision

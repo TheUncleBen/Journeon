@@ -16,6 +16,7 @@ from journeon.contracts import (
     OperationReceipt,
     ProjectCreate,
     ProjectCreated,
+    ProjectView,
     ProviderSnapshot,
 )
 from journeon.database import require_compatible_schema, transaction
@@ -195,6 +196,34 @@ class ProjectService:
             raise DomainError(
                 "DEPENDENCY_UNAVAILABLE", "The operation store is unavailable"
             ) from exc
+
+    def read(self, actor: AuthenticatedContext, project_id: str) -> ProjectView:
+        try:
+            with transaction(self.engine) as session:
+                require_compatible_schema(session)
+                require_grant(session, actor, "project.read", project_id=project_id)
+                project = session.get(Project, project_id)
+                if project is None:
+                    raise DomainError("NOT_FOUND", "Project is unavailable")
+                return ProjectView.model_validate(
+                    {
+                        "project_id": project.id,
+                        "revision": project.revision,
+                        "name": project.name,
+                        "description": project.description,
+                        "instruction_owner": project.instruction_owner,
+                        "instruction_authority_ref": project.instruction_authority_ref,
+                        "provider_allowance_at_creation": project.provider_snapshot,
+                        "verification_policy_ref": project.verification_policy_ref,
+                        "resource_refs": project.resource_refs,
+                    }
+                )
+        except (ValidationError, json.JSONDecodeError):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Stored Project state requires repair"
+            ) from None
+        except SQLAlchemyError as exc:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "The Project store is unavailable") from exc
 
     def receipt(self, actor: AuthenticatedContext, operation_id: str) -> OperationReceipt:
         try:

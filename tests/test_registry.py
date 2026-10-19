@@ -99,6 +99,7 @@ def test_generation_includes_actual_registry():
         "assignTask",
         "admitTask",
         "configureVerification",
+        "getProject",
         "getVerification",
         "getWorkflowTemplates",
         "inspectInstructionRoot",

@@ -41,6 +41,7 @@ from journeon.contracts import (
     ProfileRevisionPreview,
     ProfileView,
     ProjectCreate,
+    ProjectView,
     TaskAdmission,
     TaskAssign,
     TaskControl,
@@ -155,6 +156,23 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> OperationReceipt:
         return service.create(actor, command)
+
+    @app.get(
+        "/api/v1/projects/{project_id}",
+        response_model=ProjectView,
+        operation_id="getProject",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "projects",
+            "x-journeon-query": "project.read.v1",
+            "x-journeon-permissions": ["project.read"],
+        },
+    )
+    def get_project(
+        project_id: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ProjectView:
+        return service.read(actor, project_id)
 
     @app.get(
         "/api/v1/operations/{operation_id}",

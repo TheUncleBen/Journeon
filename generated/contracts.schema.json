@@ -4915,6 +4915,137 @@
     "title": "ProjectCreate",
     "type": "object"
   },
+  "ProjectView": {
+    "$defs": {
+      "ProviderSnapshot": {
+        "additionalProperties": false,
+        "description": "Historical consent only; never proof of current egress/route eligibility.",
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "interpretation": {
+            "const": "HISTORICAL_CREATION_SNAPSHOT",
+            "default": "HISTORICAL_CREATION_SNAPSHOT",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "INHERIT",
+              "NARROW",
+              "LOCAL_ONLY"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "policy_revision": {
+            "minimum": 1,
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "providers": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "policy_revision",
+          "approval_id",
+          "providers"
+        ],
+        "title": "ProviderSnapshot",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "description": {
+        "maxLength": 2000,
+        "title": "Description",
+        "type": "string"
+      },
+      "instruction_authority_ref": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Instruction Authority Ref",
+        "type": "string"
+      },
+      "instruction_owner": {
+        "enum": [
+          "ENVIRONMENT",
+          "PROJECT"
+        ],
+        "title": "Instruction Owner",
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Name",
+        "type": "string"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "provider_allowance_at_creation": {
+        "$ref": "#/$defs/ProviderSnapshot"
+      },
+      "resource_refs": {
+        "items": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "title": "Resource Refs",
+        "type": "array"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "verification_policy_ref": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Verification Policy Ref"
+      }
+    },
+    "required": [
+      "project_id",
+      "revision",
+      "name",
+      "description",
+      "instruction_owner",
+      "instruction_authority_ref",
+      "provider_allowance_at_creation",
+      "verification_policy_ref",
+      "resource_refs"
+    ],
+    "title": "ProjectView",
+    "type": "object"
+  },
   "ProjectionCommand": {
     "additionalProperties": false,
     "properties": {

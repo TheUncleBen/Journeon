@@ -63,6 +63,10 @@ core CPU reserve, and each route. A route declares its executable hash, argv,
 relative working directory, environment, artifact paths, memory/process/CPU limits,
 workspace and temporary-space limits, output and artifact limits, core memory and
 recovery-disk reserves, authority lease/poll interval, drain bound and control bound.
+Serialized snapshot documents, including nested submodule metadata, are measured
+and reserved against the retained storage budget before their files are written.
+If the additional reservation cannot fit, preparation stops without writing those
+files; its original operation remains available for reconciliation.
 There are no shipping capacity values or unrestricted fallback route.
 
 The implemented backend uses Linux unified cgroups through the user's systemd

@@ -132,12 +132,22 @@ def authorized_attempt_receipt(
     return result
 
 
-def snapshot_storage_bytes(captured: CapturedSnapshot) -> int:
+def snapshot_storage_bytes(captured: CapturedSnapshot, *, metadata_only: bool = False) -> int:
+    payload_bytes = (
+        0
+        if metadata_only
+        else (
+            sum(len(blob) for blob in captured.blobs.values())
+            + sum(entry.byte_count for entry in captured.snapshot.working)
+        )
+    )
     return (
         len(captured.snapshot.model_dump_json().encode())
-        + sum(len(blob) for blob in captured.blobs.values())
-        + sum(entry.byte_count for entry in captured.snapshot.working)
-        + sum(snapshot_storage_bytes(child) for child in captured.submodules.values())
+        + payload_bytes
+        + sum(
+            snapshot_storage_bytes(child, metadata_only=metadata_only)
+            for child in captured.submodules.values()
+        )
     )
 
 

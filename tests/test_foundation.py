@@ -76,7 +76,9 @@ def test_registry_owns_every_canonical_table_and_api(database):
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0011_task_admission"
+            "0012_attempt_execution"
+            if set(module["tables"]) & {"attempts", "executions"}
+            else "0011_task_admission"
             if set(module["tables"]) & {"tasks", "verification_policy_revisions"}
             else "0010_work_execution"
             if set(module["tables"])
@@ -115,7 +117,9 @@ def test_registry_owns_every_canonical_table_and_api(database):
                 command = COMMANDS[command_name]
                 assert command.owner == operation["x-journeon-owner"]
                 assert command.external_effects == (
-                    ("CONFIGURED_RELEASE_BACKUP",)
+                    ("Attempt workspace and snapshot storage",)
+                    if operation["operationId"] == "prepareAttempt"
+                    else ("CONFIGURED_RELEASE_BACKUP",)
                     if operation["operationId"] == "verifyInstalledRelease"
                     else ("ADMITTED_LOCAL_FILESYSTEM",)
                     if operation["operationId"]

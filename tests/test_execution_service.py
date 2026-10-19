@@ -530,3 +530,99 @@ def test_failed_start_control_does_not_claim_process_started(direct_execution, m
     assert "START_REQUESTED" in kinds
     assert "STARTED" not in kinds
     assert not view.verification_passed
+
+
+@pytest.mark.parametrize("model_created", [False, True])
+def test_execution_drained_database_domain(direct_execution, model_created):
+    from sqlalchemy import create_engine
+    from sqlalchemy.exc import IntegrityError
+
+    from journeon.models import Base
+
+    service, actor, command, _ = direct_execution
+    receipt = service.start(actor, command)
+    current = wait_for(service, actor, receipt.execution.execution_id, {"COMPLETED"})
+    engine = service.engine
+    if model_created:
+        model_engine = create_engine("sqlite://")
+        Base.metadata.create_all(model_engine)
+        with engine.connect() as connection:
+            row = (
+                connection.exec_driver_sql(
+                    "SELECT * FROM executions WHERE id=?", (current.execution_id,)
+                )
+                .mappings()
+                .one()
+            )
+        with model_engine.begin() as connection:
+            columns = ",".join(row.keys())
+            placeholders = ",".join("?" for _ in row)
+            connection.exec_driver_sql(
+                f"INSERT INTO executions ({columns}) VALUES ({placeholders})", tuple(row.values())
+            )
+        engine = model_engine
+    try:
+        for invalid in (2, -1, 0.5, "true", b"1"):
+            with (
+                pytest.raises(IntegrityError, match="execution_drained_boolean"),
+                engine.begin() as db,
+            ):
+                db.exec_driver_sql(
+                    "UPDATE executions SET drained=? WHERE id=?", (invalid, current.execution_id)
+                )
+        with engine.connect() as db:
+            assert (
+                db.exec_driver_sql(
+                    "SELECT drained FROM executions WHERE id=?", (current.execution_id,)
+                ).scalar()
+                == 1
+            )
+    finally:
+        if model_created:
+            engine.dispose()
+
+
+@pytest.mark.parametrize("reserve_metadata", [False, True])
+def test_execution_storage_reserves_snapshot_metadata_before_writes(
+    direct_execution, reserve_metadata
+):
+    from pathlib import Path
+
+    from journeon.attempt_snapshots import capture_snapshot
+    from journeon.attempts import snapshot_storage_bytes
+    from journeon.models import Execution
+
+    service, actor, command, source = direct_execution
+    for index in range(100):
+        (source / (str(index).zfill(3) + "x" * 180)).touch()
+    config = service.configuration.executions
+    route = config.routes[0].model_copy(update={"workspace_bytes": 4096})
+    original_reservation = (
+        route.output_bytes + route.artifact_bytes + 16 * 4 + route.workspace_bytes
+    )
+    captured = capture_snapshot(source, max_bytes=16, max_files=200)
+    metadata = snapshot_storage_bytes(captured, metadata_only=True)
+    config = config.model_copy(
+        update={
+            "snapshot_bytes": 16,
+            "snapshot_files": 200,
+            "storage_bytes": original_reservation + (metadata if reserve_metadata else 0),
+            "routes": [route],
+        }
+    )
+    service.configuration = service.configuration.model_copy(update={"executions": config})
+    receipt = service.start(actor, command)
+    result = wait_for(service, actor, receipt.execution.execution_id, {"UNKNOWN", "COMPLETED"})
+    assert result.state == ("COMPLETED" if reserve_metadata else "UNKNOWN")
+    with transaction(service.engine) as db:
+        reserved = db.get(Execution, result.execution_id).storage_bytes
+    actual = sum(
+        path.stat().st_size for path in Path(config.storage_path).rglob("*") if path.is_file()
+    )
+    assert actual <= reserved <= config.storage_bytes
+    if reserve_metadata:
+        assert reserved == original_reservation + metadata
+        assert actual > original_reservation
+    else:
+        assert actual == 0
+    assert service.start(actor, command) == receipt

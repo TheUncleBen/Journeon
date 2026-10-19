@@ -16,7 +16,7 @@ from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session, defer
 
 from journeon.attempt_snapshots import capture_snapshot, materialize_projection
-from journeon.attempts import workspace_root, write_snapshot
+from journeon.attempts import snapshot_storage_bytes, workspace_root, write_snapshot
 from journeon.contracts import (
     DomainError,
     ExecutionReceipt,
@@ -605,6 +605,23 @@ class ExecutionService:
             authority = CurrentExecution(self, actor, identity)
             if not authority.current():
                 raise PermissionError("Execution preparation authority was revoked")
+            metadata_bytes = snapshot_storage_bytes(captured, metadata_only=True)
+            resources = resource_observation(Path(config.storage_path))
+            with work_transaction(self.engine, actor) as db:
+                row = authorized_execution(db, actor, identity, "start")
+                self.check_configuration(db, actor, row)
+                self.inputs(db, actor, command)
+                storage_claim = sum(db.scalars(select(Execution.storage_bytes))) + metadata_bytes
+                if (
+                    storage_claim > config.storage_bytes
+                    or storage_claim + max(item.disk_reserve_bytes for item in config.routes)
+                    > resources["storage_available"]
+                ):
+                    raise DomainError(
+                        "DEPENDENCY_UNAVAILABLE",
+                        "Execution snapshot metadata exceeds storage admission",
+                    )
+                row.storage_bytes += metadata_bytes
             evidence_directory = Path(config.storage_path) / identity
             write_snapshot(evidence_directory, captured)
             projection = evidence_directory / "input"

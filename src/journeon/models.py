@@ -850,6 +850,7 @@ class Execution(Base):
             name="execution_revision",
         ),
         CheckConstraint("memory_bytes > 0 AND storage_bytes > 0", name="execution_resources"),
+        CheckConstraint("drained IN (0, 1)", name="execution_drained_boolean"),
         CheckConstraint(
             "state IN ('STARTING','RUNNING','COMPLETED','CANCELLED','UNKNOWN')",
             name="execution_state",

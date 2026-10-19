@@ -153,7 +153,9 @@ def test_populated_0008_successor_preserves_rows_and_sequence(populated_0007):
         for name, rows in snapshot.items():
             assert db.execute(text(f"SELECT * FROM {name}")).all() == rows
         assert db.scalar(text("SELECT seq FROM sqlite_sequence WHERE name='outbox_events'")) == 400
-        assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0011_task_admission"
+        assert (
+            db.scalar(text("SELECT version_num FROM alembic_version")) == "0012_attempt_execution"
+        )
         assert db.execute(text("PRAGMA foreign_key_check")).all() == []
         for name in ("operation_receipts", "outbox_events"):
             ddl = db.scalar(text("SELECT sql FROM sqlite_master WHERE name=:name"), {"name": name})

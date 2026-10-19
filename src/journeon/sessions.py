@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Durable session primitives for trusted authentication services; no login ceremony."""
+"Durable session primitives for trusted authentication services; no login ceremony."
 
 import hashlib
 import secrets
@@ -62,7 +62,7 @@ def issue_session(
     strong: bool,
     policy: SessionPolicy = DEFAULT_SESSION_POLICY,
 ) -> IssuedSession:
-    """Call only after trusted authentication verification, in its committing transaction."""
+    "Call only after trusted authentication verification, in its committing transaction."
     require_compatible_schema(session)
     principal = session.get(Principal, principal_id, populate_existing=True)
     if principal is None or not principal.enabled:
@@ -147,7 +147,12 @@ def current_session(
 
 
 def resolve_cookie(
-    session: Session, token: str, *, csrf_token: str | None = None, mutation: bool = False
+    session: Session,
+    token: str,
+    *,
+    csrf_token: str | None = None,
+    mutation: bool = False,
+    activity: bool | None = None,
 ) -> BrowserSession:
     if not token or len(token) != 43:
         raise denied()
@@ -163,11 +168,11 @@ def resolve_cookie(
     ):
         raise denied()
     # Only explicit commands qualify as activity; reads and polling cannot prolong idle access.
-    return current_session(session, record.id, activity=mutation)
+    return current_session(session, record.id, activity=mutation if activity is None else activity)
 
 
 def rotate_session(session: Session, session_id: str, *, strong: bool) -> IssuedSession:
-    """Rotate after verified reauthentication; preserve the existing absolute deadline."""
+    "Rotate after verified reauthentication; preserve the existing absolute deadline."
     old = current_session(session, session_id)
     remaining = old.absolute_deadline - old.last_observed
     replacement = issue_session(

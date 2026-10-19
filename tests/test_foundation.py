@@ -38,7 +38,18 @@ def test_migration_never_bootstraps_principals_or_policy(tmp_path):
         upgrade(engine)
         with transaction(engine) as session:
             for table in Base.metadata.tables.values():
-                assert session.scalar(select(func.count()).select_from(table)) == 0
+                expected = 1 if table.name == "store_identity" else 0
+                assert session.scalar(select(func.count()).select_from(table)) == expected
+            from uuid import UUID
+
+            from journeon.models import StoreIdentity
+
+            identity = session.get(StoreIdentity, 1)
+            assert str(UUID(identity.store_id)) == identity.store_id
+            assert str(UUID(identity.incarnation)) == identity.incarnation
+            assert identity.restore_operation is None
+            assert identity.destination == str(engine.url.database)
+            assert identity.security_reconciled is True
     finally:
         engine.dispose()
 
@@ -65,7 +76,18 @@ def test_registry_owns_every_canonical_table_and_api(database):
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0009_instruction_scope"
+            "0010_work_execution"
+            if set(module["tables"])
+            & {
+                "jobs",
+                "attention",
+                "store_identity",
+                "restore_request_scopes",
+                "operation_receipts",
+                "outbox_events",
+                "protected_requests",
+            }
+            else "0009_instruction_scope"
             if set(module["tables"])
             & {
                 "projects",

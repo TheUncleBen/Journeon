@@ -13,6 +13,8 @@ from journeon.models import Base, OutboxEvent, Project, Receipt
 from journeon.projects import ProjectService
 
 BOOLEAN_DOMAINS = {
+    ("store_identity", "security_reconciled"): "store_security_boolean",
+    ("jobs", "cancel_requested"): "job_cancel_boolean",
     ("instruction_roots", "enabled"): "root_enabled",
     ("instruction_publications", "projection"): "publication_projection_boolean",
     ("instruction_request_scopes", "projection"): "request_scope_projection_boolean",

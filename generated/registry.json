@@ -1529,6 +1529,155 @@
       "path": "/api/v1/projects/{identity}/instructions/policy",
       "permissions": [],
       "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "lifecycle.restore",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.restore",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": "lifecycle.restore.preview.v1",
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.restore_preview",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "previewRestore",
+      "owner": "lifecycle",
+      "path": "/api/v1/lifecycle/restore-preview",
+      "permissions": [
+        "lifecycle.restore",
+        "project.instruction.restore",
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": null,
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.read",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "readJob",
+      "owner": "jobs",
+      "path": "/api/v1/jobs/{identity}",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": "job.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": "job.cancel.v1",
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.cancel",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "cancelJob",
+      "owner": "jobs",
+      "path": "/api/v1/jobs/{identity}/cancel",
+      "permissions": [
+        "project.instruction.accept"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": "event.replay.v1",
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.events",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "replayEvents",
+      "owner": "jobs",
+      "path": "/api/v1/events/replay",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": null,
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.attention",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "readJobAttention",
+      "owner": "jobs",
+      "path": "/api/v1/jobs/{identity}/attention",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "query": "job.attention.read.v1"
     }
   ],
   "authentication": [
@@ -2205,7 +2354,7 @@
         "project.instruction.receipt.read",
         "project.instruction.projection"
       ],
-      "result_model": "InstructionReceipt",
+      "result_model": "ProtectedEffectResult",
       "reversibility": "Versioned candidates and scoped journal reconciliation",
       "risk": "SCOPED_INSTRUCTION_OPERATION",
       "stability": "INTERNAL",
@@ -2790,6 +2939,104 @@
       "risk": "SCOPED_INSTRUCTION_OPERATION",
       "stability": "INTERNAL",
       "verification": "Exact current operands; canonical commit only after observed bytes agree"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "JobCancel",
+      "name": "job.cancel.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.accept"
+      ],
+      "result_model": "JobView",
+      "reversibility": "Prior canonical evidence is retained",
+      "risk": "LOCAL_CANONICAL_CONTROL",
+      "stability": "INTERNAL",
+      "verification": "Current scope, revision and durable owning records"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ReplayQuery",
+      "name": "event.replay.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "ReplayPage",
+      "reversibility": "Prior canonical evidence is retained",
+      "risk": "AUTHORIZED_QUERY",
+      "stability": "INTERNAL",
+      "verification": "Current scope, revision and durable owning records"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "lifecycle.restore",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.restore",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": true,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "dry_run": true,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "RestorePreview",
+      "name": "lifecycle.restore.preview.v1",
+      "owner": "lifecycle",
+      "permissions": [
+        "lifecycle.restore",
+        "project.instruction.restore",
+        "project.instruction.read"
+      ],
+      "result_model": "RestorePlan",
+      "reversibility": "Prior canonical evidence is retained",
+      "risk": "AUTHORIZED_QUERY",
+      "stability": "INTERNAL",
+      "verification": "Current scope, revision and durable owning records"
     }
   ],
   "modules": [
@@ -2873,7 +3120,7 @@
         "passkey.labelled"
       ],
       "health": "schema_and_database",
-      "migration": "0009_instruction_scope",
+      "migration": "0010_work_execution",
       "module_id": "identity",
       "permission_namespaces": [
         "passkey"
@@ -2936,6 +3183,73 @@
     },
     {
       "api_prefixes": [
+        "/api/v1/jobs",
+        "/api/v1/events"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "job.admitted",
+        "job.changed",
+        "attention.raised",
+        "attention.resolved"
+      ],
+      "health": "schema_and_database",
+      "migration": "0010_work_execution",
+      "module_id": "jobs",
+      "permission_namespaces": [
+        "lifecycle",
+        "project"
+      ],
+      "permissions": [
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.restore",
+        "lifecycle.restore"
+      ],
+      "settings": [],
+      "tables": [
+        "jobs",
+        "attention"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
+        "/api/v1/lifecycle"
+      ],
+      "backup_class": "R0",
+      "core": true,
+      "dashboards": [],
+      "environment_migrations": [],
+      "events_consumed": [],
+      "events_published": [
+        "lifecycle.history.restored"
+      ],
+      "health": "schema_and_database",
+      "migration": "0010_work_execution",
+      "module_id": "lifecycle",
+      "permission_namespaces": [
+        "lifecycle",
+        "project"
+      ],
+      "permissions": [
+        "lifecycle.restore",
+        "project.instruction.restore",
+        "project.instruction.read"
+      ],
+      "settings": [],
+      "tables": [
+        "store_identity",
+        "restore_request_scopes"
+      ],
+      "version": "0.0.0.dev1"
+    },
+    {
+      "api_prefixes": [
         "/api/v1/operations"
       ],
       "backup_class": "R1",
@@ -2945,7 +3259,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0009_instruction_scope",
+      "migration": "0010_work_execution",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -3357,6 +3671,46 @@
         "project.instruction.read"
       ],
       "result_model": "InstructionView"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "name": "job.read.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "JobView"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "name": "job.attention.read.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.read"
+      ],
+      "result_model": "AttentionList"
     }
   ],
   "surfaces": [

@@ -4,7 +4,10 @@
 import difflib
 import hashlib
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+if TYPE_CHECKING:
+    from journeon.jobs import ExecutionIdentity
 from uuid import uuid4
 
 from sqlalchemy import Engine, select
@@ -143,7 +146,14 @@ def validate_tree(documents: dict[str, str], required: list[str]) -> None:
 
 
 class ProjectInstructionService:
-    def __init__(self, engine: Engine, configuration: InstructionConfiguration):
+    def __init__(
+        self,
+        engine: Engine,
+        configuration: InstructionConfiguration,
+        *,
+        execution: "ExecutionIdentity | None" = None,
+    ):
+        self.execution = execution
         self.engine = engine
         self.configuration = configuration
 
@@ -538,6 +548,7 @@ class ProjectInstructionService:
                 line for value in target.values() for line in value.splitlines() if line.strip()
             ]
             view = CandidateView(
+                job_id=str(uuid4()) if automatic else None,
                 project_id=command.project_id,
                 candidate_id=candidate_id,
                 candidate_hash=content_hash,
@@ -570,17 +581,10 @@ class ProjectInstructionService:
                     },
                 )
             )
-        if automatic:
-            evidence = self.evaluate(actor, view)
-            self.accept(
-                actor,
-                InstructionAccept(
-                    **view.model_dump(include=set(CandidateReference.model_fields)),
-                    idempotency_key="automatic:" + candidate_id,
-                    review_ids=[],
-                    eval_ids=[evidence],
-                ),
-            )
+            if automatic:
+                from journeon.jobs import admit
+
+                admit(db, actor, view, self.configuration)
         return view
 
     def candidate(
@@ -690,7 +694,15 @@ class ProjectInstructionService:
     def accept(self, actor: AuthenticatedContext, command: InstructionAccept) -> InstructionReceipt:
         payload = command.model_dump(mode="json")
         with transaction(self.engine) as db:
+            from journeon.jobs import JobService
+            from journeon.models import Job
+
             require_project(db, actor, command.project_id, "accept")
+            job = db.scalar(select(Job).where(Job.candidate_id == command.candidate_id))
+            if job is not None:
+                if self.execution is None or self.execution.job_id != job.id:
+                    raise DomainError("PERMISSION_DENIED", "The admitted Job owns this candidate")
+                JobService(self.engine, self.configuration).check(db, self.execution)
             previous = retry(
                 db, actor, "project.instructions.accept.v1", command.idempotency_key, payload
             )
@@ -815,6 +827,12 @@ class ProjectInstructionService:
                 db, actor, InstructionAccept.model_validate(payload), self.configuration
             )
             operation = consent.operation_id
+        if self.execution is not None:
+            from journeon.jobs import JobService
+
+            job, _ = JobService(self.engine, self.configuration).check(db, self.execution)
+            job.operation_id = operation
+            job.effect = "UNKNOWN"
         binding.generation += 1
         binding.active_operation = operation
         db.add(
@@ -965,6 +983,14 @@ class ProjectInstructionService:
         recovery: str | None,
     ) -> None:
         require_project(db, actor, row.project_id, "read")
+        from journeon.jobs import JobService
+        from journeon.models import Job
+
+        job = db.scalar(select(Job).where(Job.operation_id == row.id))
+        if job is not None and recovery is None and row.status != "CANONICAL_COMMITTED":
+            if self.execution is None or self.execution.job_id != job.id:
+                raise DomainError("PERMISSION_DENIED", "The admitted Job owns this publication")
+            JobService(self.engine, self.configuration).check(db, self.execution)
         if recovery is None:
             self.binding(db, actor, row.project_id)
             self.root_identity(db, actor, row.target_root_id, row.project_id)
@@ -1043,7 +1069,14 @@ class ProjectInstructionService:
         import subprocess
 
         try:
-            return self._leased_publish(actor, operation, projection=projection, recovery=recovery)
+            result = self._leased_publish(
+                actor, operation, projection=projection, recovery=recovery
+            )
+            if recovery is not None:
+                from journeon.jobs import settle_recovery
+
+                settle_recovery(self.engine, operation)
+            return result
         except (OSError, ValueError, subprocess.SubprocessError, DomainError) as error:
             with transaction(self.engine) as db:
                 journal = db.get(
@@ -1691,3 +1724,80 @@ class ProjectInstructionService:
             raise DomainError(
                 "DEPENDENCY_UNAVAILABLE", "Projection publication requires reconciliation"
             ) from None
+
+    @staticmethod
+    def validate_restore_history(source: Any, selected: Any) -> list[tuple[Any, ...]]:
+        import json
+
+        rows = []
+        if len(set(selected.revisions)) != len(selected.revisions) or any(
+            revision < 1 for revision in selected.revisions
+        ):
+            raise DomainError(
+                "VALIDATION_FAILED", "Distinct positive history revisions are required"
+            )
+        for revision in selected.revisions:
+            row = source.execute(
+                (
+                    "SELECT project_id,revision,snapshot,tree_hash,author,reason FROM "
+                    "project_instruction_revisions WHERE project_id=? AND revision=?"
+                ),
+                (selected.project_id, revision),
+            ).fetchone()
+            if row is None:
+                raise DomainError("NOT_FOUND", "Selected instruction history is unavailable")
+            data = json.loads(row[2])
+            validate_tree(data["documents"], data["required_fragments"])
+            expected_refs = {
+                name: {
+                    "project_id": row[0],
+                    "revision": row[1],
+                    "path": name,
+                    "content_hash": hashlib.sha256(content.encode()).hexdigest(),
+                }
+                for name, content in data["documents"].items()
+            }
+            if (
+                set(data) != {"documents", "document_refs", "required_fragments"}
+                or data["document_refs"] != expected_refs
+                or tree_hash(data["documents"]) != row[3]
+            ):
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Instruction history hash requires repair"
+                )
+            rows.append(row)
+        return rows
+
+    @staticmethod
+    def restore_history(source: Any, target: Any, selected: Any) -> int:
+        restored = 0
+        rows = ProjectInstructionService.validate_restore_history(source, selected)
+        for row in rows:
+            existing = target.execute(
+                (
+                    "SELECT project_id,revision,snapshot,tree_hash,author,reason FROM "
+                    "project_instruction_revisions WHERE project_id=? AND revision=?"
+                ),
+                row[:2],
+            ).fetchone()
+            if existing is not None and existing != row:
+                raise DomainError("REVISION_CONFLICT", "Conflicting canonical history is preserved")
+            if existing is None:
+                binding = target.execute(
+                    "SELECT revision FROM project_instruction_bindings WHERE project_id=?",
+                    (selected.project_id,),
+                ).fetchone()
+                if binding is None or row[1] >= binding[0]:
+                    raise DomainError(
+                        "REVISION_CONFLICT",
+                        "Only missing accepted historical revisions can be restored",
+                    )
+                target.execute(
+                    (
+                        "INSERT INTO project_instruction_revisions (project_id,revision,sn"
+                        "apshot,tree_hash,author,reason) VALUES (?,?,?,?,?,?)"
+                    ),
+                    row,
+                )
+                restored += 1
+        return restored

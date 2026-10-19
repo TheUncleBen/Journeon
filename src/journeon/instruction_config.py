@@ -11,6 +11,8 @@ from typing import Literal, Self
 from pydantic import Field, model_validator
 
 from journeon.contracts import Contract, Identifier
+from journeon.job_contracts import JobConfiguration
+from journeon.restore_contracts import RestoreConfiguration
 
 
 class RootConfiguration(Contract):
@@ -42,6 +44,8 @@ class ReleaseTrustConfiguration(Contract):
 
 
 class InstructionConfiguration(Contract):
+    jobs: JobConfiguration | None = None
+    restore: RestoreConfiguration | None = None
     release_trust: ReleaseTrustConfiguration | None = None
     roots: list[RootConfiguration]
     protected_request_seconds: int = Field(gt=0, lt=2**31)

@@ -29,6 +29,7 @@ from journeon.models import (
 )
 from journeon.permissions import AuthenticatedContext, current_owner, require_grant
 from journeon.protected import official_session, policy_hash
+from journeon.restore_contracts import RestoreAuthorization, RestorePlan
 from journeon.sessions import digest, utc_seconds
 
 
@@ -45,6 +46,8 @@ class InstructionConfirmation:
         with transaction(self.engine) as db:
             require_compatible_schema(db)
             principal = current_owner(db, actor)
+            if isinstance(effect, RestorePlan):
+                require_grant(db, actor, "lifecycle.restore")
             if isinstance(effect, (InstructionChangeConsent, PublicationRecovery)):
                 for action in ("read", "accept"):
                     require_grant(
@@ -119,6 +122,19 @@ class InstructionConfirmation:
             )
             db.add(row)
             db.flush()
+            if isinstance(effect, RestorePlan):
+                from journeon.models import RestoreRequestScope
+
+                for selected in effect.selection:
+                    for capability in ("read", "restore"):
+                        require_grant(
+                            db,
+                            actor,
+                            "project.instruction." + capability,
+                            resource_kind="project",
+                            resource_id=selected.project_id,
+                        )
+                    db.add(RestoreRequestScope(request_id=row.id, project_id=selected.project_id))
             if isinstance(effect, (InstructionChangeConsent, PublicationRecovery)):
                 db.add(
                     InstructionRequestScope(
@@ -142,6 +158,26 @@ class InstructionConfirmation:
             or row.command == "passkey.label.v1"
         ):
             raise DomainError("NOT_FOUND", "Protected request is unavailable")
+        if row.command == "lifecycle.restore.authorize.v1":
+            require_grant(db, actor, "lifecycle.restore")
+            from journeon.models import RestoreRequestScope
+
+            scopes = list(
+                db.scalars(
+                    select(RestoreRequestScope).where(RestoreRequestScope.request_id == row.id)
+                )
+            )
+            if not scopes:
+                raise DomainError("PERMISSION_DENIED", "Restore scope evidence is unavailable")
+            for restore_scope in scopes:
+                for capability in ("read", "restore"):
+                    require_grant(
+                        db,
+                        actor,
+                        "project.instruction." + capability,
+                        resource_kind="project",
+                        resource_id=restore_scope.project_id,
+                    )
         if row.command in {"project.instructions.accept.v1", "project.instructions.recover.v1"}:
             scope = db.get(InstructionRequestScope, row.id)
             if scope is None:
@@ -233,13 +269,20 @@ class InstructionConfirmation:
 
     def confirm(
         self, actor: AuthenticatedContext, command: ExactConfirmation
-    ) -> InstructionReceipt:
+    ) -> InstructionReceipt | RestoreAuthorization:
         # External observations happen before the serialized effect transaction.
         from journeon.instruction_admin import InstructionAdministration
 
         admin = InstructionAdministration(self.engine, self.configuration)
         with transaction(self.engine) as db:
             row = self._request(db, actor, command.request_id)
+            if row.command == "lifecycle.restore.authorize.v1" and row.state == "APPROVED":
+                self._bound(db, actor, row)
+                if command.request_hash != row.payload_hash:
+                    raise DomainError("PERMISSION_DENIED", "Exact restore consent is required")
+                from journeon.restore import authorization
+
+                return authorization(row)
             if row.state == "COMMITTED":
                 from journeon.instruction_operations import authorized
 
@@ -266,6 +309,40 @@ class InstructionConfirmation:
                     return decode(receipt)
                 return authorized(db, actor, receipt)
             effect = self._bound(db, actor, row)
+        if isinstance(effect, RestorePlan):
+            from journeon.restore import authorization, preview
+            from journeon.restore_contracts import RestorePreview
+
+            current = preview(
+                self.engine,
+                self.configuration,
+                actor,
+                RestorePreview.model_validate(
+                    effect.model_dump(include=set(RestorePreview.model_fields))
+                ),
+            )
+            if current != effect:
+                raise DomainError("REVISION_CONFLICT", "Restore plan changed")
+            with transaction(self.engine) as db:
+                row = self._request(db, actor, command.request_id)
+                self._bound(db, actor, row)
+                now = utc_seconds()
+                if (
+                    command.request_hash != row.payload_hash
+                    or row.nonce_hash is None
+                    or row.nonce_deadline is None
+                    or now >= row.nonce_deadline
+                    or not secrets.compare_digest(row.nonce_hash, digest(command.nonce))
+                ):
+                    raise DomainError(
+                        "PERMISSION_DENIED", "Current exact preview consent is required"
+                    )
+                row.state = "APPROVED"
+                row.approved_at = now
+                row.approval_deadline = min(now + 300, row.deadline)
+                row.nonce_hash = None
+                row.nonce_deadline = None
+                return authorization(row)
         if isinstance(effect, (InstructionChangeConsent, PublicationRecovery)):
             with transaction(self.engine) as db:
                 row = self._request(db, actor, command.request_id)

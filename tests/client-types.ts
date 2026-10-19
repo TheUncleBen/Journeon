@@ -51,11 +51,11 @@ void fakeSuccess;
 const fakeBot: TaskCreate = {...task, responsibility: "BOT"};
 void fakeBot;
 
-import type { InstructionChangeConsent, InstructionReceipt, ProtectedPrepare, HistoryRead } from "../generated/client.js";
+import type { InstructionChangeConsent, InstructionReceipt, ProtectedEffectResult, ProtectedPrepare, HistoryRead } from "../generated/client.js";
 const consent: InstructionChangeConsent = {kind: "project.instructions.accept.v1", idempotency_key: "instruction-accept", project_id: "project", candidate_id: "candidate", candidate_hash: "a".repeat(64), expected_binding_revision: 1, expected_policy_revision: 1, review_ids: [], eval_ids: []};
 const prepared: ProtectedPrepare = {effect: consent};
 void client.prepareInstructionEffect(prepared, "csrf");
-const confirmed: Promise<InstructionReceipt> = client.confirmInstructionEffect({request_id: "request", request_hash: "a".repeat(64), nonce: "n".repeat(43)}, "csrf");
+const confirmed: Promise<ProtectedEffectResult> = client.confirmInstructionEffect({request_id: "request", request_hash: "a".repeat(64), nonce: "n".repeat(43)}, "csrf");
 const history: HistoryRead = {project_id: "project", revision: 1};
 void client.readInstructionHistory("project", history, "csrf");
 void confirmed;
@@ -74,3 +74,18 @@ void client.inspectInstructionRecovery("project", {project_id: "project"}, "csrf
 // @ts-expect-error Recovery must explicitly select the exact reconciliation effect.
 const missingRecoveryChoice: PublicationRecovery = {...recoveryTarget, kind: "project.instructions.recover.v1", idempotency_key: "recovery"};
 void missingRecoveryChoice;
+
+// @ts-expect-error Offline restore authorization is not a completed instruction receipt.
+const confirmationReceipt: Promise<InstructionReceipt> = confirmed;
+void confirmationReceipt;
+
+import type { JobCancel, JobView, ReplayPage, RestorePlan, RestorePreview } from "../generated/client.js";
+const cancellation: JobCancel = {expected_revision: 1};
+const cancelledJob: Promise<JobView> = client.cancelJob("job", cancellation, "csrf");
+const replay: Promise<ReplayPage> = client.replayEvents({limit: 10}, "csrf");
+const restorePreview: RestorePreview = {idempotency_key: "restore", snapshot: "snapshot", destination: "target", data_class: "PROJECT_INSTRUCTION_HISTORY", selection: [{project_id: "project", revisions: [1]}]};
+const restorePlan: Promise<RestorePlan> = client.previewRestore(restorePreview, "csrf");
+void [cancelledJob, replay, restorePlan];
+// @ts-expect-error Job cancellation cannot supply worker identity or approval.
+const forgedCancellation: JobCancel = {...cancellation, claim_owner: "caller"};
+void forgedCancellation;

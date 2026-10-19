@@ -209,6 +209,7 @@ def test_fixture_passkey_protected_routes_remain_unavailable(database):
         "instruction.release.install.v1",
         "project.instructions.accept.v1",
         "project.instructions.recover.v1",
+        "lifecycle.restore.authorize.v1",
     }
 
 

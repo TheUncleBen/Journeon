@@ -452,4 +452,7 @@ def create_app(
     from journeon.instruction_api import bind_instruction_api
 
     bind_instruction_api(app, engine, instructions)
+    from journeon.job_api import bind_job_api
+
+    bind_job_api(app, engine, instructions)
     return app

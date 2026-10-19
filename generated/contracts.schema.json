@@ -1,4 +1,54 @@
 {
+  "AttentionList": {
+    "$defs": {
+      "AttentionView": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "OPEN",
+              "DISMISSED",
+              "RESOLVED"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "occurrences": {
+            "title": "Occurrences",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attention_id",
+          "job_id",
+          "reason",
+          "occurrences",
+          "disposition"
+        ],
+        "title": "AttentionView",
+        "type": "object"
+      }
+    },
+    "items": {
+      "$ref": "#/$defs/AttentionView"
+    },
+    "title": "AttentionList",
+    "type": "array"
+  },
   "BindingImpact": {
     "additionalProperties": false,
     "properties": {
@@ -1558,6 +1608,19 @@
         "title": "Growth Bytes",
         "type": "integer"
       },
+      "job_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Job Id"
+      },
       "project_id": {
         "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
         "title": "Project Id",
@@ -2563,6 +2626,108 @@
     "title": "InstructionReview",
     "type": "object"
   },
+  "JobCancel": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_revision": {
+        "exclusiveMinimum": 0,
+        "title": "Expected Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "expected_revision"
+    ],
+    "title": "JobCancel",
+    "type": "object"
+  },
+  "JobView": {
+    "additionalProperties": false,
+    "properties": {
+      "admission_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Admission Id",
+        "type": "string"
+      },
+      "candidate_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Candidate Id",
+        "type": "string"
+      },
+      "effect": {
+        "enum": [
+          "NONE",
+          "UNKNOWN",
+          "COMMITTED",
+          "ABANDONED"
+        ],
+        "title": "Effect",
+        "type": "string"
+      },
+      "job_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Job Id",
+        "type": "string"
+      },
+      "operation_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Operation Id"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "reason": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Reason"
+      },
+      "revision": {
+        "title": "Revision",
+        "type": "integer"
+      },
+      "state": {
+        "enum": [
+          "QUEUED",
+          "RUNNING",
+          "SUCCEEDED",
+          "FAILED",
+          "CANCELLED",
+          "RETRY_WAIT"
+        ],
+        "title": "State",
+        "type": "string"
+      }
+    },
+    "required": [
+      "job_id",
+      "project_id",
+      "candidate_id",
+      "revision",
+      "state",
+      "effect",
+      "reason",
+      "operation_id",
+      "admission_id"
+    ],
+    "title": "JobView",
+    "type": "object"
+  },
   "LegacyPlan": {
     "$defs": {
       "LegacyMapping": {
@@ -2770,6 +2935,31 @@
           "expected_revision"
         ],
         "title": "CandidateRegister",
+        "type": "object"
+      },
+      "HistorySelection": {
+        "additionalProperties": false,
+        "properties": {
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revisions": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Revisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "revisions"
+        ],
+        "title": "HistorySelection",
         "type": "object"
       },
       "InstructionChangeConsent": {
@@ -3092,6 +3282,108 @@
         "title": "ReleaseInstall",
         "type": "object"
       },
+      "RestorePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "current_versions_hash": {
+            "title": "Current Versions Hash",
+            "type": "string"
+          },
+          "data_class": {
+            "const": "PROJECT_INSTRUCTION_HISTORY",
+            "title": "Data Class",
+            "type": "string"
+          },
+          "dependencies_hash": {
+            "title": "Dependencies Hash",
+            "type": "string"
+          },
+          "destination": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "destination_path": {
+            "title": "Destination Path",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "kind": {
+            "const": "lifecycle.restore.authorize.v1",
+            "default": "lifecycle.restore.authorize.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "schema_revision": {
+            "title": "Schema Revision",
+            "type": "string"
+          },
+          "security_effect": {
+            "const": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+            "default": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+            "title": "Security Effect",
+            "type": "string"
+          },
+          "selection": {
+            "items": {
+              "$ref": "#/$defs/HistorySelection"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Selection",
+            "type": "array"
+          },
+          "snapshot": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Snapshot",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "source_path": {
+            "title": "Source Path",
+            "type": "string"
+          },
+          "store_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "snapshot",
+          "destination",
+          "data_class",
+          "selection",
+          "snapshot_hash",
+          "store_id",
+          "incarnation",
+          "current_versions_hash",
+          "dependencies_hash",
+          "platform",
+          "schema_revision",
+          "source_path",
+          "destination_path"
+        ],
+        "title": "RestorePlan",
+        "type": "object"
+      },
       "RootAdmit": {
         "additionalProperties": false,
         "properties": {
@@ -3182,6 +3474,7 @@
           "mapping": {
             "instruction.candidate.register.v1": "#/$defs/CandidateRegister",
             "instruction.release.install.v1": "#/$defs/ReleaseInstall",
+            "lifecycle.restore.authorize.v1": "#/$defs/RestorePlan",
             "project.instructions.accept.v1": "#/$defs/InstructionChangeConsent",
             "project.instructions.policy.configure.v1": "#/$defs/PolicyConfigure",
             "project.instructions.recover.v1": "#/$defs/PublicationRecovery",
@@ -3211,6 +3504,9 @@
           },
           {
             "$ref": "#/$defs/PublicationRecovery"
+          },
+          {
+            "$ref": "#/$defs/RestorePlan"
           }
         ],
         "title": "Effect"
@@ -4736,6 +5032,146 @@
     "title": "ProjectionView",
     "type": "object"
   },
+  "ProtectedEffectResult": {
+    "$defs": {
+      "InstructionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committed At"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "PROJECT",
+              "DEVELOPMENT_CANDIDATE",
+              "VERIFIED_RELEASE",
+              "ROOT"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "CANONICAL_COMMITTED",
+              "PENDING",
+              "RECOVERY_NEEDED",
+              "CONFLICT",
+              "ABANDONED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "enum": [
+              "instruction_root",
+              "project_instructions",
+              "instruction_install"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "target_kind",
+          "target_id",
+          "revision",
+          "status",
+          "committed_at",
+          "content_hash",
+          "provenance"
+        ],
+        "title": "InstructionReceipt",
+        "type": "object"
+      },
+      "RestoreAuthorization": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "lifecycle.restore.authorize.v1",
+            "default": "lifecycle.restore.authorize.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "plan_hash": {
+            "title": "Plan Hash",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "AUTHORIZED_OFFLINE_ONLY",
+            "default": "AUTHORIZED_OFFLINE_ONLY",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "request_id",
+          "plan_hash"
+        ],
+        "title": "RestoreAuthorization",
+        "type": "object"
+      }
+    },
+    "anyOf": [
+      {
+        "$ref": "#/$defs/InstructionReceipt"
+      },
+      {
+        "$ref": "#/$defs/RestoreAuthorization"
+      }
+    ],
+    "title": "ProtectedEffectResult"
+  },
   "ProtectedIdentity": {
     "additionalProperties": false,
     "properties": {
@@ -4784,6 +5220,31 @@
           "expected_revision"
         ],
         "title": "CandidateRegister",
+        "type": "object"
+      },
+      "HistorySelection": {
+        "additionalProperties": false,
+        "properties": {
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revisions": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Revisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "revisions"
+        ],
+        "title": "HistorySelection",
         "type": "object"
       },
       "InstructionChangeConsent": {
@@ -5106,6 +5567,108 @@
         "title": "ReleaseInstall",
         "type": "object"
       },
+      "RestorePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "current_versions_hash": {
+            "title": "Current Versions Hash",
+            "type": "string"
+          },
+          "data_class": {
+            "const": "PROJECT_INSTRUCTION_HISTORY",
+            "title": "Data Class",
+            "type": "string"
+          },
+          "dependencies_hash": {
+            "title": "Dependencies Hash",
+            "type": "string"
+          },
+          "destination": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "destination_path": {
+            "title": "Destination Path",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "kind": {
+            "const": "lifecycle.restore.authorize.v1",
+            "default": "lifecycle.restore.authorize.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "schema_revision": {
+            "title": "Schema Revision",
+            "type": "string"
+          },
+          "security_effect": {
+            "const": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+            "default": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+            "title": "Security Effect",
+            "type": "string"
+          },
+          "selection": {
+            "items": {
+              "$ref": "#/$defs/HistorySelection"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Selection",
+            "type": "array"
+          },
+          "snapshot": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Snapshot",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "source_path": {
+            "title": "Source Path",
+            "type": "string"
+          },
+          "store_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "snapshot",
+          "destination",
+          "data_class",
+          "selection",
+          "snapshot_hash",
+          "store_id",
+          "incarnation",
+          "current_versions_hash",
+          "dependencies_hash",
+          "platform",
+          "schema_revision",
+          "source_path",
+          "destination_path"
+        ],
+        "title": "RestorePlan",
+        "type": "object"
+      },
       "RootAdmit": {
         "additionalProperties": false,
         "properties": {
@@ -5192,6 +5755,7 @@
           "mapping": {
             "instruction.candidate.register.v1": "#/$defs/CandidateRegister",
             "instruction.release.install.v1": "#/$defs/ReleaseInstall",
+            "lifecycle.restore.authorize.v1": "#/$defs/RestorePlan",
             "project.instructions.accept.v1": "#/$defs/InstructionChangeConsent",
             "project.instructions.policy.configure.v1": "#/$defs/PolicyConfigure",
             "project.instructions.recover.v1": "#/$defs/PublicationRecovery",
@@ -5221,6 +5785,9 @@
           },
           {
             "$ref": "#/$defs/PublicationRecovery"
+          },
+          {
+            "$ref": "#/$defs/RestorePlan"
           }
         ],
         "title": "Effect"
@@ -5366,6 +5933,350 @@
       "expected_manifest_digest"
     ],
     "title": "ReleaseVerify",
+    "type": "object"
+  },
+  "ReplayPage": {
+    "$defs": {
+      "ReplayCursor": {
+        "additionalProperties": false,
+        "properties": {
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "incarnation",
+          "sequence"
+        ],
+        "title": "ReplayCursor",
+        "type": "object"
+      },
+      "ReplayEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_revision": {
+            "title": "Target Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "target_id",
+          "target_revision",
+          "operation_id"
+        ],
+        "title": "ReplayEvent",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "cursor": {
+        "$ref": "#/$defs/ReplayCursor"
+      },
+      "events": {
+        "items": {
+          "$ref": "#/$defs/ReplayEvent"
+        },
+        "title": "Events",
+        "type": "array"
+      },
+      "status": {
+        "enum": [
+          "AVAILABLE",
+          "CANONICAL_REFETCH_REQUIRED"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "truncated": {
+        "title": "Truncated",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "status",
+      "cursor",
+      "events",
+      "truncated"
+    ],
+    "title": "ReplayPage",
+    "type": "object"
+  },
+  "ReplayQuery": {
+    "$defs": {
+      "ReplayCursor": {
+        "additionalProperties": false,
+        "properties": {
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "incarnation",
+          "sequence"
+        ],
+        "title": "ReplayCursor",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "cursor": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ReplayCursor"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "limit": {
+        "exclusiveMinimum": 0,
+        "maximum": 100,
+        "title": "Limit",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "limit"
+    ],
+    "title": "ReplayQuery",
+    "type": "object"
+  },
+  "RestorePlan": {
+    "$defs": {
+      "HistorySelection": {
+        "additionalProperties": false,
+        "properties": {
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revisions": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Revisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "revisions"
+        ],
+        "title": "HistorySelection",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "current_versions_hash": {
+        "title": "Current Versions Hash",
+        "type": "string"
+      },
+      "data_class": {
+        "const": "PROJECT_INSTRUCTION_HISTORY",
+        "title": "Data Class",
+        "type": "string"
+      },
+      "dependencies_hash": {
+        "title": "Dependencies Hash",
+        "type": "string"
+      },
+      "destination": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Destination",
+        "type": "string"
+      },
+      "destination_path": {
+        "title": "Destination Path",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Incarnation",
+        "type": "string"
+      },
+      "kind": {
+        "const": "lifecycle.restore.authorize.v1",
+        "default": "lifecycle.restore.authorize.v1",
+        "title": "Kind",
+        "type": "string"
+      },
+      "platform": {
+        "title": "Platform",
+        "type": "string"
+      },
+      "schema_revision": {
+        "title": "Schema Revision",
+        "type": "string"
+      },
+      "security_effect": {
+        "const": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+        "default": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+        "title": "Security Effect",
+        "type": "string"
+      },
+      "selection": {
+        "items": {
+          "$ref": "#/$defs/HistorySelection"
+        },
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Selection",
+        "type": "array"
+      },
+      "snapshot": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Snapshot",
+        "type": "string"
+      },
+      "snapshot_hash": {
+        "title": "Snapshot Hash",
+        "type": "string"
+      },
+      "source_path": {
+        "title": "Source Path",
+        "type": "string"
+      },
+      "store_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "snapshot",
+      "destination",
+      "data_class",
+      "selection",
+      "snapshot_hash",
+      "store_id",
+      "incarnation",
+      "current_versions_hash",
+      "dependencies_hash",
+      "platform",
+      "schema_revision",
+      "source_path",
+      "destination_path"
+    ],
+    "title": "RestorePlan",
+    "type": "object"
+  },
+  "RestorePreview": {
+    "$defs": {
+      "HistorySelection": {
+        "additionalProperties": false,
+        "properties": {
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revisions": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Revisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "revisions"
+        ],
+        "title": "HistorySelection",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "data_class": {
+        "const": "PROJECT_INSTRUCTION_HISTORY",
+        "title": "Data Class",
+        "type": "string"
+      },
+      "destination": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Destination",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "selection": {
+        "items": {
+          "$ref": "#/$defs/HistorySelection"
+        },
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Selection",
+        "type": "array"
+      },
+      "snapshot": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Snapshot",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "snapshot",
+      "destination",
+      "data_class",
+      "selection"
+    ],
+    "title": "RestorePreview",
     "type": "object"
   },
   "RootInspect": {

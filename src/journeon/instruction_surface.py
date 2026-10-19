@@ -66,7 +66,8 @@ def bind_surface(app: FastAPI, engine: Engine, config: InstructionConfiguration 
     def styles() -> Response:
         return Response(
             "body{font:1rem/1.6 system-ui;margin:1rem;color:#171717;background:#fff}"
-            "main{max-width:55rem;margin:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}"
+            "main{max-width:55rem;margin:auto;overflow-wrap:anywhere}"
+            "pre{white-space:pre-wrap;overflow-wrap:anywhere}"
             "button,a{font:inherit}button{padding:.7rem;margin:.5rem;border:2px solid #333}"
             ":focus-visible{outline:3px solid #005fcc;outline-offset:3px}"
             "@media(prefers-color-scheme:dark){body{color:#eee;background:#171717}"
@@ -89,7 +90,8 @@ def bind_surface(app: FastAPI, engine: Engine, config: InstructionConfiguration 
         return page(
             "Authenticate for instruction administration",
             "<p>Sign in before preparing an instruction request. Refreshing authentication "
-            "invalidates requests from the previous session; prepare a new request afterward.</p>"
+            "invalidates requests from the previous session; prepare a new req"
+            "uest afterward.</p>"
             '<button id="login" type="button">Sign in with a passkey</button>'
             '<button id="stepup" type="button">Refresh authentication</button>',
         )
@@ -128,6 +130,12 @@ def bind_surface(app: FastAPI, engine: Engine, config: InstructionConfiguration 
                 '<a href="/instructions/authenticate">Authenticate and prepare a new request</a>',
             )
         descriptions = {
+            "lifecycle.restore.authorize.v1": (
+                "Authorize the exact offline recovery of missing instruction history below. "
+                "The stopped-store command stages a new database and preserves current security "
+                "state and newer unselected work. This confirmation does not "
+                "restore or activate it."
+            ),
             "instruction.candidate.register.v1": (
                 "Register local instruction assets with DEVELOPMENT_CANDIDATE "
                 "provenance. This does not verify an official release."
@@ -164,11 +172,13 @@ def bind_surface(app: FastAPI, engine: Engine, config: InstructionConfiguration 
         )
         return page(
             "Confirm instruction operation",
-            "<p>Review the complete stored operation below. Confirm applies this exact operation; "
+            "<p>Review the complete stored operation below. Confirm applies th"
+            "is exact operation; "
             "signing in alone does not approve it. Cancel does not undo an operation "
             "already applied.</p>"
             f"<p>{description}</p><h2>Stored operation</h2><pre>{operands}</pre>{fields}"
-            '<p id="expiry"></p><button id="confirm" type="button">Confirm this operation</button>'
+            '<p id="expiry"></p><button id="confirm" type="button">Confirm thi'
+            "s operation</button>"
             '<button id="cancel" type="button">Cancel request</button>'
             "<p>After expiry or refreshed authentication, prepare a new request. "
             "An interrupted publication requires its exact recovery operation.</p>",

@@ -84,6 +84,9 @@ def application(config: RuntimeConfig) -> FastAPI:
         tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if not set(Base.metadata.tables) <= tables:
             raise ValueError("Required database tables are unavailable")
+        from journeon.restore import startup_admission
+
+        startup_admission(path, db)
         instruction_state = {
             "configuration": "EXPLICIT" if config.instructions is not None else "UNCONFIGURED",
             "installation": "REGISTERED"
@@ -112,12 +115,40 @@ def application(config: RuntimeConfig) -> FastAPI:
         engine.dispose()
         raise
 
+    import threading
+
+    from journeon.jobs import JobService
+
+    stop = threading.Event()
+    worker = None
+    if config.instructions is not None and config.instructions.jobs is not None:
+        worker = threading.Thread(
+            target=JobService(engine, config.instructions).run,
+            args=(stop,),
+            name="instruction-jobs",
+        )
+
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        from journeon.maintenance import acquire
+
+        maintenance = acquire(path)
+        started = False
         try:
+            with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as db:
+                startup_admission(path, db)
+            if worker is not None:
+                worker.start()
+                started = True
             yield
         finally:
+            stop.set()
+            if worker is not None and started:
+                import asyncio
+
+                await asyncio.to_thread(worker.join)
             engine.dispose()
+            os.close(maintenance)
             print(json.dumps({"status": "STOPPED"}), flush=True)
 
     app.state.instruction_dependencies = instruction_state

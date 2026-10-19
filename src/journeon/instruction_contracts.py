@@ -3,10 +3,11 @@
 
 from typing import Annotated, Any, Literal, cast
 
-from pydantic import Field, StringConstraints, TypeAdapter, model_validator
+from pydantic import Field, RootModel, StringConstraints, TypeAdapter, model_validator
 
 from journeon.contracts import Contract, Identifier, Name
 from journeon.contracts import InstructionReceipt as InstructionReceipt
+from journeon.restore_contracts import RestoreAuthorization, RestorePlan
 
 Hash = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 Revision = Annotated[int, Field(ge=0)]
@@ -126,7 +127,8 @@ ProtectedEffect = Annotated[
     | CandidateRegister
     | ReleaseInstall
     | InstructionChangeConsent
-    | PublicationRecovery,
+    | PublicationRecovery
+    | RestorePlan,
     Field(discriminator="kind"),
 ]
 EFFECT_ADAPTER: TypeAdapter[ProtectedEffect] = TypeAdapter(cast(Any, ProtectedEffect))
@@ -251,6 +253,7 @@ class InstructionView(Contract):
 
 
 class CandidateView(CandidateReference):
+    job_id: Identifier | None = None
     author: Identifier
     category: str
     diff: str
@@ -324,3 +327,7 @@ class HistoryView(Contract):
     author: Identifier
     reason: str
     required_fragments: list[str]
+
+
+class ProtectedEffectResult(RootModel[InstructionReceipt | RestoreAuthorization]):
+    pass

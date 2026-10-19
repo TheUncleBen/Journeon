@@ -26,6 +26,7 @@ from alembic.script import ScriptDirectory
 from alembic.util.exc import CommandError
 from sqlalchemy.exc import SQLAlchemyError
 
+from journeon.contracts import DomainError
 from journeon.database import SCHEMA_REVISION, create_database
 from journeon.migrate import configuration
 from journeon.models import Base
@@ -114,7 +115,7 @@ def doctor(path: Path) -> dict[str, str]:
 
 
 def validate_snapshot(directory: Path) -> dict[str, Any]:
-    """Validate database bytes and metadata; this is not signature or restore approval."""
+    "Validate database bytes and metadata; this is not signature or restore approval."
     path = directory / "database.sqlite"
     _regular(path)
     _regular(directory / "manifest.json")
@@ -147,7 +148,7 @@ def validate_snapshot(directory: Path) -> dict[str, Any]:
 
 
 def snapshot_database(path: Path, destination: Path) -> dict[str, Any]:
-    """Create a new private coherent database snapshot; leave failed outputs unapproved."""
+    "Create a new private coherent database snapshot; leave failed outputs unapproved."
     if not destination.is_absolute():
         raise ValueError("An absolute new snapshot directory is required")
     with closing(_connect(path)) as source:
@@ -191,7 +192,7 @@ def snapshot_database(path: Path, destination: Path) -> dict[str, Any]:
 
 
 def migrate_database(path: Path, snapshot: Path) -> dict[str, str]:
-    """Snapshot and migrate an existing supported database; never auto-restore on failure."""
+    "Snapshot and migrate an existing supported database; never auto-restore on failure."
     config = configuration()
     supported = {
         revision.revision for revision in ScriptDirectory.from_config(config).walk_revisions()
@@ -227,14 +228,37 @@ def migrate_database(path: Path, snapshot: Path) -> dict[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("doctor", "snapshot", "validate", "migrate"))
+    parser.add_argument(
+        "operation", choices=("doctor", "snapshot", "validate", "migrate", "restore")
+    )
     parser.add_argument("path", type=Path)
     parser.add_argument("destination", type=Path, nargs="?")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--authorization")
+    parser.add_argument("--plan", type=Path)
+    parser.add_argument("--instruction-config", type=Path)
     args = parser.parse_args()
     try:
         result: dict[str, Any]
-        if args.operation == "doctor":
+        if args.operation == "restore":
+            if not args.authorization or args.plan is None or args.instruction_config is None:
+                raise ValueError("Exact restore plan, authorization and configuration are required")
+            from journeon.instruction_config import InstructionConfiguration
+            from journeon.restore import restore
+            from journeon.restore_contracts import RestorePlan
+
+            config = InstructionConfiguration.model_validate_json(
+                args.instruction_config.read_bytes()
+            )
+            plan = RestorePlan.model_validate_json(args.plan.read_bytes())
+            if str(args.path) != plan.source_path or str(args.destination) != plan.destination_path:
+                raise ValueError("Restore command operands differ from the authorized plan")
+            engine = create_database(args.path)
+            try:
+                result = restore(engine, config, args.authorization, plan)
+            finally:
+                engine.dispose()
+        elif args.operation == "doctor":
             result = doctor(args.path)
         elif args.operation == "validate":
             result = validate_snapshot(args.path)
@@ -244,7 +268,7 @@ def main() -> int:
             result = snapshot_database(args.path, args.destination)
         else:
             result = migrate_database(args.path, args.destination)
-    except (OSError, ValueError, sqlite3.Error, SQLAlchemyError, CommandError):
+    except (OSError, ValueError, sqlite3.Error, SQLAlchemyError, CommandError, DomainError):
         result = {
             "status": "FAIL",
             "detail": "Operation failed; preserve existing state and any partial snapshot",
@@ -254,7 +278,7 @@ def main() -> int:
         if args.json
         else "\n".join(f"{k}: {v}" for k, v in result.items())
     )
-    return 0 if result.get("status", "PASS") in {"PASS", "INFO"} else 1
+    return 0 if result.get("status", "PASS") in {"PASS", "INFO", "RESTORED_INACTIVE"} else 1
 
 
 if __name__ == "__main__":

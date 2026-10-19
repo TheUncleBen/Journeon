@@ -11,8 +11,9 @@ from sqlalchemy import URL, Connection, Engine, create_engine, event, text
 from sqlalchemy.orm import Session
 
 from journeon.contracts import DomainError
+from journeon.maintenance import RestoreWriteIdentity
 
-SCHEMA_REVISION = "0009_instruction_scope"
+SCHEMA_REVISION = "0010_work_execution"
 
 
 def require_compatible_schema(session: Session) -> None:
@@ -22,7 +23,12 @@ def require_compatible_schema(session: Session) -> None:
         raise DomainError("DEPENDENCY_UNAVAILABLE", "The operation schema is incompatible")
 
 
-def create_database(path: Path, *, busy_timeout_ms: int = 5000) -> Engine:
+def create_database(
+    path: Path,
+    *,
+    busy_timeout_ms: int = 5000,
+    restore_write: RestoreWriteIdentity | None = None,
+) -> Engine:
     if not path.is_absolute() or path.name in {":memory:", ""}:
         raise ValueError("Use an absolute path to a local SQLite database")
     if not 1 <= busy_timeout_ms <= 60000:
@@ -35,18 +41,44 @@ def create_database(path: Path, *, busy_timeout_ms: int = 5000) -> Engine:
 
     @event.listens_for(engine, "connect")
     def configure(connection: sqlite3.Connection, _record: Any) -> None:
-        connection.isolation_level = None
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute(f"PRAGMA busy_timeout = {busy_timeout_ms}")
-        mode = connection.execute("PRAGMA journal_mode = WAL").fetchone()
-        if not mode or mode[0].lower() != "wal":
-            raise RuntimeError("SQLite WAL is required")
-        connection.execute("PRAGMA synchronous = FULL")
+        from journeon.maintenance import acquire
+
+        if Path(str(path) + ".successor.json").exists():
+            raise RuntimeError("The store has a restored successor")
+        descriptor = acquire(path)
+        try:
+            if connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='store_identity'"
+            ).fetchone():
+                from journeon.restore import startup_admission
+
+                startup_admission(path, connection, staging=restore_write)
+            connection.isolation_level = None
+            connection.execute("PRAGMA foreign_keys = ON")
+            connection.execute(f"PRAGMA busy_timeout = {busy_timeout_ms}")
+            mode = connection.execute("PRAGMA journal_mode = WAL").fetchone()
+            if not mode or mode[0].lower() != "wal":
+                raise RuntimeError("SQLite WAL is required")
+            connection.execute("PRAGMA synchronous = FULL")
+        except BaseException:
+            import os
+
+            os.close(descriptor)
+            raise
+        _record.info["maintenance_descriptor"] = descriptor
 
     @event.listens_for(engine, "begin")
     def begin(connection: Any) -> None:
         # Serialize current authorization with the accepted mutation/receipt.
         connection.exec_driver_sql("BEGIN IMMEDIATE")
+
+    @event.listens_for(engine, "close")
+    def unlock(_connection: Any, record: Any) -> None:
+        import os
+
+        descriptor = record.info.pop("maintenance_descriptor", None)
+        if descriptor is not None:
+            os.close(descriptor)
 
     return engine
 

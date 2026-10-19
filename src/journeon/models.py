@@ -130,7 +130,9 @@ class Receipt(Base):
             "((target_kind = 'project_instructions' AND project_id IS NOT NULL "
             "AND project_id = target_id) OR "
             "(target_kind IN ('instruction_root','instruction_install') AND pr"
-            "oject_id IS NULL)))",
+            "oject_id IS NULL))) OR (owner = 'jobs' AND target_kind = 'job' "
+            "AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND target_ki"
+            "nd = 'store' AND project_id IS NULL)",
             name="receipt_target",
         ),
         Index(
@@ -176,7 +178,9 @@ class OutboxEvent(Base):
             "((target_kind = 'project_instructions' AND project_id IS NOT NULL "
             "AND project_id = target_id) OR "
             "(target_kind IN ('instruction_root','instruction_install') AND pr"
-            "oject_id IS NULL)))",
+            "oject_id IS NULL))) OR (owner = 'jobs' AND target_kind = 'job' "
+            "AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND target_ki"
+            "nd = 'store' AND project_id IS NULL)",
             name="event_target",
         ),
         {"sqlite_autoincrement": True},
@@ -337,7 +341,10 @@ class ProtectedRequest(Base):
             unique=True,
         ),
         CheckConstraint(
-            "state IN ('PENDING', 'APPROVED', 'COMMITTED', 'CANCELLED', 'EXPIRED', 'INVALIDATED')",
+            (
+                "state IN ('PENDING', 'APPROVED', 'COMMITTED', 'CANCELLED', 'EXPIR"
+                "ED', 'INVALIDATED')"
+            ),
             name="protected_state",
         ),
         CheckConstraint("deadline > issued_at AND issued_at >= 0", name="protected_deadline"),
@@ -345,7 +352,8 @@ class ProtectedRequest(Base):
             "command IN ('passkey.label.v1','project.root.admit.v1','project.r"
             "oot.revoke.v1','project.instructions.policy.configure.v1','instru"
             "ction.candidate.register.v1','instruction.release.install.v1','pr"
-            "oject.instructions.accept.v1', 'project.instructions.recover.v1')",
+            "oject.instructions.accept.v1', 'project.instructions.recover.v1',"
+            " 'lifecycle.restore.authorize.v1')",
             name="protected_command",
         ),
     )
@@ -600,7 +608,10 @@ class InstructionPublication(Base):
             "principal_id", "project_id", "idempotency_key", name="publication_identity"
         ),
         CheckConstraint(
-            "status IN ('PENDING','RECOVERY_NEEDED','CONFLICT','CANONICAL_COMMITTED','ABANDONED')",
+            (
+                "status IN ('PENDING','RECOVERY_NEEDED','CONFLICT','CANONICAL_COMM"
+                "ITTED','ABANDONED')"
+            ),
             name="publication_status",
         ),
         CheckConstraint("projection IN (0, 1)", name="publication_projection_boolean"),
@@ -656,3 +667,79 @@ class InstructionRequestScope(Base):
     publication_id: Mapped[str | None] = mapped_column(ForeignKey("instruction_publications.id"))
 
     projection: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class StoreIdentity(Base):
+    __tablename__ = "store_identity"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    store_id: Mapped[str] = mapped_column(String(128))
+    incarnation: Mapped[str] = mapped_column(String(128))
+    restore_operation: Mapped[str | None] = mapped_column(String(128))
+    destination: Mapped[str] = mapped_column(Text)
+    security_reconciled: Mapped[bool] = mapped_column(Boolean)
+    __table_args__ = (
+        CheckConstraint("id = 1", name="single_store_identity"),
+        CheckConstraint("security_reconciled IN (0, 1)", name="store_security_boolean"),
+    )
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    candidate_id: Mapped[str] = mapped_column(ForeignKey("instruction_candidates.id"), unique=True)
+    input_hash: Mapped[str] = mapped_column(String(64))
+    binding_revision: Mapped[int] = mapped_column(Integer)
+    policy_revision: Mapped[int] = mapped_column(Integer)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    principal_epoch: Mapped[int] = mapped_column(Integer)
+    session_id: Mapped[str] = mapped_column(ForeignKey("browser_sessions.id"))
+    revision: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(16))
+    fence: Mapped[int] = mapped_column(Integer)
+    claim_owner: Mapped[str | None] = mapped_column(String(128))
+    incarnation: Mapped[str] = mapped_column(String(128))
+    lease_deadline: Mapped[int | None] = mapped_column(Integer)
+    due_at: Mapped[int] = mapped_column(Integer)
+    attempts: Mapped[int] = mapped_column(Integer)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean)
+    reason: Mapped[str | None] = mapped_column(String(128))
+    effect: Mapped[str] = mapped_column(String(16))
+    operation_id: Mapped[str | None] = mapped_column(String(128), unique=True)
+    admission_id: Mapped[str] = mapped_column(String(128), unique=True)
+    evidence_id: Mapped[str | None] = mapped_column(String(128))
+    byte_count: Mapped[int] = mapped_column(Integer)
+    __table_args__ = (
+        CheckConstraint("kind = 'INSTRUCTION_NAVIGATION'", name="job_kind"),
+        CheckConstraint("cancel_requested IN (0, 1)", name="job_cancel_boolean"),
+        CheckConstraint(
+            "state IN ('QUEUED','RUNNING','SUCCEEDED','FAILED','CANCELLED','RETRY_WAIT')",
+            name="job_state",
+        ),
+        CheckConstraint("effect IN ('NONE','UNKNOWN','COMMITTED','ABANDONED')", name="job_effect"),
+        CheckConstraint("revision >= 1 AND fence >= 0 AND attempts >= 0", name="job_versions"),
+    )
+
+
+class Attention(Base):
+    __tablename__ = "attention"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    job_id: Mapped[str] = mapped_column(ForeignKey("jobs.id"))
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    reason: Mapped[str] = mapped_column(String(128))
+    occurrences: Mapped[int] = mapped_column(Integer)
+    disposition: Mapped[str] = mapped_column(String(16))
+    history: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint("job_id", "reason", name="attention_source_reason"),
+        CheckConstraint(
+            "disposition IN ('OPEN','DISMISSED','RESOLVED')", name="attention_disposition"
+        ),
+    )
+
+
+class RestoreRequestScope(Base):
+    __tablename__ = "restore_request_scopes"
+    request_id: Mapped[str] = mapped_column(ForeignKey("protected_requests.id"), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)

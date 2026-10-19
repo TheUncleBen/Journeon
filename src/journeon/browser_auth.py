@@ -51,6 +51,8 @@ class BrowserAuth:
                     request.cookies.get(COOKIE_NAME, ""),
                     csrf_token=request.headers.get("x-csrf-token"),
                     mutation=mutation,
+                    activity=mutation
+                    and getattr(request.scope.get("route"), "operation_id", None) != "replayEvents",
                 )
                 return AuthenticatedContext(record.principal_id, record.principal_epoch, record.id)
         except SQLAlchemyError:

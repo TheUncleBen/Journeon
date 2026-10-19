@@ -1,6 +1,54 @@
 {
   "components": {
     "schemas": {
+      "AttentionList": {
+        "items": {
+          "$ref": "#/components/schemas/AttentionView"
+        },
+        "title": "AttentionList",
+        "type": "array"
+      },
+      "AttentionView": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "OPEN",
+              "DISMISSED",
+              "RESOLVED"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "occurrences": {
+            "title": "Occurrences",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attention_id",
+          "job_id",
+          "reason",
+          "occurrences",
+          "disposition"
+        ],
+        "title": "AttentionView",
+        "type": "object"
+      },
       "BindingImpact": {
         "additionalProperties": false,
         "properties": {
@@ -786,6 +834,18 @@
             "title": "Growth Bytes",
             "type": "integer"
           },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
           "project_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
             "title": "Project Id",
@@ -1297,6 +1357,31 @@
           "revision"
         ],
         "title": "HistoryRead",
+        "type": "object"
+      },
+      "HistorySelection": {
+        "additionalProperties": false,
+        "properties": {
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revisions": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Revisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "revisions"
+        ],
+        "title": "HistorySelection",
         "type": "object"
       },
       "HistoryView": {
@@ -2035,6 +2120,167 @@
         "title": "InstructionView",
         "type": "object"
       },
+      "JobCancel": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "exclusiveMinimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "title": "JobCancel",
+        "type": "object"
+      },
+      "JobReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "job.admitted.v1",
+              "job.changed.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "RETRY_WAIT"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "const": "job",
+            "default": "job",
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "target_id",
+          "revision",
+          "committed_at",
+          "state"
+        ],
+        "title": "JobReceipt",
+        "type": "object"
+      },
+      "JobView": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Admission Id",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "effect": {
+            "enum": [
+              "NONE",
+              "UNKNOWN",
+              "COMMITTED",
+              "ABANDONED"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "RETRY_WAIT"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "project_id",
+          "candidate_id",
+          "revision",
+          "state",
+          "effect",
+          "reason",
+          "operation_id",
+          "admission_id"
+        ],
+        "title": "JobView",
+        "type": "object"
+      },
       "LegacyMapping": {
         "additionalProperties": false,
         "properties": {
@@ -2161,6 +2407,7 @@
               "mapping": {
                 "instruction.candidate.register.v1": "#/components/schemas/CandidateRegister",
                 "instruction.release.install.v1": "#/components/schemas/ReleaseInstall",
+                "lifecycle.restore.authorize.v1": "#/components/schemas/RestorePlan",
                 "project.instructions.accept.v1": "#/components/schemas/InstructionChangeConsent",
                 "project.instructions.policy.configure.v1": "#/components/schemas/PolicyConfigure",
                 "project.instructions.recover.v1": "#/components/schemas/PublicationRecovery",
@@ -2190,6 +2437,9 @@
               },
               {
                 "$ref": "#/components/schemas/PublicationRecovery"
+              },
+              {
+                "$ref": "#/components/schemas/RestorePlan"
               }
             ],
             "title": "Effect"
@@ -3224,6 +3474,17 @@
         "title": "ProjectionView",
         "type": "object"
       },
+      "ProtectedEffectResult": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/InstructionReceipt"
+          },
+          {
+            "$ref": "#/components/schemas/RestoreAuthorization"
+          }
+        ],
+        "title": "ProtectedEffectResult"
+      },
       "ProtectedIdentity": {
         "additionalProperties": false,
         "properties": {
@@ -3247,6 +3508,7 @@
               "mapping": {
                 "instruction.candidate.register.v1": "#/components/schemas/CandidateRegister",
                 "instruction.release.install.v1": "#/components/schemas/ReleaseInstall",
+                "lifecycle.restore.authorize.v1": "#/components/schemas/RestorePlan",
                 "project.instructions.accept.v1": "#/components/schemas/InstructionChangeConsent",
                 "project.instructions.policy.configure.v1": "#/components/schemas/PolicyConfigure",
                 "project.instructions.recover.v1": "#/components/schemas/PublicationRecovery",
@@ -3276,6 +3538,9 @@
               },
               {
                 "$ref": "#/components/schemas/PublicationRecovery"
+              },
+              {
+                "$ref": "#/components/schemas/RestorePlan"
               }
             ],
             "title": "Effect"
@@ -3594,6 +3859,368 @@
           "expected_manifest_digest"
         ],
         "title": "ReleaseVerify",
+        "type": "object"
+      },
+      "ReplayCursor": {
+        "additionalProperties": false,
+        "properties": {
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "incarnation",
+          "sequence"
+        ],
+        "title": "ReplayCursor",
+        "type": "object"
+      },
+      "ReplayEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_revision": {
+            "title": "Target Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "target_id",
+          "target_revision",
+          "operation_id"
+        ],
+        "title": "ReplayEvent",
+        "type": "object"
+      },
+      "ReplayPage": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/ReplayCursor"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "AVAILABLE",
+              "CANONICAL_REFETCH_REQUIRED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "cursor",
+          "events",
+          "truncated"
+        ],
+        "title": "ReplayPage",
+        "type": "object"
+      },
+      "ReplayQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplayCursor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limit": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "title": "ReplayQuery",
+        "type": "object"
+      },
+      "RestoreAuthorization": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "lifecycle.restore.authorize.v1",
+            "default": "lifecycle.restore.authorize.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "plan_hash": {
+            "title": "Plan Hash",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "AUTHORIZED_OFFLINE_ONLY",
+            "default": "AUTHORIZED_OFFLINE_ONLY",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "request_id",
+          "plan_hash"
+        ],
+        "title": "RestoreAuthorization",
+        "type": "object"
+      },
+      "RestorePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "current_versions_hash": {
+            "title": "Current Versions Hash",
+            "type": "string"
+          },
+          "data_class": {
+            "const": "PROJECT_INSTRUCTION_HISTORY",
+            "title": "Data Class",
+            "type": "string"
+          },
+          "dependencies_hash": {
+            "title": "Dependencies Hash",
+            "type": "string"
+          },
+          "destination": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "destination_path": {
+            "title": "Destination Path",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "kind": {
+            "const": "lifecycle.restore.authorize.v1",
+            "default": "lifecycle.restore.authorize.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "schema_revision": {
+            "title": "Schema Revision",
+            "type": "string"
+          },
+          "security_effect": {
+            "const": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+            "default": "PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY",
+            "title": "Security Effect",
+            "type": "string"
+          },
+          "selection": {
+            "items": {
+              "$ref": "#/components/schemas/HistorySelection"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Selection",
+            "type": "array"
+          },
+          "snapshot": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Snapshot",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "source_path": {
+            "title": "Source Path",
+            "type": "string"
+          },
+          "store_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "snapshot",
+          "destination",
+          "data_class",
+          "selection",
+          "snapshot_hash",
+          "store_id",
+          "incarnation",
+          "current_versions_hash",
+          "dependencies_hash",
+          "platform",
+          "schema_revision",
+          "source_path",
+          "destination_path"
+        ],
+        "title": "RestorePlan",
+        "type": "object"
+      },
+      "RestorePreview": {
+        "additionalProperties": false,
+        "properties": {
+          "data_class": {
+            "const": "PROJECT_INSTRUCTION_HISTORY",
+            "title": "Data Class",
+            "type": "string"
+          },
+          "destination": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "selection": {
+            "items": {
+              "$ref": "#/components/schemas/HistorySelection"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Selection",
+            "type": "array"
+          },
+          "snapshot": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Snapshot",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "snapshot",
+          "destination",
+          "data_class",
+          "selection"
+        ],
+        "title": "RestorePreview",
+        "type": "object"
+      },
+      "RestoreReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "lifecycle.restore.v1",
+            "default": "lifecycle.restore.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "plan_hash": {
+            "title": "Plan Hash",
+            "type": "string"
+          },
+          "restored_history_count": {
+            "title": "Restored History Count",
+            "type": "integer"
+          },
+          "status": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Status",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "const": "store",
+            "default": "store",
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "target_id",
+          "incarnation",
+          "plan_hash",
+          "restored_history_count",
+          "committed_at"
+        ],
+        "title": "RestoreReceipt",
         "type": "object"
       },
       "RootAdmit": {
@@ -5067,6 +5694,111 @@
         "x-journeon-query": "bot.settings.read.v1"
       }
     },
+    "/api/v1/events/replay": {
+      "post": {
+        "operationId": "replayEvents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Events",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        },
+        "x-journeon-command": "event.replay.v1",
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.read"
+        ]
+      }
+    },
     "/api/v1/instruction-bundles": {
       "post": {
         "operationId": "resolveInstructionBundle",
@@ -5392,6 +6124,334 @@
         "x-journeon-query": "instruction.bundle.read.v1"
       }
     },
+    "/api/v1/jobs/{identity}": {
+      "get": {
+        "operationId": "readJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Read",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        },
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.read"
+        ],
+        "x-journeon-query": "job.read.v1"
+      }
+    },
+    "/api/v1/jobs/{identity}/attention": {
+      "get": {
+        "operationId": "readJobAttention",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttentionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Attention",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        },
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.read"
+        ],
+        "x-journeon-query": "job.attention.read.v1"
+      }
+    },
+    "/api/v1/jobs/{identity}/cancel": {
+      "post": {
+        "operationId": "cancelJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCancel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Cancel",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "project.instruction.accept",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        },
+        "x-journeon-command": "job.cancel.v1",
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.accept"
+        ]
+      }
+    },
     "/api/v1/legacy-memory/preview": {
       "post": {
         "operationId": "previewLegacyMemory",
@@ -5521,6 +6581,125 @@
         ]
       }
     },
+    "/api/v1/lifecycle/restore-preview": {
+      "post": {
+        "operationId": "previewRestore",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestorePreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestorePlan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Restore Preview",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "lifecycle.restore",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.restore",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            }
+          ],
+          "owner_only": true,
+          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        },
+        "x-journeon-command": "lifecycle.restore.preview.v1",
+        "x-journeon-owner": "lifecycle",
+        "x-journeon-permissions": [
+          "lifecycle.restore",
+          "project.instruction.restore",
+          "project.instruction.read"
+        ]
+      }
+    },
     "/api/v1/operations/{operation_id}": {
       "get": {
         "operationId": "getOperationReceipt",
@@ -5542,6 +6721,12 @@
               "application/json": {
                 "schema": {
                   "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/RestoreReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/JobReceipt"
+                    },
                     {
                       "$ref": "#/components/schemas/OperationReceipt"
                     },
@@ -8584,7 +9769,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InstructionReceipt"
+                  "$ref": "#/components/schemas/ProtectedEffectResult"
                 }
               }
             },

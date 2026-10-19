@@ -15,6 +15,7 @@ from journeon.instruction_contracts import (
     ExactConfirmation,
     InstructionReceipt,
     OfficialPreview,
+    ProtectedEffectResult,
     ProtectedIdentity,
     ProtectedPrepare,
     ProtectedState,
@@ -25,6 +26,7 @@ from journeon.instruction_contracts import (
 )
 from journeon.instruction_protected import InstructionConfirmation
 from journeon.permissions import AuthenticatedContext
+from journeon.restore_contracts import RestoreAuthorization
 
 
 def bind_instruction_api(
@@ -86,13 +88,13 @@ def bind_instruction_api(
     @app.post(
         "/api/v1/protected-operations/confirm",
         responses=errors,
-        response_model=InstructionReceipt,
+        response_model=ProtectedEffectResult,
         operation_id="confirmInstructionEffect",
     )
     def confirm(
         command: ExactConfirmation,
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
-    ) -> InstructionReceipt:
+    ) -> InstructionReceipt | RestoreAuthorization:
         return InstructionConfirmation(engine, configured()).confirm(actor, command)
 
     @app.post(

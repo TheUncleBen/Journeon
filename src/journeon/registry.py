@@ -41,9 +41,11 @@ from journeon.contracts import (
 )
 from journeon.health import schema_and_database
 from journeon.instruction_config import RootObservation
+from journeon.job_contracts import AttentionList, JobCancel, JobView, ReplayPage, ReplayQuery
 from journeon.migrate import configuration
 from journeon.models import Base
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
+from journeon.restore_contracts import RestorePlan, RestorePreview
 
 
 @dataclass(frozen=True)
@@ -593,7 +595,7 @@ INSTRUCTION_ROUTES: dict[str, tuple[str, type[BaseModel], type[BaseModel], str |
     "confirmInstructionEffect": (
         "instruction.protected.confirm.v1",
         instruction_dto.ExactConfirmation,
-        instruction_dto.InstructionReceipt,
+        instruction_dto.ProtectedEffectResult,
         None,
     ),
     "cancelInstructionEffect": (
@@ -884,6 +886,91 @@ MODULES["project_instructions"] = {
 }
 for module in ("projects", "identity", "operations", "instructions"):
     MODULES[module]["migration"] = "0009_instruction_scope"
+
+
+MODULES["jobs"] = {
+    "core": True,
+    "api_prefixes": ("/api/v1/jobs", "/api/v1/events"),
+    "dashboards": (),
+    "events_published": ("job.admitted", "job.changed", "attention.raised", "attention.resolved"),
+    "events_consumed": (),
+    "tables": ("jobs", "attention"),
+    "backup_class": "R0",
+    "health": "schema_and_database",
+    "permissions": (
+        "project.instruction.read",
+        "project.instruction.accept",
+        "project.instruction.restore",
+        "lifecycle.restore",
+    ),
+    "migration": "0010_work_execution",
+    "settings": (),
+    "environment_migrations": (),
+}
+MODULES["lifecycle"] = {
+    "core": True,
+    "api_prefixes": ("/api/v1/lifecycle",),
+    "dashboards": (),
+    "events_published": ("lifecycle.history.restored",),
+    "events_consumed": (),
+    "tables": ("store_identity", "restore_request_scopes"),
+    "backup_class": "R0",
+    "health": "schema_and_database",
+    "permissions": ("lifecycle.restore", "project.instruction.restore", "project.instruction.read"),
+    "migration": "0010_work_execution",
+    "settings": (),
+    "environment_migrations": (),
+}
+for execution_module in MODULES.values():
+    if set(execution_module["tables"]) & {
+        "operation_receipts",
+        "outbox_events",
+        "protected_requests",
+    }:
+        execution_module["migration"] = "0010_work_execution"
+
+JOB_ROUTES: dict[str, tuple[str, type[BaseModel] | None, type[BaseModel], tuple[str, ...]]] = {
+    "readJob": ("job.read.v1", None, JobView, ("project.instruction.read",)),
+    "cancelJob": ("job.cancel.v1", JobCancel, JobView, ("project.instruction.accept",)),
+    "replayEvents": ("event.replay.v1", ReplayQuery, ReplayPage, ("project.instruction.read",)),
+    "readJobAttention": (
+        "job.attention.read.v1",
+        None,
+        AttentionList,
+        ("project.instruction.read",),
+    ),
+    "previewRestore": (
+        "lifecycle.restore.preview.v1",
+        RestorePreview,
+        RestorePlan,
+        ("lifecycle.restore", "project.instruction.restore", "project.instruction.read"),
+    ),
+}
+for operation, (name, job_input, job_result, permissions) in JOB_ROUTES.items():
+    CONFIGURATION_AUTHORIZATION[name] = {
+        "owner_only": operation == "previewRestore",
+        "grant_checks": [
+            grant_check(permission, "current target scope", owner=False)
+            for permission in permissions
+        ],
+        "semantics": "Current service-owned target authorization precedes disclosure and effects",
+    }
+    if job_input is None:
+        QUERIES[name] = {"owner": "jobs", "permissions": permissions, "result_model": job_result}
+    else:
+        COMMANDS[name] = CommandDefinition(
+            name=name,
+            owner="lifecycle" if operation == "previewRestore" else "jobs",
+            input_model=job_input,
+            result_model=job_result,
+            permissions=permissions,
+            risk="LOCAL_CANONICAL_CONTROL" if operation == "cancelJob" else "AUTHORIZED_QUERY",
+            external_effects=(),
+            reversibility="Prior canonical evidence is retained",
+            dry_run=operation != "cancelJob",
+            idempotent=True,
+            verification="Current scope, revision and durable owning records",
+        )
 
 
 @dataclass(frozen=True)

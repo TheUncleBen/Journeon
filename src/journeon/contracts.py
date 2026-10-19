@@ -531,8 +531,32 @@ class InstructionReceipt(Contract):
     provenance: Literal["PROJECT", "DEVELOPMENT_CANDIDATE", "VERIFIED_RELEASE", "ROOT"]
 
 
+class JobReceipt(Contract):
+    operation_id: Identifier
+    command: Literal["job.admitted.v1", "job.changed.v1"]
+    target_kind: Literal["job"] = "job"
+    target_id: Identifier
+    revision: int
+    committed_at: str
+    state: Literal["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED", "RETRY_WAIT"]
+
+
+class RestoreReceipt(Contract):
+    operation_id: Identifier
+    command: Literal["lifecycle.restore.v1"] = "lifecycle.restore.v1"
+    target_kind: Literal["store"] = "store"
+    target_id: Identifier
+    incarnation: Identifier
+    plan_hash: str
+    restored_history_count: int
+    committed_at: str
+    status: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+
+
 CanonicalReceipt = (
-    OperationReceipt
+    RestoreReceipt
+    | JobReceipt
+    | OperationReceipt
     | PasskeyMutationReceipt
     | TaskReceipt
     | ConfigurationReceipt

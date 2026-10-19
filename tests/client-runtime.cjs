@@ -68,6 +68,17 @@ async function main() {
   assert.equal(calls.at(-1).url, "/api/v1/projects/encoded%2Fproject/instructions/recovery");
   assert.equal(calls.at(-1).init.headers["X-CSRF-Token"], "recovery-csrf");
   assert.deepEqual(JSON.parse(calls.at(-1).init.body), {project_id: "encoded/project"});
+  await client.readJob("encoded/job");
+  assert.equal(calls.at(-1).url, "/api/v1/jobs/encoded%2Fjob");
+  await client.cancelJob("encoded/job", {expected_revision: 1}, "job-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/jobs/encoded%2Fjob/cancel");
+  assert.equal(calls.at(-1).init.headers["X-CSRF-Token"], "job-csrf");
+  await client.replayEvents({limit: 10}, "replay-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/events/replay");
+  assert.deepEqual(JSON.parse(calls.at(-1).init.body), {limit: 10});
+  await client.previewRestore({idempotency_key: "restore", snapshot: "saved", destination: "target", data_class: "PROJECT_INSTRUCTION_HISTORY", selection: [{project_id: "project", revisions: [1]}]}, "restore-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/lifecycle/restore-preview");
+  assert.equal(calls.at(-1).init.headers["X-CSRF-Token"], "restore-csrf");
   const denied = new JourneonClient("", async () => new Response(
     JSON.stringify({code: "PERMISSION_DENIED"}), {status: 403},
   ));

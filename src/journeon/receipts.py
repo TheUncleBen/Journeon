@@ -27,6 +27,38 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     )
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
+    if row.owner == "lifecycle":
+        from journeon.contracts import RestoreReceipt
+        from journeon.models import StoreIdentity
+        from journeon.permissions import current_owner, require_grant
+
+        current_owner(db, actor)
+        require_grant(db, actor, "lifecycle.restore")
+        store = db.get(StoreIdentity, 1)
+        if (
+            store is None
+            or row.target_kind != "store"
+            or row.target_id != store.store_id
+            or row.project_id is not None
+        ):
+            raise DomainError("PERMISSION_DENIED", "Restore receipt scope is unavailable")
+        restored = RestoreReceipt.model_validate(row.result)
+        if restored.operation_id != row.id or restored.target_id != store.store_id:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Restore receipt requires repair")
+        return restored
+    if row.owner == "jobs":
+        from journeon.job_contracts import JobReceipt
+        from journeon.jobs import authorize
+        from journeon.models import Job
+
+        job = db.get(Job, row.target_id)
+        if job is None or row.target_kind != "job" or row.project_id != job.project_id:
+            raise DomainError("PERMISSION_DENIED", "Job receipt scope is unavailable")
+        authorize(db, actor, job)
+        job_result = JobReceipt.model_validate(row.result)
+        if job_result.operation_id != row.id or job_result.target_id != job.id:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Job receipt requires repair")
+        return job_result
     if row.owner == "project_instructions":
         from journeon.instruction_operations import authorized
 

@@ -75,6 +75,15 @@ def official(tmp_path):
     root.mkdir()
     config = InstructionConfiguration.model_validate(
         {
+            "jobs": {
+                "pending_count": 10,
+                "pending_bytes": 1048576,
+                "concurrency": 1,
+                "lease_seconds": 30,
+                "poll_seconds": 1,
+                "retry_seconds": 1,
+                "max_attempts": 2,
+            },
             "roots": [
                 {
                     "key": "environment",
@@ -352,6 +361,16 @@ def test_environment_tree_real_bytes_policy_and_automatic_navigation(official):
     )
     assert proposed.status_code == 200, proposed.text
     assert proposed.json()["automatic"]
+    job = proposed.json()["job_id"]
+    assert client.get(f"/api/v1/jobs/{job}", headers=headers).json()["state"] == "QUEUED"
+    assert (path / "INDEX.md").read_text() == base["INDEX.md"]
+    from journeon.jobs import JobService
+
+    service = JobService(engine, config)
+    claim = service.claim()
+    assert claim is not None
+    service.execute(claim)
+    assert client.get(f"/api/v1/jobs/{job}", headers=headers).json()["state"] == "SUCCEEDED"
     assert (path / "INDEX.md").read_text() == repaired["INDEX.md"]
     assert (
         client.get(f"/api/v1/projects/{identity}/instructions", headers=headers).json()["revision"]

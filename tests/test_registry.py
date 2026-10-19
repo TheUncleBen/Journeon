@@ -115,6 +115,11 @@ def test_generation_includes_actual_registry():
         "readInstructionHistory",
         "inspectInstructionRecovery",
         "readInstructionDocument",
+        "readJob",
+        "cancelJob",
+        "replayEvents",
+        "readJobAttention",
+        "previewRestore",
     }
     engine = create_engine("sqlite://")
     try:

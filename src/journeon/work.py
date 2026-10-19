@@ -407,27 +407,34 @@ class WorkService:
                 if isinstance(command, (TaskAdmission, TaskAssign)):
                     current = task_view(task_row(db, actor, command.task_id, "task.read"))
                     policy = current_policy(db, actor, current.project_id)
-                    require_grant(db, actor, "execution.admit", project_id=current.project_id)
-                    if policy is None or not policy.enabled:
-                        raise DomainError(
-                            "PERMISSION_DENIED", "Current execution policy is unavailable"
+                    if isinstance(command, TaskAdmission):
+                        if (
+                            policy is not None
+                            and policy.revision != command.expected_policy_revision
+                        ):
+                            raise DomainError(
+                                "REVISION_CONFLICT",
+                                "Verification policy changed; refresh its revision",
+                            )
+                        current_decision = self._admission(
+                            db, actor, current, policy, datetime.now(UTC).isoformat()
                         )
-                    if (
-                        isinstance(command, TaskAdmission)
-                        and policy.revision != command.expected_policy_revision
-                    ):
-                        raise DomainError(
-                            "REVISION_CONFLICT", "Verification policy changed; refresh its revision"
-                        )
-                    identity = (
-                        command.bot_id
-                        if isinstance(command, TaskAssign)
-                        else current.assignment.bot_id
-                    )
-                    if identity:
+                        if (
+                            previous.task.admission is not None
+                            and previous.task.admission.decision != "DENY"
+                            and current_decision.decision == "DENY"
+                        ):
+                            raise DomainError(
+                                "PERMISSION_DENIED", "Current Task admission is unavailable"
+                            )
+                    elif command.bot_id is not None:
                         from journeon.agents import task_receiver
 
-                        task_receiver(db, actor, identity, current.project_id, policy)
+                        if policy is None:
+                            raise DomainError(
+                                "DEPENDENCY_UNAVAILABLE", "Verification policy is not configured"
+                            )
+                        task_receiver(db, actor, command.bot_id, current.project_id, policy)
                 return previous
             row = task_row(db, actor, command.task_id, f"task.{action}")
             for capability in ("task.read", "task.receipt.read"):
@@ -448,7 +455,13 @@ class WorkService:
                     raise DomainError(
                         "REVISION_CONFLICT", "Verification policy changed; refresh its revision"
                     )
-                validate_workflow(policy, command.workflow)
+                try:
+                    validate_workflow(policy, command.workflow)
+                except ValidationError:
+                    raise DomainError(
+                        "VALIDATION_FAILED",
+                        "Task workflow must bind the configured verification checks",
+                    ) from None
                 project = db.get(Project, view.project_id)
                 assert project is not None
                 values.update(
@@ -574,7 +587,14 @@ class WorkService:
             or view.workflow is None
         ):
             return outcome("DENY", "Task criteria and workflow require policy reconciliation")
-        validate_workflow(policy, view.workflow)
+        try:
+            validate_workflow(policy, view.workflow)
+        except DomainError as exc:
+            if exc.code != "VALIDATION_FAILED":
+                raise
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Stored Task workflow requires repair"
+            ) from None
         if view.assignment.bot_id:
             from journeon.agents import task_receiver
 

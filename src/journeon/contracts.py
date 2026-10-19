@@ -248,6 +248,19 @@ class VerificationCheck(Contract):
         return self
 
 
+def validate_verification_bindings(
+    checks: list[VerificationCheck], workflow: TaskWorkflow, required_capabilities: list[str]
+) -> None:
+    ids = {check.check_id for check in checks}
+    if len(ids) != len(checks):
+        raise ValueError("Verification check identities must be distinct")
+    gates = {step.check_id for step in workflow.steps if step.kind == "VERIFICATION"}
+    if gates != ids:
+        raise ValueError("Workflow gates must bind every exact verification check")
+    if len(set(required_capabilities)) != len(required_capabilities):
+        raise ValueError("Required capabilities must be distinct")
+
+
 class VerificationPolicy(Contract):
     project_id: Identifier
     revision: PositiveRevision
@@ -263,14 +276,7 @@ class VerificationPolicy(Contract):
 
     @model_validator(mode="after")
     def bound_checks(self) -> "VerificationPolicy":
-        ids = {check.check_id for check in self.checks}
-        if len(ids) != len(self.checks):
-            raise ValueError("Verification check identities must be distinct")
-        gates = {step.check_id for step in self.workflow.steps if step.kind == "VERIFICATION"}
-        if gates != ids:
-            raise ValueError("Workflow gates must bind every exact verification check")
-        if len(set(self.required_capabilities)) != len(self.required_capabilities):
-            raise ValueError("Required capabilities must be distinct")
+        validate_verification_bindings(self.checks, self.workflow, self.required_capabilities)
         return self
 
 
@@ -287,6 +293,11 @@ class VerificationPolicyConfigure(Contract):
     required_services: list[Literal["NATIVE", "RESOURCE", "SKILL", "CONNECTION", "TOOL"]] = Field(
         default_factory=list, max_length=5
     )
+
+    @model_validator(mode="after")
+    def bound_checks(self) -> "VerificationPolicyConfigure":
+        validate_verification_bindings(self.checks, self.workflow, self.required_capabilities)
+        return self
 
 
 class VerificationPolicyReceipt(Contract):

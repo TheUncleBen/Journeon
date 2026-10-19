@@ -4,6 +4,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session, defer
 
@@ -94,21 +95,26 @@ def configure(
     ):
         raise DomainError("REVISION_CONFLICT", "Verification policy changed; refresh its revision")
     now = datetime.now(UTC).isoformat()
-    policy = VerificationPolicy.model_validate(
-        command.model_dump(
-            exclude={
-                "schema_version",
-                "idempotency_key",
-                "expected_project_revision",
-                "expected_policy_revision",
+    try:
+        policy = VerificationPolicy.model_validate(
+            command.model_dump(
+                exclude={
+                    "schema_version",
+                    "idempotency_key",
+                    "expected_project_revision",
+                    "expected_policy_revision",
+                }
+            )
+            | {
+                "revision": command.expected_policy_revision + 1,
+                "created_by": actor.principal_id,
+                "created_at": now,
             }
         )
-        | {
-            "revision": command.expected_policy_revision + 1,
-            "created_by": actor.principal_id,
-            "created_at": now,
-        }
-    )
+    except ValidationError:
+        raise DomainError(
+            "VALIDATION_FAILED", "Verification policy checks and workflow must match"
+        ) from None
     data = policy.model_dump(mode="json")
     db.add(
         VerificationPolicyRevision(
@@ -161,11 +167,29 @@ def validate_workflow(policy: VerificationPolicy, workflow: TaskWorkflow) -> Non
     VerificationPolicy.model_validate(policy.model_dump() | {"workflow": workflow.model_dump()})
     steps = {step.step_id: step for step in workflow.steps}
     for gate in policy.workflow.steps:
-        if steps.get(gate.step_id) != gate:
+        step = steps.get(gate.step_id)
+        if (
+            step is None
+            or step.model_dump(exclude={"dependencies"})
+            != gate.model_dump(exclude={"dependencies"})
+            or not set(gate.dependencies) <= set(step.dependencies)
+        ):
             raise DomainError(
                 "VALIDATION_FAILED",
                 "Task workflow must preserve Project policy steps and dependencies",
             )
+        pending = list(set(step.dependencies) - set(gate.dependencies))
+        visited: set[str] = set()
+        while pending:
+            prerequisite = steps[pending.pop()]
+            if prerequisite.step_id in visited:
+                continue
+            visited.add(prerequisite.step_id)
+            if prerequisite.condition_step is not None:
+                raise DomainError(
+                    "VALIDATION_FAILED", "Added policy prerequisites must be unconditional"
+                )
+            pending.extend(prerequisite.dependencies)
     if any(loop not in workflow.loops for loop in policy.workflow.loops):
         raise DomainError(
             "VALIDATION_FAILED", "Task workflow must preserve Project policy loop bounds"

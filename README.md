@@ -93,7 +93,10 @@ Checks name exact argv, an expected exit code and an owned-workspace-relative di
 operands grants no command execution permission. Task creation inherits configured
 criteria when the user does not supply them. `POST /api/v1/tasks/revise` edits criteria
 and workflow under `task.revise`, retaining the Project policy steps, dependencies
-and loop bounds. Graphs support conditions, parallel branches, joins and explicit
+and loop bounds. Tasks may add unconditional work or review prerequisites before
+retained policy steps; added prerequisites cannot make a required gate conditional.
+Invalid proposed policy check bindings or Task workflows return validation errors
+without partially changing stored state. Graphs support conditions, parallel branches, joins and explicit
 finite loops; recursive dependency edges are rejected. The authenticated
 `GET /api/v1/tasks/workflow-templates?project_id=...` returns eight provider-neutral
 templates. Their `check` identifier must be bound to the configured proof check.
@@ -104,7 +107,7 @@ Project execution-admission and Bot/Profile-use authority. Contributions leave t
 primary assignee unchanged. Handoffs preserve Task identity and retained history;
 no Bot-private memory, sessions, credentials or Workspace data are copied. The
 current implementation accepts supported deterministic preparation only. Declared
-native, resource, Skill, Connection or tool service requirements block assignment
+native, resource, Skill, Connection or tool service requirements block Bot assignment
 until their owning services are available; Profile eligibility strings confer no
 permission.
 
@@ -116,6 +119,10 @@ to `TASK_PREPARATION`, with `execution_authorized=false`; it cannot authorize a
 process, an Attempt, a model call or a later effect. Consumers must independently
 validate actual resources, routes, artifacts and current authority. Policy-reference
 strings alone cannot admit work. Stored receipts remain historical observations.
+Identical assignment retries recheck the applicable current grants; human and
+unassigned responsibility do not acquire Bot execution prerequisites on replay.
+Admission retries recheck current eligibility. A historical denial remains a denial;
+replaying it cannot grant execution authority.
 Actual Task execution, approval settlement, evidence-driven completion and an
 operational Work UI remain unavailable.
 

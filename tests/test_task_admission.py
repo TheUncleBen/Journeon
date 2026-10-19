@@ -434,7 +434,10 @@ def test_bot_handoff_contributor_history_private_boundary_and_revoked_receiver(a
             contributor=contributor,
         )
 
-    first_task = service.assign(shared, assign(task, first, "first")).task
+    first_command = assign(task, first, "first")
+    first_receipt = service.assign(shared, first_command)
+    first_task = first_receipt.task
+    assert service.assign(shared, first_command) == first_receipt
     contribution = service.assign(shared, assign(first_task, second, "contribute", True)).task
     assert contribution.assignment.bot_id == first.bot_id
     assert contribution.contributors[0].bot_id == second.bot_id
@@ -449,6 +452,8 @@ def test_bot_handoff_contributor_history_private_boundary_and_revoked_receiver(a
         db.get(AccessGrant, f"{first.bot_id}:use").enabled = False
     with pytest.raises(DomainError):
         service.assign(shared, assign(handed, first, "revoked"))
+    with pytest.raises(DomainError):
+        service.assign(shared, first_command)
     assert service.read(shared, task.task_id) == handed
 
 

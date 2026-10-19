@@ -388,7 +388,7 @@ def test_crash_boundaries_reconcile_same_job_and_fence(official, monkeypatch, bo
         with pytest.raises(SystemExit):
             service.execute(claim)
         monkeypatch.setattr(target, name, original)
-    service.reconcile(claim.job_id, interrupted=True)
+    service.reconcile(claim.job_id, expected=claim)
     with transaction(engine) as db:
         job = db.get(Job, claim.job_id)
         assert job.fence > claim.fence

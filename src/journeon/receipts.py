@@ -4,7 +4,7 @@
 import json
 
 from pydantic import ValidationError
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, defer
 
@@ -29,7 +29,7 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         raise DomainError("NOT_FOUND", "Operation is unavailable")
     if row.owner == "lifecycle":
         from journeon.contracts import RestoreReceipt
-        from journeon.models import StoreIdentity
+        from journeon.models import ProtectedRequest, RestoreRequestScope, StoreIdentity
         from journeon.permissions import current_owner, require_grant
 
         current_owner(db, actor)
@@ -37,11 +37,40 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         store = db.get(StoreIdentity, 1)
         if (
             store is None
+            or row.command != "lifecycle.restore.v1"
             or row.target_kind != "store"
             or row.target_id != store.store_id
             or row.project_id is not None
         ):
             raise DomainError("PERMISSION_DENIED", "Restore receipt scope is unavailable")
+        request = db.scalar(
+            select(ProtectedRequest)
+            .options(defer(ProtectedRequest.payload))
+            .where(
+                ProtectedRequest.operation_id == row.id,
+                ProtectedRequest.payload_hash == row.payload_hash,
+                ProtectedRequest.command == "lifecycle.restore.authorize.v1",
+                ProtectedRequest.principal_id == actor.principal_id,
+                ProtectedRequest.state == "COMMITTED",
+            )
+        )
+        scopes = (
+            list(
+                db.scalars(
+                    select(RestoreRequestScope.project_id).where(
+                        RestoreRequestScope.request_id == request.id
+                    )
+                )
+            )
+            if request is not None
+            else []
+        )
+        if not scopes:
+            raise DomainError("PERMISSION_DENIED", "Restore scope evidence is unavailable")
+        from journeon.instruction_operations import authorize_project_receipt
+
+        for project_id in scopes:
+            authorize_project_receipt(db, actor, project_id)
         restored = RestoreReceipt.model_validate(row.result)
         if restored.operation_id != row.id or restored.target_id != store.store_id:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Restore receipt requires repair")
@@ -55,6 +84,7 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         if job is None or row.target_kind != "job" or row.project_id != job.project_id:
             raise DomainError("PERMISSION_DENIED", "Job receipt scope is unavailable")
         authorize(db, actor, job)
+        authorize(db, actor, job, "receipt.read")
         job_result = JobReceipt.model_validate(row.result)
         if job_result.operation_id != row.id or job_result.target_id != job.id:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Job receipt requires repair")

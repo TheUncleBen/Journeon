@@ -15,8 +15,10 @@ from typing import Self
 
 import uvicorn
 from alembic.script import ScriptDirectory
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import JSONResponse, Response
 
 from journeon.api import create_app
 from journeon.browser_auth import BrowserAuth
@@ -127,6 +129,25 @@ def application(config: RuntimeConfig) -> FastAPI:
             args=(stop,),
             name="instruction-jobs",
         )
+
+    @app.middleware("http")
+    async def worker_health(request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if (
+            worker is not None
+            and worker.ident is not None
+            and not worker.is_alive()
+            and not stop.is_set()
+        ):
+            from journeon.contracts import ErrorEnvelope
+
+            return JSONResponse(
+                status_code=503,
+                content=ErrorEnvelope(
+                    code="DEPENDENCY_UNAVAILABLE",
+                    reason="The instruction dispatcher is unavailable",
+                ).model_dump(),
+            )
+        return await call_next(request)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:

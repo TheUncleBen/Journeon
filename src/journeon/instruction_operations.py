@@ -45,29 +45,30 @@ def authorized(db: Session, actor: AuthenticatedContext, row: Receipt) -> Instru
     if row.project_id is None:
         current_owner(db, actor)
     else:
-        for action in ("read", "receipt.read"):
-            require_grant(
-                db,
-                actor,
-                "project.instruction." + action,
-                resource_kind="project",
-                resource_id=row.project_id,
-            )
-    if row.project_id is not None:
-        from journeon.models import InstructionRoot, ProjectInstructionBinding
-
-        binding = db.get(ProjectInstructionBinding, row.project_id)
-        root = db.get(InstructionRoot, binding.root_id) if binding else None
-        if (
-            binding is None
-            or root is None
-            or not root.enabled
-            or root.revision != binding.root_revision
-        ):
-            raise DomainError(
-                "PERMISSION_DENIED", "Current Project instruction binding is unavailable"
-            )
+        authorize_project_receipt(db, actor, row.project_id)
     return decode(row)
+
+
+def authorize_project_receipt(db: Session, actor: AuthenticatedContext, project_id: str) -> None:
+    for action in ("read", "receipt.read"):
+        require_grant(
+            db,
+            actor,
+            "project.instruction." + action,
+            resource_kind="project",
+            resource_id=project_id,
+        )
+    from journeon.models import InstructionRoot, ProjectInstructionBinding
+
+    binding = db.get(ProjectInstructionBinding, project_id)
+    root = db.get(InstructionRoot, binding.root_id) if binding else None
+    if (
+        binding is None
+        or root is None
+        or not root.enabled
+        or root.revision != binding.root_revision
+    ):
+        raise DomainError("PERMISSION_DENIED", "Current Project instruction binding is unavailable")
 
 
 def decode(row: Receipt) -> InstructionReceipt:

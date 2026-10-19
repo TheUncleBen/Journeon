@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
+import json
+import sqlite3
 import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import Engine, func, select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, defer
 
 from journeon.contracts import DomainError
@@ -363,7 +366,11 @@ class JobService:
                 settled = db.get(Job, identity.job_id)
                 assert settled is not None
                 row = settled
-                if row.fence == identity.fence:
+                if row.state == "RUNNING" and (row.fence, row.claim_owner, row.incarnation) == (
+                    identity.fence,
+                    identity.owner,
+                    identity.incarnation,
+                ):
                     row.operation_id = result.operation_id
                     row.effect, row.state, row.reason = (
                         "COMMITTED",
@@ -373,19 +380,39 @@ class JobService:
                     row.revision += 1
                     record(db, row)
         except (DomainError, OSError, ValueError):
-            self.reconcile(identity.job_id, interrupted=True)
+            self.reconcile(identity.job_id, expected=identity)
 
-    def reconcile(self, identity: str | None = None, *, interrupted: bool = False) -> None:
+    def reconcile(
+        self, identity: str | None = None, *, expected: ExecutionIdentity | None = None
+    ) -> None:
         config = self.configuration.jobs
         if config is None:
             return
         with transaction(self.engine) as db:
+            if expected is None:
+                for operation in db.scalars(
+                    select(Job.operation_id)
+                    .join(InstructionPublication, Job.operation_id == InstructionPublication.id)
+                    .where(
+                        Job.effect == "UNKNOWN",
+                        InstructionPublication.status.in_(("CANONICAL_COMMITTED", "ABANDONED")),
+                    )
+                ).all():
+                    assert operation is not None
+                    settle_recovery_in_transaction(db, operation)
             query = select(Job).where(Job.state == "RUNNING")
             if identity is not None:
                 query = query.where(Job.id == identity)
             for row in db.scalars(query):
+                if expected is not None and (
+                    row.id,
+                    row.fence,
+                    row.claim_owner,
+                    row.incarnation,
+                ) != (expected.job_id, expected.fence, expected.owner, expected.incarnation):
+                    continue
                 if (
-                    not interrupted
+                    expected is None
                     and row.lease_deadline is not None
                     and utc_seconds() < row.lease_deadline
                 ):
@@ -433,48 +460,68 @@ class JobService:
         config = self.configuration.jobs
         if config is None:
             return
-        while not stop.is_set():
-            self.reconcile()
-            identity = self.claim()
-            if identity is not None:
-                if stop.is_set():
-                    self.reconcile(identity.job_id, interrupted=True)
-                    break
-                self.execute(identity)
-            else:
-                stop.wait(config.poll_seconds)
+        pressure = 0
+        try:
+            while not stop.is_set():
+                try:
+                    self.reconcile()
+                    identity = self.claim()
+                    if identity is not None:
+                        if stop.is_set():
+                            self.reconcile(identity.job_id, expected=identity)
+                            break
+                        self.execute(identity)
+                    else:
+                        stop.wait(config.poll_seconds)
+                    pressure = 0
+                except OperationalError as error:
+                    code = getattr(error.orig, "sqlite_errorcode", None)
+                    if code is None or code & 0xFF not in (
+                        sqlite3.SQLITE_BUSY,
+                        sqlite3.SQLITE_LOCKED,
+                    ):
+                        raise
+                    pressure += 1
+                    if pressure >= config.max_attempts:
+                        raise
+                    print(json.dumps({"status": "JOB_STORAGE_PRESSURE"}), flush=True)
+                    stop.wait(config.retry_seconds)
+        except Exception:
+            print(json.dumps({"status": "JOB_WORKER_FAILED"}), flush=True)
 
 
 def settle_recovery(engine: Engine, operation: str) -> None:
     with transaction(engine) as db:
-        row = db.scalar(select(Job).where(Job.operation_id == operation))
-        journal = db.get(InstructionPublication, operation)
-        if (
-            row is None
-            or journal is None
-            or journal.status not in {"CANONICAL_COMMITTED", "ABANDONED"}
-        ):
-            return
-        row.effect = "COMMITTED" if journal.status == "CANONICAL_COMMITTED" else "ABANDONED"
-        row.state = (
-            "CANCELLED"
-            if row.cancel_requested
-            else "SUCCEEDED"
-            if row.effect == "COMMITTED"
-            else "FAILED"
-        )
-        row.reason = "PROTECTED_RECOVERY_COMPLETED"
-        row.revision += 1
-        row.fence += 1
-        for item in db.scalars(select(Attention).where(Attention.job_id == row.id)):
-            item.disposition = "RESOLVED"
-            item.history = [
-                *item.history,
-                {
-                    "at": utc_seconds(),
-                    "operation_id": operation,
-                    "disposition": "RESOLVED",
-                    "effect": row.effect,
-                },
-            ]
-        record(db, row, event_type="attention.resolved")
+        settle_recovery_in_transaction(db, operation)
+
+
+def settle_recovery_in_transaction(db: Session, operation: str) -> None:
+    row = db.scalar(select(Job).where(Job.operation_id == operation))
+    journal = db.get(InstructionPublication, operation)
+    if row is None or journal is None or journal.status not in {"CANONICAL_COMMITTED", "ABANDONED"}:
+        return
+    if row.reason == "PROTECTED_RECOVERY_COMPLETED":
+        return
+    row.effect = "COMMITTED" if journal.status == "CANONICAL_COMMITTED" else "ABANDONED"
+    row.state = (
+        "CANCELLED"
+        if row.cancel_requested
+        else "SUCCEEDED"
+        if row.effect == "COMMITTED"
+        else "FAILED"
+    )
+    row.reason = "PROTECTED_RECOVERY_COMPLETED"
+    row.revision += 1
+    row.fence += 1
+    for item in db.scalars(select(Attention).where(Attention.job_id == row.id)):
+        item.disposition = "RESOLVED"
+        item.history = [
+            *item.history,
+            {
+                "at": utc_seconds(),
+                "operation_id": operation,
+                "disposition": "RESOLVED",
+                "effect": row.effect,
+            },
+        ]
+    record(db, row, event_type="attention.resolved")

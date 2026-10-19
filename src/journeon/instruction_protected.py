@@ -305,8 +305,11 @@ class InstructionConfirmation:
                     if receipt.project_id != scope.project_id:
                         raise DomainError("PERMISSION_DENIED", "Recovery receipt scope differs")
                     from journeon.instruction_operations import decode
+                    from journeon.jobs import settle_recovery_in_transaction
 
-                    return decode(receipt)
+                    result = decode(receipt)
+                    settle_recovery_in_transaction(db, operation)
+                    return result
                 return authorized(db, actor, receipt)
             effect = self._bound(db, actor, row)
         if isinstance(effect, RestorePlan):

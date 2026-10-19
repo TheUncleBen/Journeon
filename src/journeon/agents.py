@@ -36,6 +36,7 @@ from journeon.contracts import (
     ProfileView,
     TeamCreate,
     TeamView,
+    VerificationPolicy,
 )
 from journeon.database import require_compatible_schema, transaction
 from journeon.instructions import digest, validate_template, write_asset
@@ -738,3 +739,24 @@ class AgentService:
                 ):
                     raise DomainError("REVISION_CONFLICT", "Legacy destination is unavailable")
             return LegacyPlan(mappings=command.mappings, unmapped=command.unmapped)
+
+
+def task_receiver(
+    db: Session,
+    actor: AuthenticatedContext,
+    identity: str,
+    project_id: str,
+    policy: "VerificationPolicy",
+) -> tuple[BotView, ProfileView]:
+    require_grant(db, actor, "execution.admit", project_id=project_id)
+    authorize(db, actor, "bot", identity, "use")
+    bot = bot_view(db, actor, identity)
+    authorize(db, actor, "profile", bot.profile_id, "use")
+    profile = profile_view(db, actor, bot.profile_id)
+    for capability in policy.required_capabilities:
+        require_grant(db, actor, capability, project_id=project_id)
+    if not policy.enabled or policy.required_services:
+        raise DomainError(
+            "PERMISSION_DENIED", "Receiving Bot requires unavailable execution services"
+        )
+    return bot, profile

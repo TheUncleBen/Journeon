@@ -150,9 +150,189 @@ class TaskControl(Contract):
     reason: Name
 
 
+class WorkflowStep(Contract):
+    step_id: Identifier
+    kind: Literal["WORK", "CONDITION", "APPROVAL", "VERIFICATION", "REVIEW"]
+    dependencies: list[Identifier] = Field(default_factory=list, max_length=128)
+    condition_step: Identifier | None = None
+    condition_value: bool | Name | float | None = None
+    condition_operator: Literal["EQ", "LT", "LE", "GT", "GE"] = "EQ"
+    check_id: Identifier | None = None
+
+
+class WorkflowLoop(Contract):
+    steps: list[Identifier] = Field(min_length=1, max_length=128)
+    maximum_iterations: int = Field(ge=1)
+
+
+class TaskWorkflow(Contract):
+    steps: list[WorkflowStep] = Field(min_length=1, max_length=128)
+    loops: list[WorkflowLoop] = Field(default_factory=list, max_length=128)
+
+    @model_validator(mode="after")
+    def valid_graph(self) -> "TaskWorkflow":
+        from graphlib import CycleError, TopologicalSorter
+        from math import isfinite
+
+        graph = {step.step_id: set(step.dependencies) for step in self.steps}
+        if len(graph) != len(self.steps):
+            raise ValueError("Workflow step identities must be distinct")
+        by_id = {step.step_id: step for step in self.steps}
+        for step in self.steps:
+            if len(set(step.dependencies)) != len(step.dependencies):
+                raise ValueError("Workflow dependencies must be distinct")
+            if not set(step.dependencies) <= graph.keys():
+                raise ValueError("Workflow dependency is unavailable")
+            if (step.condition_step is None) != (step.condition_value is None):
+                raise ValueError("Conditional steps require an exact branch")
+            if step.condition_step is not None and (
+                step.condition_step not in step.dependencies
+                or by_id[step.condition_step].kind != "CONDITION"
+            ):
+                raise ValueError("Conditional steps require a preceding condition")
+            if isinstance(step.condition_value, float) and not isfinite(step.condition_value):
+                raise ValueError("Condition scores must be finite")
+            if step.condition_operator != "EQ" and (
+                not isinstance(step.condition_value, (int, float))
+                or isinstance(step.condition_value, bool)
+            ):
+                raise ValueError("Ordered conditions require a numeric score")
+            if (step.kind == "VERIFICATION") != (step.check_id is not None):
+                raise ValueError("Verification gates require an exact proof check")
+        try:
+            tuple(TopologicalSorter(graph).static_order())
+        except CycleError:
+            raise ValueError("Recursive workflow dependencies are not permitted") from None
+        for loop in self.loops:
+            members = set(loop.steps)
+            if len(members) != len(loop.steps) or not members <= graph.keys():
+                raise ValueError("Workflow loops require distinct known steps")
+        return self
+
+
+class WorkflowTemplate(Contract):
+    name: Name
+    workflow: TaskWorkflow
+
+
+class WorkflowTemplates(Contract):
+    templates: list[WorkflowTemplate]
+
+
+class VerificationCheck(Contract):
+    check_id: Identifier
+    criterion: Name
+    argv: list[Name] = Field(min_length=1, max_length=128)
+    working_directory: Name
+    expected_exit_code: int
+
+    @model_validator(mode="after")
+    def relative_directory(self) -> "VerificationCheck":
+        from pathlib import PurePosixPath
+
+        path = PurePosixPath(self.working_directory)
+        if path.is_absolute() or ".." in path.parts or "\\" in self.working_directory:
+            raise ValueError("Verification directory must remain inside the owned workspace")
+        return self
+
+
+class VerificationPolicy(Contract):
+    project_id: Identifier
+    revision: PositiveRevision
+    enabled: bool
+    checks: list[VerificationCheck] = Field(min_length=1, max_length=128)
+    workflow: TaskWorkflow
+    required_capabilities: list[Identifier] = Field(default_factory=list, max_length=128)
+    required_services: list[Literal["NATIVE", "RESOURCE", "SKILL", "CONNECTION", "TOOL"]] = Field(
+        default_factory=list, max_length=5
+    )
+    created_by: Identifier
+    created_at: str
+
+    @model_validator(mode="after")
+    def bound_checks(self) -> "VerificationPolicy":
+        ids = {check.check_id for check in self.checks}
+        if len(ids) != len(self.checks):
+            raise ValueError("Verification check identities must be distinct")
+        gates = {step.check_id for step in self.workflow.steps if step.kind == "VERIFICATION"}
+        if gates != ids:
+            raise ValueError("Workflow gates must bind every exact verification check")
+        if len(set(self.required_capabilities)) != len(self.required_capabilities):
+            raise ValueError("Required capabilities must be distinct")
+        return self
+
+
+class VerificationPolicyConfigure(Contract):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    project_id: Identifier
+    expected_project_revision: PositiveRevision
+    expected_policy_revision: int = Field(ge=0)
+    enabled: bool
+    checks: list[VerificationCheck] = Field(min_length=1, max_length=128)
+    workflow: TaskWorkflow
+    required_capabilities: list[Identifier] = Field(default_factory=list, max_length=128)
+    required_services: list[Literal["NATIVE", "RESOURCE", "SKILL", "CONNECTION", "TOOL"]] = Field(
+        default_factory=list, max_length=5
+    )
+
+
+class VerificationPolicyReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["project.verification.configure.v1"] = "project.verification.configure.v1"
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    policy: VerificationPolicy
+
+
+class TaskRevise(TaskControl):
+    success_conditions: list[Name] = Field(min_length=1, max_length=128)
+    workflow: TaskWorkflow
+    expected_policy_revision: PositiveRevision
+
+
+class TaskAssign(TaskControl):
+    responsibility: Literal["BOT", "HUMAN", "UNASSIGNED"]
+    bot_id: Identifier | None = None
+    expected_bot_revision: PositiveRevision | None = None
+    contributor: bool = False
+
+    @model_validator(mode="after")
+    def assignment_target(self) -> "TaskAssign":
+        if (self.responsibility == "BOT") != (
+            self.bot_id is not None and self.expected_bot_revision is not None
+        ) or (self.responsibility != "BOT" and self.bot_id is not None):
+            raise ValueError("Bot assignment requires an exact Bot revision")
+        if self.contributor and self.responsibility != "BOT":
+            raise ValueError("A contributor must identify a Bot")
+        return self
+
+
+class TaskAdmission(TaskControl):
+    expected_policy_revision: PositiveRevision
+
+
+class AdmissionDecision(Contract):
+    scope: Literal["TASK_PREPARATION"] = "TASK_PREPARATION"
+    execution_authorized: Literal[False] = False
+    decision: Literal["ADMIT", "QUEUE", "DENY", "REQUIRE_APPROVAL"]
+    reason: Name
+    task_revision: PositiveRevision
+    criteria_revision: PositiveRevision
+    workflow_revision: PositiveRevision
+    policy_revision: PositiveRevision | None
+    bot_revision: PositiveRevision | None = None
+    profile_revision: PositiveRevision | None = None
+    authentication_ref: Identifier
+    principal_epoch: PositiveRevision
+    checked_at: str
+    execution_started: Literal[False] = False
+
+
 class TaskCriterion(Contract):
     text: Name
-    provenance: Literal["USER"] = "USER"
+    provenance: Literal["USER", "PROJECT"] = "USER"
     principal_id: Identifier
     objective_revision: PositiveRevision
 
@@ -162,19 +342,25 @@ class TaskPolicyBinding(Contract):
     project_id: Identifier
     project_revision: PositiveRevision
     policy_ref: Identifier | None
+    policy_revision: PositiveRevision | None = None
 
 
 class TaskAssignment(Contract):
-    responsibility: Literal["HUMAN", "UNASSIGNED"]
+    responsibility: Literal["HUMAN", "UNASSIGNED", "BOT"]
+    bot_id: Identifier | None = None
+    previous_bot_id: Identifier | None = None
+    kind: Literal["CREATE", "REASSIGN", "HANDOFF"] = "CREATE"
     principal_id: Identifier | None
     assigned_by: Identifier
     assigned_at: str
-    reason: Literal["Task created"] = "Task created"
+    reason: Name = "Task created"
 
     @model_validator(mode="after")
     def responsible_human(self) -> "TaskAssignment":
         if (self.responsibility == "HUMAN") != (self.principal_id is not None):
             raise ValueError("Human responsibility requires an attributed Principal")
+        if (self.responsibility == "BOT") != (self.bot_id is not None):
+            raise ValueError("Bot responsibility requires an attributed Bot")
         return self
 
 
@@ -190,6 +376,10 @@ class TaskView(Contract):
     verification_policy: TaskPolicyBinding
     assignment: TaskAssignment
     assignment_history: list[TaskAssignment]
+    contributors: list[TaskAssignment] = Field(default_factory=list)
+    workflow: TaskWorkflow | None = None
+    workflow_revision: PositiveRevision = 1
+    admission: AdmissionDecision | None = None
     dependencies: list[Identifier]
     state: TaskState
     paused: bool
@@ -203,7 +393,15 @@ class TaskView(Contract):
 class TaskReceipt(Contract):
     schema_version: SchemaVersion = 1
     operation_id: Identifier
-    command: Literal["task.create.v1", "task.pause.v1", "task.resume.v1", "task.cancel.v1"]
+    command: Literal[
+        "task.create.v1",
+        "task.pause.v1",
+        "task.resume.v1",
+        "task.cancel.v1",
+        "task.revise.v1",
+        "task.assign.v1",
+        "task.admit.v1",
+    ]
     outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
     committed_at: str
     task: TaskView
@@ -554,7 +752,8 @@ class RestoreReceipt(Contract):
 
 
 CanonicalReceipt = (
-    RestoreReceipt
+    VerificationPolicyReceipt
+    | RestoreReceipt
     | JobReceipt
     | OperationReceipt
     | PasskeyMutationReceipt

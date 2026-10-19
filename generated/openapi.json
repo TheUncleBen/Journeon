@@ -1,6 +1,123 @@
 {
   "components": {
     "schemas": {
+      "AdmissionDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Revision"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "criteria_revision": {
+            "minimum": 1.0,
+            "title": "Criteria Revision",
+            "type": "integer"
+          },
+          "decision": {
+            "enum": [
+              "ADMIT",
+              "QUEUE",
+              "DENY",
+              "REQUIRE_APPROVAL"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "execution_authorized": {
+            "const": false,
+            "default": false,
+            "title": "Execution Authorized",
+            "type": "boolean"
+          },
+          "execution_started": {
+            "const": false,
+            "default": false,
+            "title": "Execution Started",
+            "type": "boolean"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Revision"
+          },
+          "principal_epoch": {
+            "minimum": 1.0,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "profile_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Revision"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "scope": {
+            "const": "TASK_PREPARATION",
+            "default": "TASK_PREPARATION",
+            "title": "Scope",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1.0,
+            "title": "Task Revision",
+            "type": "integer"
+          },
+          "workflow_revision": {
+            "minimum": 1.0,
+            "title": "Workflow Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decision",
+          "reason",
+          "task_revision",
+          "criteria_revision",
+          "workflow_revision",
+          "policy_revision",
+          "authentication_ref",
+          "principal_epoch",
+          "checked_at"
+        ],
+        "title": "AdmissionDecision",
+        "type": "object"
+      },
       "AttentionList": {
         "items": {
           "$ref": "#/components/schemas/AttentionView"
@@ -4367,6 +4484,131 @@
         "title": "RootRevoke",
         "type": "object"
       },
+      "TaskAdmission": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_policy_revision": {
+            "minimum": 1.0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "task_id",
+          "expected_revision",
+          "reason",
+          "expected_policy_revision"
+        ],
+        "title": "TaskAdmission",
+        "type": "object"
+      },
+      "TaskAssign": {
+        "additionalProperties": false,
+        "properties": {
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Id"
+          },
+          "contributor": {
+            "default": false,
+            "title": "Contributor",
+            "type": "boolean"
+          },
+          "expected_bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Bot Revision"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "responsibility": {
+            "enum": [
+              "BOT",
+              "HUMAN",
+              "UNASSIGNED"
+            ],
+            "title": "Responsibility",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "task_id",
+          "expected_revision",
+          "reason",
+          "responsibility"
+        ],
+        "title": "TaskAssign",
+        "type": "object"
+      },
       "TaskAssignment": {
         "additionalProperties": false,
         "properties": {
@@ -4378,6 +4620,40 @@
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
             "title": "Assigned By",
             "type": "string"
+          },
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Id"
+          },
+          "kind": {
+            "default": "CREATE",
+            "enum": [
+              "CREATE",
+              "REASSIGN",
+              "HANDOFF"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "previous_bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Bot Id"
           },
           "principal_id": {
             "anyOf": [
@@ -4392,15 +4668,17 @@
             "title": "Principal Id"
           },
           "reason": {
-            "const": "Task created",
             "default": "Task created",
+            "maxLength": 200,
+            "minLength": 1,
             "title": "Reason",
             "type": "string"
           },
           "responsibility": {
             "enum": [
               "HUMAN",
-              "UNASSIGNED"
+              "UNASSIGNED",
+              "BOT"
             ],
             "title": "Responsibility",
             "type": "string"
@@ -4535,8 +4813,11 @@
             "type": "string"
           },
           "provenance": {
-            "const": "USER",
             "default": "USER",
+            "enum": [
+              "USER",
+              "PROJECT"
+            ],
             "title": "Provenance",
             "type": "string"
           },
@@ -4569,6 +4850,18 @@
               }
             ],
             "title": "Policy Ref"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Revision"
           },
           "project_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
@@ -4603,7 +4896,10 @@
               "task.create.v1",
               "task.pause.v1",
               "task.resume.v1",
-              "task.cancel.v1"
+              "task.cancel.v1",
+              "task.revise.v1",
+              "task.assign.v1",
+              "task.admit.v1"
             ],
             "title": "Command",
             "type": "string"
@@ -4642,9 +4938,81 @@
         "title": "TaskReceipt",
         "type": "object"
       },
+      "TaskRevise": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_policy_revision": {
+            "minimum": 1.0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "success_conditions": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Success Conditions",
+            "type": "array"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/TaskWorkflow"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "task_id",
+          "expected_revision",
+          "reason",
+          "success_conditions",
+          "workflow",
+          "expected_policy_revision"
+        ],
+        "title": "TaskRevise",
+        "type": "object"
+      },
       "TaskView": {
         "additionalProperties": false,
         "properties": {
+          "admission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdmissionDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "assignment": {
             "$ref": "#/components/schemas/TaskAssignment"
           },
@@ -4667,6 +5035,13 @@
               }
             ],
             "title": "Blocker"
+          },
+          "contributors": {
+            "items": {
+              "$ref": "#/components/schemas/TaskAssignment"
+            },
+            "title": "Contributors",
+            "type": "array"
           },
           "created_at": {
             "title": "Created At",
@@ -4774,6 +5149,22 @@
           },
           "verification_policy": {
             "$ref": "#/components/schemas/TaskPolicyBinding"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskWorkflow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "workflow_revision": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Workflow Revision",
+            "type": "integer"
           }
         },
         "required": [
@@ -4798,6 +5189,33 @@
           "updated_at"
         ],
         "title": "TaskView",
+        "type": "object"
+      },
+      "TaskWorkflow": {
+        "additionalProperties": false,
+        "properties": {
+          "loops": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowLoop"
+            },
+            "maxItems": 128,
+            "title": "Loops",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStep"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "TaskWorkflow",
         "type": "object"
       },
       "TeamCreate": {
@@ -4931,6 +5349,405 @@
           "value"
         ],
         "title": "VariableBinding",
+        "type": "object"
+      },
+      "VerificationCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "argv": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Argv",
+            "type": "array"
+          },
+          "check_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Check Id",
+            "type": "string"
+          },
+          "criterion": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Criterion",
+            "type": "string"
+          },
+          "expected_exit_code": {
+            "title": "Expected Exit Code",
+            "type": "integer"
+          },
+          "working_directory": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Working Directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "criterion",
+          "argv",
+          "working_directory",
+          "expected_exit_code"
+        ],
+        "title": "VerificationCheck",
+        "type": "object"
+      },
+      "VerificationPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationCheck"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Checks",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_capabilities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Capabilities",
+            "type": "array"
+          },
+          "required_services": {
+            "items": {
+              "enum": [
+                "NATIVE",
+                "RESOURCE",
+                "SKILL",
+                "CONNECTION",
+                "TOOL"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Required Services",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/TaskWorkflow"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "enabled",
+          "checks",
+          "workflow",
+          "created_by",
+          "created_at"
+        ],
+        "title": "VerificationPolicy",
+        "type": "object"
+      },
+      "VerificationPolicyConfigure": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationCheck"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Checks",
+            "type": "array"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "expected_policy_revision": {
+            "minimum": 0.0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "expected_project_revision": {
+            "minimum": 1.0,
+            "title": "Expected Project Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_capabilities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Capabilities",
+            "type": "array"
+          },
+          "required_services": {
+            "items": {
+              "enum": [
+                "NATIVE",
+                "RESOURCE",
+                "SKILL",
+                "CONNECTION",
+                "TOOL"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Required Services",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/TaskWorkflow"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "project_id",
+          "expected_project_revision",
+          "expected_policy_revision",
+          "enabled",
+          "checks",
+          "workflow"
+        ],
+        "title": "VerificationPolicyConfigure",
+        "type": "object"
+      },
+      "VerificationPolicyReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "project.verification.configure.v1",
+            "default": "project.verification.configure.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VerificationPolicy"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "policy"
+        ],
+        "title": "VerificationPolicyReceipt",
+        "type": "object"
+      },
+      "WorkflowLoop": {
+        "additionalProperties": false,
+        "properties": {
+          "maximum_iterations": {
+            "minimum": 1.0,
+            "title": "Maximum Iterations",
+            "type": "integer"
+          },
+          "steps": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps",
+          "maximum_iterations"
+        ],
+        "title": "WorkflowLoop",
+        "type": "object"
+      },
+      "WorkflowStep": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Id"
+          },
+          "condition_operator": {
+            "default": "EQ",
+            "enum": [
+              "EQ",
+              "LT",
+              "LE",
+              "GT",
+              "GE"
+            ],
+            "title": "Condition Operator",
+            "type": "string"
+          },
+          "condition_step": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition Step"
+          },
+          "condition_value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition Value"
+          },
+          "dependencies": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "WORK",
+              "CONDITION",
+              "APPROVAL",
+              "VERIFICATION",
+              "REVIEW"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "step_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Step Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "kind"
+        ],
+        "title": "WorkflowStep",
+        "type": "object"
+      },
+      "WorkflowTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/TaskWorkflow"
+          }
+        },
+        "required": [
+          "name",
+          "workflow"
+        ],
+        "title": "WorkflowTemplate",
+        "type": "object"
+      },
+      "WorkflowTemplates": {
+        "additionalProperties": false,
+        "properties": {
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowTemplate"
+            },
+            "title": "Templates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "templates"
+        ],
+        "title": "WorkflowTemplates",
         "type": "object"
       }
     }
@@ -6722,6 +7539,9 @@
                 "schema": {
                   "anyOf": [
                     {
+                      "$ref": "#/components/schemas/VerificationPolicyReceipt"
+                    },
+                    {
                       "$ref": "#/components/schemas/RestoreReceipt"
                     },
                     {
@@ -7710,6 +8530,111 @@
         "x-journeon-owner": "projects",
         "x-journeon-permissions": [
           "project.create",
+          "project.receipt.read"
+        ]
+      }
+    },
+    "/api/v1/projects/verification": {
+      "post": {
+        "operationId": "configureVerification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationPolicyConfigure"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationPolicyReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Configure Verification",
+        "x-journeon-command": "project.verification.configure.v1",
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.verification.configure",
+          "project.verification.read",
           "project.receipt.read"
         ]
       }
@@ -9621,6 +10546,111 @@
         ]
       }
     },
+    "/api/v1/projects/{project_id}/verification": {
+      "get": {
+        "operationId": "getVerification",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationPolicy"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Verification",
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.verification.read"
+        ],
+        "x-journeon-query": "project.verification.read.v1"
+      }
+    },
     "/api/v1/protected-operations/cancel": {
       "post": {
         "operationId": "cancelInstructionEffect",
@@ -10366,6 +11396,360 @@
         ]
       }
     },
+    "/api/v1/tasks/admit": {
+      "post": {
+        "operationId": "admitTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskAdmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Admit Task",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.admit",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "execution.admit",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "admission or Bot assignment"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "bot.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "{policy.required_capability}",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "configured policy requirement"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current Task preparation authority; no permission to execute a later effect"
+        },
+        "x-journeon-command": "task.admit.v1",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.admit",
+          "task.read",
+          "task.receipt.read",
+          "project.verification.read",
+          "execution.admit",
+          "bot.read",
+          "bot.use",
+          "profile.read",
+          "profile.use"
+        ]
+      }
+    },
+    "/api/v1/tasks/assign": {
+      "post": {
+        "operationId": "assignTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskAssign"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Assign Task",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.assign",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "execution.admit",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "admission or Bot assignment"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "bot.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "Bot assignment or admission"
+            },
+            {
+              "capability": "{policy.required_capability}",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "configured policy requirement"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current Task preparation authority; no permission to execute a later effect"
+        },
+        "x-journeon-command": "task.assign.v1",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.assign",
+          "task.read",
+          "task.receipt.read",
+          "project.verification.read",
+          "execution.admit",
+          "bot.read",
+          "bot.use",
+          "profile.read",
+          "profile.use"
+        ]
+      }
+    },
     "/api/v1/tasks/cancel": {
       "post": {
         "operationId": "cancelTask",
@@ -10679,6 +12063,247 @@
           "task.read",
           "task.receipt.read"
         ]
+      }
+    },
+    "/api/v1/tasks/revise": {
+      "post": {
+        "operationId": "reviseTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRevise"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Revise Task",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.revise",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current Task preparation authority; no permission to execute a later effect"
+        },
+        "x-journeon-command": "task.revise.v1",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.revise",
+          "task.read",
+          "task.receipt.read",
+          "project.verification.read"
+        ]
+      }
+    },
+    "/api/v1/tasks/workflow-templates": {
+      "get": {
+        "operationId": "getWorkflowTemplates",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTemplates"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Workflow Templates",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.read"
+        ],
+        "x-journeon-query": "task.workflows.read.v1"
       }
     },
     "/api/v1/tasks/{task_id}": {

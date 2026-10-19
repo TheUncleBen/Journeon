@@ -31,12 +31,18 @@ from journeon.contracts import (
     ProfileRevisionPreview,
     ProfileView,
     ProjectCreate,
+    TaskAdmission,
+    TaskAssign,
     TaskControl,
     TaskCreate,
     TaskReceipt,
+    TaskRevise,
     TaskView,
     TeamCreate,
     TeamView,
+    VerificationPolicy,
+    VerificationPolicyConfigure,
+    VerificationPolicyReceipt,
 )
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.registry import registry_manifest
@@ -90,6 +96,9 @@ def artifacts() -> dict[str, str]:
     finally:
         engine.dispose()
     definitions = openapi["components"]["schemas"]
+    receipt_schema = openapi["paths"]["/api/v1/operations/{operation_id}"]["get"]["responses"][
+        "200"
+    ]["content"]["application/json"]["schema"]
     types = []
     for name, schema in sorted(definitions.items()):
         types.append(f"export type {name} = {ts_type(schema)};")
@@ -113,10 +122,16 @@ def artifacts() -> dict[str, str]:
         "getBotSettings": ("GET", "/api/v1/bots/{identity}/effective-settings"),
         "getInstructionBundle": ("GET", "/api/v1/instruction-bundles/{identity}"),
         "getEffectivePermission": ("GET", "/api/v1/permissions/effective"),
+        "getWorkflowTemplates": ("GET", "/api/v1/tasks/workflow-templates"),
         "getTask": ("GET", "/api/v1/tasks/{task_id}"),
         "createTask": ("POST", "/api/v1/tasks"),
         "pauseTask": ("POST", "/api/v1/tasks/pause"),
         "resumeTask": ("POST", "/api/v1/tasks/resume"),
+        "reviseTask": ("POST", "/api/v1/tasks/revise"),
+        "assignTask": ("POST", "/api/v1/tasks/assign"),
+        "admitTask": ("POST", "/api/v1/tasks/admit"),
+        "configureVerification": ("POST", "/api/v1/projects/verification"),
+        "getVerification": ("GET", "/api/v1/projects/{project_id}/verification"),
         "cancelTask": ("POST", "/api/v1/tasks/cancel"),
         "beginPasskey": ("POST", "/api/v1/auth/passkeys/begin"),
         "finishPasskey": ("POST", "/api/v1/auth/passkeys/finish"),
@@ -217,9 +232,9 @@ def artifacts() -> dict[str, str]:
         + "\n\n".join(types)
         + """
 
-export type CanonicalReceipt =
-  OperationReceipt | PasskeyMutationReceipt | TaskReceipt |
-  ConfigurationReceipt | InstructionReceipt;
+export type CanonicalReceipt = """
+        + ts_type(receipt_schema)
+        + """;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -361,6 +376,38 @@ export class JourneonClient {
       headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
   }
 
+  reviseTask(command: TaskRevise, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/revise", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  assignTask(command: TaskAssign, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/assign", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  admitTask(command: TaskAdmission, csrfToken?: string): Promise<TaskReceipt> {
+    return this.request("/api/v1/tasks/admit", {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  configureVerification(command: VerificationPolicyConfigure,
+    csrfToken?: string): Promise<VerificationPolicyReceipt> {
+    return this.request("/api/v1/projects/verification",
+      {method: "POST", body: JSON.stringify(command),
+      headers: csrfToken ? {"X-CSRF-Token": csrfToken} : {}});
+  }
+
+  getVerification(projectId: string): Promise<VerificationPolicy> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}/verification`,
+      {method: "GET"});
+  }
+
+  getWorkflowTemplates(projectId: string): Promise<WorkflowTemplates> {
+    const query = new URLSearchParams({project_id: projectId});
+    return this.request(`/api/v1/tasks/workflow-templates?${query}`, {method: "GET"});
+  }
+
   getOperationReceipt(operationId: string): Promise<CanonicalReceipt> {
     return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`,
       {method: "GET"});
@@ -394,6 +441,12 @@ export class JourneonClient {
             BundleResult,
             ProjectCreate,
             TaskCreate,
+            TaskRevise,
+            TaskAssign,
+            TaskAdmission,
+            VerificationPolicyConfigure,
+            VerificationPolicyReceipt,
+            VerificationPolicy,
             TaskControl,
             TaskReceipt,
             TaskView,

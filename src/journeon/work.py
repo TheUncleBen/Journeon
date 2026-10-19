@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Canonical local Task transactions; execution admission belongs to a later consumer."""
+"""Canonical Task transactions and current-authority deterministic admission."""
 
 import hashlib
 import json
@@ -14,20 +14,28 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, defer
 
 from journeon.contracts import (
+    AdmissionDecision,
     DomainError,
     TaskAction,
+    TaskAdmission,
+    TaskAssign,
     TaskAssignment,
     TaskControl,
     TaskCreate,
     TaskCriterion,
     TaskPolicyBinding,
     TaskReceipt,
+    TaskRevise,
     TaskView,
+    VerificationPolicy,
+    VerificationPolicyConfigure,
+    VerificationPolicyReceipt,
 )
 from journeon.database import require_compatible_schema, transaction
-from journeon.models import OutboxEvent, Project, Receipt, Task
+from journeon.models import OutboxEvent, Project, Receipt, Task, TaskRevision
 from journeon.permissions import AuthenticatedContext, require_grant
 from journeon.sessions import current_session
+from journeon.verification import configure, current_policy, validate_workflow
 
 
 @contextmanager
@@ -92,7 +100,7 @@ def prior_receipt(
     db: Session,
     actor: AuthenticatedContext,
     name: str,
-    command: TaskCreate | TaskControl,
+    command: TaskCreate | TaskControl | TaskRevise | TaskAssign | TaskAdmission,
     digest: str,
 ) -> TaskReceipt | None:
     row = db.scalar(
@@ -114,7 +122,9 @@ def prior_receipt(
     return result
 
 
-def payload_hash(command: TaskCreate | TaskControl) -> str:
+def payload_hash(
+    command: TaskCreate | TaskControl | TaskRevise | TaskAssign | TaskAdmission,
+) -> str:
     data = command.model_dump(mode="json", exclude={"idempotency_key"})
     if isinstance(command, TaskCreate):
         data["dependencies"] = sorted(data["dependencies"])
@@ -141,7 +151,7 @@ def commit_task(
     db: Session,
     actor: AuthenticatedContext,
     name: str,
-    command: TaskCreate | TaskControl,
+    command: TaskCreate | TaskControl | TaskRevise | TaskAssign | TaskAdmission,
     digest: str,
     view: TaskView,
 ) -> TaskReceipt:
@@ -167,11 +177,22 @@ def commit_task(
         )
     )
     db.flush()
+    db.add(
+        TaskRevision(
+            task_id=view.task_id,
+            revision=view.revision,
+            snapshot=view.model_dump(mode="json"),
+            operation_id=result.operation_id,
+        )
+    )
     event_types = {
         "task.create.v1": "task.created",
         "task.pause.v1": "task.paused",
         "task.resume.v1": "task.resumed",
         "task.cancel.v1": "task.cancelled",
+        "task.revise.v1": "task.revised",
+        "task.assign.v1": "task.assigned",
+        "task.admit.v1": "task.admission.checked",
     }
     db.add(
         OutboxEvent(
@@ -217,6 +238,12 @@ class WorkService:
             if project.revision != command.expected_project_revision:
                 raise DomainError("REVISION_CONFLICT", "Project changed; refresh its revision")
             dependencies(db, actor, project.id, command.dependencies)
+            policy = (
+                current_policy(db, actor, project.id)
+                if isinstance(project.verification_policy_ref, str)
+                and project.verification_policy_ref.startswith("verification:")
+                else None
+            )
             now = datetime.now(UTC).isoformat()
             assignment = TaskAssignment(
                 responsibility=command.responsibility,
@@ -235,11 +262,25 @@ class WorkService:
                 success_conditions=[
                     TaskCriterion(text=text, principal_id=actor.principal_id, objective_revision=1)
                     for text in command.success_conditions
-                ],
+                ]
+                if command.success_conditions
+                else [
+                    TaskCriterion(
+                        text=check.criterion,
+                        provenance="PROJECT",
+                        principal_id=policy.created_by,
+                        objective_revision=1,
+                    )
+                    for check in policy.checks
+                ]
+                if policy
+                else [],
+                workflow=policy.workflow if policy else None,
                 verification_policy=TaskPolicyBinding(
                     project_id=project.id,
                     project_revision=project.revision,
                     policy_ref=project.verification_policy_ref,
+                    policy_revision=policy.revision if policy else None,
                 ),
                 assignment=assignment,
                 assignment_history=[assignment],
@@ -319,9 +360,242 @@ class WorkService:
                         else "BACKLOG"
                     )
                 # BACKLOG is deliberate: no execution, evidence or route admission is asserted.
-            values.update(revision=view.revision + 1, updated_at=datetime.now(UTC).isoformat())
+            values.update(
+                admission=None, revision=view.revision + 1, updated_at=datetime.now(UTC).isoformat()
+            )
             updated = TaskView.model_validate(values)
             row.revision = updated.revision
             row.snapshot = updated.model_dump(mode="json")
             db.flush()
             return commit_task(db, actor, name, command, digest, updated)
+
+    def configure_verification(
+        self, actor: AuthenticatedContext, command: VerificationPolicyConfigure
+    ) -> VerificationPolicyReceipt:
+        with work_transaction(self.engine, actor) as db:
+            return configure(db, actor, command)
+
+    def verification(self, actor: AuthenticatedContext, project_id: str) -> VerificationPolicy:
+        with work_transaction(self.engine, actor) as db:
+            policy = current_policy(db, actor, project_id)
+            if policy is None:
+                raise DomainError("NOT_FOUND", "Verification policy is not configured")
+            return policy
+
+    def revise(self, actor: AuthenticatedContext, command: TaskRevise) -> TaskReceipt:
+        return self._change(actor, "revise", command)
+
+    def assign(self, actor: AuthenticatedContext, command: TaskAssign) -> TaskReceipt:
+        return self._change(actor, "assign", command)
+
+    def create_or_continue_task(
+        self, actor: AuthenticatedContext, command: TaskAdmission
+    ) -> TaskReceipt:
+        return self._change(actor, "admit", command)
+
+    def _change(
+        self,
+        actor: AuthenticatedContext,
+        action: str,
+        command: TaskRevise | TaskAssign | TaskAdmission,
+    ) -> TaskReceipt:
+        name = f"task.{action}.v1"
+        digest = payload_hash(command)
+        with work_transaction(self.engine, actor) as db:
+            previous = prior_receipt(db, actor, name, command, digest)
+            if previous is not None:
+                if isinstance(command, (TaskAdmission, TaskAssign)):
+                    current = task_view(task_row(db, actor, command.task_id, "task.read"))
+                    policy = current_policy(db, actor, current.project_id)
+                    require_grant(db, actor, "execution.admit", project_id=current.project_id)
+                    if policy is None or not policy.enabled:
+                        raise DomainError(
+                            "PERMISSION_DENIED", "Current execution policy is unavailable"
+                        )
+                    if (
+                        isinstance(command, TaskAdmission)
+                        and policy.revision != command.expected_policy_revision
+                    ):
+                        raise DomainError(
+                            "REVISION_CONFLICT", "Verification policy changed; refresh its revision"
+                        )
+                    identity = (
+                        command.bot_id
+                        if isinstance(command, TaskAssign)
+                        else current.assignment.bot_id
+                    )
+                    if identity:
+                        from journeon.agents import task_receiver
+
+                        task_receiver(db, actor, identity, current.project_id, policy)
+                return previous
+            row = task_row(db, actor, command.task_id, f"task.{action}")
+            for capability in ("task.read", "task.receipt.read"):
+                require_grant(db, actor, capability, project_id=row.project_id)
+            view = task_view(row)
+            if view.revision != command.expected_revision:
+                raise DomainError("REVISION_CONFLICT", "Task changed; refresh its revision")
+            if view.state in ("RUNNING", "REVIEW", "DONE", "CANCELLED", "ARCHIVED"):
+                raise DomainError(
+                    "REVISION_CONFLICT", "Task requires settlement before this change"
+                )
+            policy = current_policy(db, actor, view.project_id)
+            values = view.model_dump(mode="json")
+            now = datetime.now(UTC).isoformat()
+            values.update(revision=view.revision + 1, updated_at=now, admission=None)
+            if isinstance(command, TaskRevise):
+                if policy is None or policy.revision != command.expected_policy_revision:
+                    raise DomainError(
+                        "REVISION_CONFLICT", "Verification policy changed; refresh its revision"
+                    )
+                validate_workflow(policy, command.workflow)
+                project = db.get(Project, view.project_id)
+                assert project is not None
+                values.update(
+                    success_conditions=[
+                        TaskCriterion(
+                            text=text,
+                            principal_id=actor.principal_id,
+                            objective_revision=view.objective_revision,
+                        ).model_dump()
+                        for text in command.success_conditions
+                    ],
+                    criteria_revision=view.criteria_revision + 1,
+                    workflow=command.workflow.model_dump(),
+                    workflow_revision=view.workflow_revision + 1,
+                    state="BACKLOG",
+                    blocker=None,
+                    verification_policy=TaskPolicyBinding(
+                        project_id=project.id,
+                        project_revision=project.revision,
+                        policy_ref=project.verification_policy_ref,
+                        policy_revision=policy.revision,
+                    ).model_dump(),
+                )
+            elif isinstance(command, TaskAssign):
+                if command.bot_id is not None:
+                    from journeon.agents import task_receiver
+
+                    if policy is None:
+                        raise DomainError(
+                            "DEPENDENCY_UNAVAILABLE", "Verification policy is not configured"
+                        )
+                    bot, _ = task_receiver(db, actor, command.bot_id, view.project_id, policy)
+                    if bot.revision != command.expected_bot_revision:
+                        raise DomainError("REVISION_CONFLICT", "Bot revision changed")
+                assignment = TaskAssignment(
+                    responsibility=command.responsibility,
+                    principal_id=actor.principal_id if command.responsibility == "HUMAN" else None,
+                    bot_id=command.bot_id,
+                    previous_bot_id=view.assignment.bot_id,
+                    kind="HANDOFF"
+                    if view.assignment.bot_id and command.bot_id and not command.contributor
+                    else "REASSIGN",
+                    assigned_by=actor.principal_id,
+                    assigned_at=now,
+                    reason=command.reason,
+                )
+                if command.contributor:
+                    if command.bot_id == view.assignment.bot_id or any(
+                        item.bot_id == command.bot_id for item in view.contributors
+                    ):
+                        raise DomainError(
+                            "REVISION_CONFLICT", "Bot already participates in this Task"
+                        )
+                    values["contributors"] = [*view.contributors, assignment]
+                else:
+                    values.update(
+                        assignment=assignment,
+                        assignment_history=[*view.assignment_history, assignment],
+                        state="BACKLOG",
+                    )
+            else:
+                if policy is not None and policy.revision != command.expected_policy_revision:
+                    raise DomainError(
+                        "REVISION_CONFLICT", "Verification policy changed; refresh its revision"
+                    )
+                decision = self._admission(db, actor, view, policy, now)
+                values.update(
+                    admission=decision,
+                    state={
+                        "ADMIT": "READY",
+                        "QUEUE": "WAITING",
+                        "DENY": "BLOCKED",
+                        "REQUIRE_APPROVAL": "WAITING",
+                    }[decision.decision],
+                    blocker=decision.reason if decision.decision == "DENY" else None,
+                )
+            updated = TaskView.model_validate(values)
+            row.revision, row.snapshot = updated.revision, updated.model_dump(mode="json")
+            db.flush()
+            return commit_task(db, actor, name, command, digest, updated)
+
+    def _admission(
+        self,
+        db: Session,
+        actor: AuthenticatedContext,
+        view: TaskView,
+        policy: VerificationPolicy | None,
+        now: str,
+    ) -> AdmissionDecision:
+        decision = AdmissionDecision(
+            decision="ADMIT",
+            reason="Current deterministic admission checks passed",
+            task_revision=view.revision + 1,
+            criteria_revision=view.criteria_revision,
+            workflow_revision=view.workflow_revision,
+            policy_revision=policy.revision if policy else None,
+            authentication_ref=actor.authentication_ref,
+            principal_epoch=actor.principal_epoch,
+            checked_at=now,
+        )
+
+        def outcome(value: str, reason: str) -> AdmissionDecision:
+            return AdmissionDecision.model_validate(
+                decision.model_dump() | {"decision": value, "reason": reason}
+            )
+
+        try:
+            require_grant(db, actor, "execution.admit", project_id=view.project_id)
+            if policy is not None:
+                for capability in policy.required_capabilities:
+                    require_grant(db, actor, capability, project_id=view.project_id)
+        except DomainError as exc:
+            if exc.code != "PERMISSION_DENIED":
+                raise
+            return outcome("DENY", "Current execution authority is unavailable")
+        if policy is None or not policy.enabled:
+            return outcome("DENY", "Verification policy is not configured or enabled")
+        if policy.required_services:
+            return outcome("DENY", "Required execution services are unavailable")
+        if (
+            view.verification_policy.policy_revision != policy.revision
+            or not view.success_conditions
+            or view.workflow is None
+        ):
+            return outcome("DENY", "Task criteria and workflow require policy reconciliation")
+        validate_workflow(policy, view.workflow)
+        if view.assignment.bot_id:
+            from journeon.agents import task_receiver
+
+            try:
+                bot, profile = task_receiver(
+                    db, actor, view.assignment.bot_id, view.project_id, policy
+                )
+                decision = decision.model_copy(
+                    update={"bot_revision": bot.revision, "profile_revision": profile.revision}
+                )
+            except DomainError as exc:
+                if exc.code not in ("PERMISSION_DENIED", "NOT_FOUND"):
+                    raise
+                return outcome("DENY", "Current responsible Bot is ineligible")
+        elif view.assignment.responsibility == "UNASSIGNED":
+            return outcome("QUEUE", "Task requires a responsible assignee")
+        pending = dependencies(db, actor, view.project_id, view.dependencies)
+        if any(item.state in ("CANCELLED", "ARCHIVED", "BLOCKED") for item in pending):
+            return outcome("DENY", "A Task dependency cannot currently continue")
+        if view.paused or view.stop_reason or any(item.state != "DONE" for item in pending):
+            return outcome("QUEUE", "Task is paused or waiting for a dependency")
+        if any(step.kind == "APPROVAL" for step in view.workflow.steps):
+            return outcome("REQUIRE_APPROVAL", "Workflow approval is required before execution")
+        return decision

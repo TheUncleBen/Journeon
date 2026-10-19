@@ -41,12 +41,19 @@ from journeon.contracts import (
     ProfileRevisionPreview,
     ProfileView,
     ProjectCreate,
+    TaskAdmission,
+    TaskAssign,
     TaskControl,
     TaskCreate,
     TaskReceipt,
+    TaskRevise,
     TaskView,
     TeamCreate,
     TeamView,
+    VerificationPolicy,
+    VerificationPolicyConfigure,
+    VerificationPolicyReceipt,
+    WorkflowTemplates,
 )
 from journeon.factors import FactorService
 from journeon.instruction_config import InstructionConfiguration
@@ -184,6 +191,29 @@ def create_app(
         return FactorService(engine).label(actor, command)
 
     @app.get(
+        "/api/v1/tasks/workflow-templates",
+        response_model=WorkflowTemplates,
+        operation_id="getWorkflowTemplates",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "work",
+            "x-journeon-query": "task.workflows.read.v1",
+            "x-journeon-permissions": ["task.read"],
+        },
+    )
+    def get_workflow_templates(
+        project_id: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> WorkflowTemplates:
+        from journeon.permissions import require_grant
+        from journeon.work import work_transaction
+        from journeon.workflows import templates
+
+        with work_transaction(engine, actor) as db:
+            require_grant(db, actor, "task.read", project_id=project_id)
+            return templates()
+
+    @app.get(
         "/api/v1/tasks/{task_id}",
         response_model=TaskView,
         operation_id="getTask",
@@ -267,6 +297,81 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> TaskReceipt:
         return WorkService(engine).control(actor, "cancel", command)
+
+    @app.post(
+        "/api/v1/tasks/revise",
+        response_model=TaskReceipt,
+        operation_id="reviseTask",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.revise.v1"),
+    )
+    def revise_task(
+        command: TaskRevise, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> TaskReceipt:
+        return WorkService(engine).revise(actor, command)
+
+    @app.post(
+        "/api/v1/tasks/assign",
+        response_model=TaskReceipt,
+        operation_id="assignTask",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.assign.v1"),
+    )
+    def assign_task(
+        command: TaskAssign, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> TaskReceipt:
+        return WorkService(engine).assign(actor, command)
+
+    @app.post(
+        "/api/v1/tasks/admit",
+        response_model=TaskReceipt,
+        operation_id="admitTask",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.admit.v1"),
+    )
+    def admit_task(
+        command: TaskAdmission,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskReceipt:
+        return WorkService(engine).create_or_continue_task(actor, command)
+
+    @app.post(
+        "/api/v1/projects/verification",
+        response_model=VerificationPolicyReceipt,
+        operation_id="configureVerification",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "projects",
+            "x-journeon-command": "project.verification.configure.v1",
+            "x-journeon-permissions": [
+                "project.verification.configure",
+                "project.verification.read",
+                "project.receipt.read",
+            ],
+        },
+    )
+    def configure_verification(
+        command: VerificationPolicyConfigure,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> VerificationPolicyReceipt:
+        return WorkService(engine).configure_verification(actor, command)
+
+    @app.get(
+        "/api/v1/projects/{project_id}/verification",
+        response_model=VerificationPolicy,
+        operation_id="getVerification",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "projects",
+            "x-journeon-query": "project.verification.read.v1",
+            "x-journeon-permissions": ["project.verification.read"],
+        },
+    )
+    def get_verification(
+        project_id: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> VerificationPolicy:
+        return WorkService(engine).verification(actor, project_id)
 
     @app.post(
         "/api/v1/profiles",

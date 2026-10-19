@@ -89,3 +89,14 @@ void [cancelledJob, replay, restorePlan];
 // @ts-expect-error Job cancellation cannot supply worker identity or approval.
 const forgedCancellation: JobCancel = {...cancellation, claim_owner: "caller"};
 void forgedCancellation;
+
+import type { VerificationPolicyReceipt, JobReceipt, RestoreReceipt, TaskAdmission } from "../generated/client.js";
+function canonicalPolicy(receipt: VerificationPolicyReceipt): CanonicalReceipt { return receipt; }
+function canonicalJob(receipt: JobReceipt): CanonicalReceipt { return receipt; }
+function canonicalRestore(receipt: RestoreReceipt): CanonicalReceipt { return receipt; }
+void [canonicalPolicy, canonicalJob, canonicalRestore];
+const admission: TaskAdmission = {...taskControl, expected_policy_revision: 1};
+void client.admitTask(admission, "csrf");
+// @ts-expect-error Admission cannot accept caller approval.
+const approvedAdmission: TaskAdmission = {...admission, approved: true};
+void approvedAdmission;

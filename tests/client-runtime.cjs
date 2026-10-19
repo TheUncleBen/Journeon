@@ -9,6 +9,25 @@ async function main() {
     calls.push({ url, init });
     return new Response(JSON.stringify(receipt), { status: 200 });
   };
+  const successorCalls = [];
+  const successor = new JourneonClient("", async (url, init) => {
+    successorCalls.push({url, init});
+    return new Response(JSON.stringify(receipt), {status: 200});
+  });
+  for (const [method, path] of [["admitTask", "/api/v1/tasks/admit"],
+    ["assignTask", "/api/v1/tasks/assign"], ["reviseTask", "/api/v1/tasks/revise"],
+    ["configureVerification", "/api/v1/projects/verification"]]) {
+    assert.deepEqual(await successor[method]({idempotency_key: "fixture"}, "csrf"), receipt);
+    const call = successorCalls.at(-1);
+    assert.equal(call.url, path);
+    assert.equal(call.init.method, "POST");
+    assert.equal(call.init.headers["X-CSRF-Token"], "csrf");
+    assert.equal(call.init.credentials, "same-origin");
+  }
+  await successor.getVerification("encoded/project");
+  assert.equal(successorCalls.at(-1).url, "/api/v1/projects/encoded%2Fproject/verification");
+  await successor.getWorkflowTemplates("encoded/project");
+  assert.equal(successorCalls.at(-1).url, "/api/v1/tasks/workflow-templates?project_id=encoded%2Fproject");
   const client = new JourneonClient("", transport);
   const command = {
     schema_version: 1, idempotency_key: "synthetic-command", name: "Example project",

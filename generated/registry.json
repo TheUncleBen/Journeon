@@ -49,6 +49,21 @@
     {
       "authentication": null,
       "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_workflow_templates",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getWorkflowTemplates",
+      "owner": "work",
+      "path": "/api/v1/tasks/workflow-templates",
+      "permissions": [
+        "task.read"
+      ],
+      "query": "task.workflows.read.v1"
+    },
+    {
+      "authentication": null,
+      "command": null,
       "endpoint": "journeon.api.create_app.<locals>.get_task",
       "methods": [
         "GET"
@@ -128,6 +143,264 @@
         "task.receipt.read"
       ],
       "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.revise",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect"
+      },
+      "command": "task.revise.v1",
+      "endpoint": "journeon.api.create_app.<locals>.revise_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "reviseTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/revise",
+      "permissions": [
+        "task.revise",
+        "task.read",
+        "task.receipt.read",
+        "project.verification.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.assign",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "admission or Bot assignment"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "configured policy requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect"
+      },
+      "command": "task.assign.v1",
+      "endpoint": "journeon.api.create_app.<locals>.assign_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "assignTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/assign",
+      "permissions": [
+        "task.assign",
+        "task.read",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "admission or Bot assignment"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "configured policy requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect"
+      },
+      "command": "task.admit.v1",
+      "endpoint": "journeon.api.create_app.<locals>.admit_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "admitTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/admit",
+      "permissions": [
+        "task.admit",
+        "task.read",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "project.verification.configure.v1",
+      "endpoint": "journeon.api.create_app.<locals>.configure_verification",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "configureVerification",
+      "owner": "projects",
+      "path": "/api/v1/projects/verification",
+      "permissions": [
+        "project.verification.configure",
+        "project.verification.read",
+        "project.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_verification",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getVerification",
+      "owner": "projects",
+      "path": "/api/v1/projects/{project_id}/verification",
+      "permissions": [
+        "project.verification.read"
+      ],
+      "query": "project.verification.read.v1"
     },
     {
       "authentication": null,
@@ -3037,6 +3310,253 @@
       "risk": "AUTHORIZED_QUERY",
       "stability": "INTERNAL",
       "verification": "Current scope, revision and durable owning records"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.revise",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskRevise",
+      "name": "task.revise.v1",
+      "owner": "work",
+      "permissions": [
+        "task.revise",
+        "task.read",
+        "task.receipt.read",
+        "project.verification.read"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A subsequent authorized change retains the original history",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current policy, assignment and Task revisions; no process execution"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.assign",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "admission or Bot assignment"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "configured policy requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskAssign",
+      "name": "task.assign.v1",
+      "owner": "work",
+      "permissions": [
+        "task.assign",
+        "task.read",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A subsequent authorized change retains the original history",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current policy, assignment and Task revisions; no process execution"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "admission or Bot assignment"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "Bot assignment or admission"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "configured policy requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskAdmission",
+      "name": "task.admit.v1",
+      "owner": "work",
+      "permissions": [
+        "task.admit",
+        "task.read",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "A subsequent authorized change retains the original history",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current policy, assignment and Task revisions; no process execution"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "VerificationPolicyConfigure",
+      "name": "project.verification.configure.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.verification.configure",
+        "project.verification.read",
+        "project.receipt.read"
+      ],
+      "result_model": "VerificationPolicyReceipt",
+      "reversibility": "A subsequent policy revision retains previous proof definitions",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Immutable proof definitions confer no execution authority"
     }
   ],
   "modules": [
@@ -3376,21 +3896,25 @@
       "environment_migrations": [],
       "events_consumed": [],
       "events_published": [
-        "project.created"
+        "project.created",
+        "project.verification.configured"
       ],
       "health": "schema_and_database",
-      "migration": "0009_instruction_scope",
+      "migration": "0011_task_admission",
       "module_id": "projects",
       "permission_namespaces": [
         "project"
       ],
       "permissions": [
         "project.create",
-        "project.receipt.read"
+        "project.receipt.read",
+        "project.verification.configure",
+        "project.verification.read"
       ],
       "settings": [],
       "tables": [
-        "projects"
+        "projects",
+        "verification_policy_revisions"
       ],
       "version": "0.0.0.dev1"
     },
@@ -3407,12 +3931,19 @@
         "task.created",
         "task.paused",
         "task.resumed",
-        "task.cancelled"
+        "task.cancelled",
+        "task.revised",
+        "task.assigned",
+        "task.admission.checked"
       ],
       "health": "schema_and_database",
-      "migration": "0006_work",
+      "migration": "0011_task_admission",
       "module_id": "work",
       "permission_namespaces": [
+        "bot",
+        "execution",
+        "profile",
+        "project",
         "task"
       ],
       "permissions": [
@@ -3421,11 +3952,21 @@
         "task.receipt.read",
         "task.pause",
         "task.resume",
-        "task.cancel"
+        "task.cancel",
+        "task.revise",
+        "task.assign",
+        "task.admit",
+        "execution.admit",
+        "project.verification.read",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
       ],
       "settings": [],
       "tables": [
-        "tasks"
+        "tasks",
+        "task_revisions"
       ],
       "version": "0.0.0.dev1"
     }
@@ -3711,6 +4252,22 @@
         "project.instruction.read"
       ],
       "result_model": "AttentionList"
+    },
+    {
+      "name": "project.verification.read.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.verification.read"
+      ],
+      "result_model": "VerificationPolicy"
+    },
+    {
+      "name": "task.workflows.read.v1",
+      "owner": "work",
+      "permissions": [
+        "task.read"
+      ],
+      "result_model": "WorkflowTemplates"
     }
   ],
   "surfaces": [

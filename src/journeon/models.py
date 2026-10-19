@@ -743,3 +743,21 @@ class RestoreRequestScope(Base):
     __tablename__ = "restore_request_scopes"
     request_id: Mapped[str] = mapped_column(ForeignKey("protected_requests.id"), primary_key=True)
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+
+
+class VerificationPolicyRevision(Base):
+    __tablename__ = "verification_policy_revisions"
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (CheckConstraint("revision >= 1", name="verification_policy_revision"),)
+
+
+class TaskRevision(Base):
+    __tablename__ = "task_revisions"
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    operation_id: Mapped[str | None] = mapped_column(ForeignKey("operation_receipts.id"))
+    __table_args__ = (CheckConstraint("revision >= 1", name="task_history_revision"),)

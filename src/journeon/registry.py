@@ -32,12 +32,19 @@ from journeon.contracts import (
     ProfileRevisionPreview,
     ProfileView,
     ProjectCreate,
+    TaskAdmission,
+    TaskAssign,
     TaskControl,
     TaskCreate,
     TaskReceipt,
+    TaskRevise,
     TaskView,
     TeamCreate,
     TeamView,
+    VerificationPolicy,
+    VerificationPolicyConfigure,
+    VerificationPolicyReceipt,
+    WorkflowTemplates,
 )
 from journeon.health import schema_and_database
 from journeon.instruction_config import RootObservation
@@ -971,6 +978,106 @@ for operation, (name, job_input, job_result, permissions) in JOB_ROUTES.items():
             idempotent=True,
             verification="Current scope, revision and durable owning records",
         )
+
+
+for admission_action, admission_model in (
+    ("revise", TaskRevise),
+    ("assign", TaskAssign),
+    ("admit", TaskAdmission),
+):
+    admission_name = f"task.{admission_action}.v1"
+    COMMANDS[admission_name] = CommandDefinition(
+        name=admission_name,
+        owner="work",
+        input_model=admission_model,
+        result_model=TaskReceipt,
+        permissions=(f"task.{admission_action}", "task.read", "task.receipt.read"),
+        risk="LOCAL_CANONICAL_MUTATION",
+        external_effects=(),
+        reversibility="A subsequent authorized change retains the original history",
+        dry_run=False,
+        idempotent=True,
+        verification="Current policy, assignment and Task revisions; no process execution",
+    )
+MODULES["work"]["permissions"] += ("task.revise", "task.assign", "task.admit", "execution.admit")
+MODULES["work"]["tables"] += ("task_revisions",)
+MODULES["work"]["events_published"] += ("task.revised", "task.assigned", "task.admission.checked")
+MODULES["work"]["migration"] = "0011_task_admission"
+MODULES["projects"]["tables"] += ("verification_policy_revisions",)
+MODULES["projects"]["permissions"] += (
+    "project.verification.configure",
+    "project.verification.read",
+)
+MODULES["projects"]["events_published"] += ("project.verification.configured",)
+MODULES["projects"]["migration"] = "0011_task_admission"
+COMMANDS["project.verification.configure.v1"] = CommandDefinition(
+    name="project.verification.configure.v1",
+    owner="projects",
+    input_model=VerificationPolicyConfigure,
+    result_model=VerificationPolicyReceipt,
+    permissions=(
+        "project.verification.configure",
+        "project.verification.read",
+        "project.receipt.read",
+    ),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="A subsequent policy revision retains previous proof definitions",
+    dry_run=False,
+    idempotent=True,
+    verification="Immutable proof definitions confer no execution authority",
+)
+QUERIES["project.verification.read.v1"] = {
+    "owner": "projects",
+    "permissions": ("project.verification.read",),
+    "result_model": VerificationPolicy,
+}
+
+QUERIES["task.workflows.read.v1"] = {
+    "owner": "work",
+    "permissions": ("task.read",),
+    "result_model": WorkflowTemplates,
+}
+
+for action in ("revise", "assign", "admit"):
+    name = f"task.{action}.v1"
+    checks = [
+        grant_check(capability, "task.project_id", owner=False)
+        for capability in COMMANDS[name].permissions
+    ]
+    checks.append(grant_check("project.verification.read", "task.project_id", owner=False))
+    if action in ("assign", "admit"):
+        checks.extend(
+            [
+                grant_check(
+                    "execution.admit", "task.project_id", "admission or Bot assignment", owner=False
+                ),
+                grant_check("bot.read", "receiver.bot_id", "Bot assignment or admission"),
+                grant_check("bot.use", "receiver.bot_id", "Bot assignment or admission"),
+                grant_check("profile.read", "receiver.profile_id", "Bot assignment or admission"),
+                grant_check("profile.use", "receiver.profile_id", "Bot assignment or admission"),
+                grant_check(
+                    "{policy.required_capability}",
+                    "task.project_id",
+                    "configured policy requirement",
+                    owner=False,
+                ),
+            ]
+        )
+    CONFIGURATION_AUTHORIZATION[name] = {
+        "owner_only": False,
+        "grant_checks": checks,
+        "semantics": "Current Task preparation authority; no permission to execute a later effect",
+    }
+    COMMANDS[name] = replace(
+        COMMANDS[name],
+        permissions=tuple(
+            dict.fromkeys(check["capability"] for check in checks if "{" not in check["capability"])
+        ),
+    )
+    MODULES["work"]["permissions"] = tuple(
+        dict.fromkeys((*MODULES["work"]["permissions"], *COMMANDS[name].permissions))
+    )
 
 
 @dataclass(frozen=True)

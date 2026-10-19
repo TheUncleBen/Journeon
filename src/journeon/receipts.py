@@ -99,6 +99,10 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         return authorized_configuration_receipt(db, actor, row)
     if row.owner == "work":
         return authorized_work_receipt(db, actor, row)
+    if row.command == "project.verification.configure.v1" and row.owner == "projects":
+        from journeon.verification import policy_receipt
+
+        return policy_receipt(db, actor, row)
     if row.command == "project.create.v1" and row.owner == "projects":
         if row.target_kind != "project" or row.target_id != row.project_id:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored operation state requires repair")

@@ -10,13 +10,12 @@ from sqlalchemy import inspect, text
 from test_operation_migration import legacy_store  # noqa: F401
 from test_work_migration import populated_0005  # noqa: F401
 
-from journeon.contracts import TaskCreate
+from journeon.contracts import TaskReceipt, TaskView
 from journeon.database import transaction
 from journeon.migrate import configuration, upgrade
-from journeon.models import AccessGrant
+from journeon.models import AccessGrant, OutboxEvent, Receipt, Task
 from journeon.permissions import AuthenticatedContext
 from journeon.receipts import OperationService
-from journeon.work import WorkService
 
 
 @pytest.fixture
@@ -40,18 +39,101 @@ def populated_0006(request, monkeypatch):
                     provenance="fixture",
                 )
             )
-    with monkeypatch.context() as patch:
-        patch.setattr("journeon.database.SCHEMA_REVISION", "0006_work")
-        task = WorkService(engine).create(
-            AuthenticatedContext("owner", 7, "old-session"),
-            TaskCreate(
-                schema_version=1,
+    view = TaskView.model_validate(
+        {
+            "task_id": "retained-task",
+            "project_id": project.project.project_id,
+            "initiating_principal_id": "owner",
+            "revision": 1,
+            "objective": "Preserve Work history",
+            "objective_revision": 1,
+            "criteria_revision": 1,
+            "success_conditions": [],
+            "verification_policy": {
+                "project_id": project.project.project_id,
+                "project_revision": 1,
+                "policy_ref": None,
+            },
+            "assignment": {
+                "responsibility": "HUMAN",
+                "principal_id": "owner",
+                "assigned_by": "owner",
+                "assigned_at": project.committed_at,
+            },
+            "assignment_history": [
+                {
+                    "responsibility": "HUMAN",
+                    "principal_id": "owner",
+                    "assigned_by": "owner",
+                    "assigned_at": project.committed_at,
+                }
+            ],
+            "dependencies": [],
+            "state": "BACKLOG",
+            "paused": False,
+            "pause_reason": None,
+            "stop_reason": None,
+            "blocker": None,
+            "created_at": project.committed_at,
+            "updated_at": project.committed_at,
+        }
+    )
+    task = TaskReceipt(
+        operation_id="retained-task-operation",
+        command="task.create.v1",
+        committed_at=project.committed_at,
+        task=view,
+    )
+    # Populate the historical schema without running a newer writer against it.
+    snapshot = view.model_dump(
+        mode="json", exclude={"workflow", "workflow_revision", "admission", "contributors"}
+    )
+    snapshot["verification_policy"].pop("policy_revision")
+    for assignment in [snapshot["assignment"], *snapshot["assignment_history"]]:
+        for key in ("bot_id", "previous_bot_id", "kind"):
+            assignment.pop(key)
+    result = task.model_dump(mode="json") | {"task": snapshot}
+    with transaction(engine) as db:
+        db.add(
+            Task(
+                id=view.task_id,
+                project_id=view.project_id,
+                initiating_principal_id="owner",
+                revision=1,
+                snapshot=snapshot,
+            )
+        )
+        db.add(
+            Receipt(
+                id=task.operation_id,
+                principal_id="owner",
+                command="task.create.v1",
                 idempotency_key="task",
-                project_id=project.project.project_id,
-                expected_project_revision=1,
-                objective="Preserve Work history",
-                responsibility="HUMAN",
-            ),
+                payload_hash="a" * 64,
+                project_id=view.project_id,
+                authentication_ref="old-session",
+                owner="work",
+                target_kind="task",
+                target_id=view.task_id,
+                result=result,
+            )
+        )
+        db.flush()
+        db.add(
+            OutboxEvent(
+                event_id="retained-task-event",
+                operation_id=task.operation_id,
+                event_type="task.created",
+                schema_version=1,
+                principal_id="owner",
+                project_id=view.project_id,
+                owner="work",
+                target_kind="task",
+                target_id=view.task_id,
+                target_revision=1,
+                payload=result,
+                committed_at=task.committed_at,
+            )
         )
     with engine.begin() as db:
         db.execute(text("UPDATE sqlite_sequence SET seq=250 WHERE name='outbox_events'"))

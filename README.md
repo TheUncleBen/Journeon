@@ -76,10 +76,41 @@ Cancel records `CANCELLED` and denies subsequent continuation controls. Terminal
 cannot be reopened through these commands. Historical receipts remain historical.
 
 Task changes, typed receipts and versioned event payloads commit in one transaction.
-Migration `0006_work` preserves prior Project/passkey operations and the event sequence
-allocation ceiling, including pruned sequence numbers. Event delivery, replay cursors,
-restore-incarnation invalidation, execution, Attempts, Jobs, review, completion evidence,
-Bot assignment and operational Work UI remain unavailable in this increment.
+Migration `0011_task_admission` retains existing records and adds immutable Task and
+verification-policy revisions. Earlier history remains in its original receipts.
+
+`POST /api/v1/projects/verification` configures a versioned proof definition under
+`project.verification.configure`, `project.verification.read` and
+`project.receipt.read` grants. `GET /api/v1/projects/{project_id}/verification` reads it.
+Checks name exact argv, an expected exit code and an owned-workspace-relative directory; saving these
+operands grants no command execution permission. Task creation inherits configured
+criteria when the user does not supply them. `POST /api/v1/tasks/revise` edits criteria
+and workflow under `task.revise`, retaining the Project policy steps, dependencies
+and loop bounds. Graphs support conditions, parallel branches, joins and explicit
+finite loops; recursive dependency edges are rejected. The authenticated
+`GET /api/v1/tasks/workflow-templates?project_id=...` returns eight provider-neutral
+templates. Their `check` identifier must be bound to the configured proof check.
+
+`POST /api/v1/tasks/assign` requires `task.assign` and records explicit human,
+unassigned or Bot responsibility. Bot assignment and contribution require current
+Project execution-admission and Bot/Profile-use authority. Contributions leave the
+primary assignee unchanged. Handoffs preserve Task identity and retained history;
+no Bot-private memory, sessions, credentials or Workspace data are copied. The
+current implementation accepts supported deterministic preparation only. Declared
+native, resource, Skill, Connection or tool service requirements block assignment
+until their owning services are available; Profile eligibility strings confer no
+permission.
+
+`POST /api/v1/tasks/admit` requires `task.admit`, current Task read/receipt grants
+and the expected Task/policy revisions. The service derives `ADMIT`, `QUEUE`, `DENY`
+or `REQUIRE_APPROVAL` from current grants, policy, responsibility, dependencies and
+approval gates. An admitted Task becomes `READY`. The result is explicitly scoped
+to `TASK_PREPARATION`, with `execution_authorized=false`; it cannot authorize a
+process, an Attempt, a model call or a later effect. Consumers must independently
+validate actual resources, routes, artifacts and current authority. Policy-reference
+strings alone cannot admit work. Stored receipts remain historical observations.
+Actual Task execution, approval settlement, evidence-driven completion and an
+operational Work UI remain unavailable.
 
 ## Identity configuration and instruction provenance
 

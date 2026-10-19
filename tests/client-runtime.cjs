@@ -53,6 +53,21 @@ async function main() {
     assert.equal(call.init.method, "POST");
     assert.equal(call.init.headers["X-CSRF-Token"], "synthetic-csrf");
   }
+  const instruction = {project_id: "encoded/project", revision: 1, path: "rules.md"};
+  await client.readInstructionDocument("encoded/project", instruction, "instruction-csrf");
+  const documentCall = calls.at(-1);
+  assert.equal(documentCall.url, "/api/v1/projects/encoded%2Fproject/instructions/document");
+  assert.equal(documentCall.init.headers["X-CSRF-Token"], "instruction-csrf");
+  assert.deepEqual(JSON.parse(documentCall.init.body), instruction);
+  await client.prepareInstructionEffect({effect: {kind: "instruction.candidate.register.v1", idempotency_key: "candidate", manifest_digest: "a".repeat(64), expected_revision: 0}}, "instruction-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/protected-operations/prepare");
+  assert.equal(calls.at(-1).init.credentials, "same-origin");
+  await client.projectInstructionProjection("encoded/project", "check", {project_id: "encoded/project"}, "instruction-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/projects/encoded%2Fproject/instructions/projections/check");
+  await client.inspectInstructionRecovery("encoded/project", {project_id: "encoded/project"}, "recovery-csrf");
+  assert.equal(calls.at(-1).url, "/api/v1/projects/encoded%2Fproject/instructions/recovery");
+  assert.equal(calls.at(-1).init.headers["X-CSRF-Token"], "recovery-csrf");
+  assert.deepEqual(JSON.parse(calls.at(-1).init.body), {project_id: "encoded/project"});
   const denied = new JourneonClient("", async () => new Response(
     JSON.stringify({code: "PERMISSION_DENIED"}), {status: 403},
   ));

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Explicit local runtime binding; provisioning and migrations are separate operations."""
+"Explicit local runtime binding; provisioning and migrations are separate operations."
 
 import argparse
 import ipaddress
@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from journeon.api import create_app
 from journeon.browser_auth import BrowserAuth
 from journeon.database import SCHEMA_REVISION, create_database
+from journeon.instruction_config import InstructionConfiguration
 from journeon.migrate import configuration
 from journeon.models import Base
 from journeon.passkeys import STANDARD_PASSKEY_POLICY, PasskeyService
@@ -38,6 +39,7 @@ def regular_file(path: Path) -> Path:
 class RuntimeConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
+    instructions: InstructionConfiguration | None = None
     host: str
     port: int = Field(ge=1, le=65535)
     origin: str
@@ -82,6 +84,18 @@ def application(config: RuntimeConfig) -> FastAPI:
         tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if not set(Base.metadata.tables) <= tables:
             raise ValueError("Required database tables are unavailable")
+        instruction_state = {
+            "configuration": "EXPLICIT" if config.instructions is not None else "UNCONFIGURED",
+            "installation": "REGISTERED"
+            if db.execute("SELECT 1 FROM instruction_installations LIMIT 1").fetchone()
+            else "UNCONFIGURED",
+            "publication": "UNRESOLVED"
+            if db.execute(
+                "SELECT 1 FROM instruction_publications WHERE status != 'CANONICAL"
+                "_COMMITTED' LIMIT 1"
+            ).fetchone()
+            else "NO_PENDING_JOURNAL",
+        }
     if ScriptDirectory.from_config(configuration()).get_heads() != [SCHEMA_REVISION]:
         raise ValueError("Release migrations do not match the runtime")
     engine = create_database(path, busy_timeout_ms=config.busy_timeout_ms)
@@ -89,6 +103,7 @@ def application(config: RuntimeConfig) -> FastAPI:
         app = create_app(
             engine,
             browser_auth=BrowserAuth(config.origin),
+            instructions=config.instructions,
             passkeys=PasskeyService(
                 engine, rp_id=config.rp_id, origin=config.origin, policy=STANDARD_PASSKEY_POLICY
             ),
@@ -105,6 +120,7 @@ def application(config: RuntimeConfig) -> FastAPI:
             engine.dispose()
             print(json.dumps({"status": "STOPPED"}), flush=True)
 
+    app.state.instruction_dependencies = instruction_state
     app.router.lifespan_context = lifespan
     return app
 

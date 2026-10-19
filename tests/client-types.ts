@@ -50,3 +50,27 @@ void fakeSuccess;
 // @ts-expect-error Responsibility cannot fabricate a Bot identity.
 const fakeBot: TaskCreate = {...task, responsibility: "BOT"};
 void fakeBot;
+
+import type { InstructionChangeConsent, InstructionReceipt, ProtectedPrepare, HistoryRead } from "../generated/client.js";
+const consent: InstructionChangeConsent = {kind: "project.instructions.accept.v1", idempotency_key: "instruction-accept", project_id: "project", candidate_id: "candidate", candidate_hash: "a".repeat(64), expected_binding_revision: 1, expected_policy_revision: 1, review_ids: [], eval_ids: []};
+const prepared: ProtectedPrepare = {effect: consent};
+void client.prepareInstructionEffect(prepared, "csrf");
+const confirmed: Promise<InstructionReceipt> = client.confirmInstructionEffect({request_id: "request", request_hash: "a".repeat(64), nonce: "n".repeat(43)}, "csrf");
+const history: HistoryRead = {project_id: "project", revision: 1};
+void client.readInstructionHistory("project", history, "csrf");
+void confirmed;
+// @ts-expect-error Caller flags cannot approve an instruction change.
+const forgedConsent: InstructionChangeConsent = {...consent, approved: true};
+void forgedConsent;
+// @ts-expect-error The production effect set does not accept arbitrary commands.
+const rawEffect: ProtectedPrepare = {effect: {kind: "execute.raw", command: "anything"}};
+void rawEffect;
+
+import type { PublicationRecovery, RecoveryTarget } from "../generated/client.js";
+const recoveryTarget: RecoveryTarget = {project_id: "project", operation_id: "operation", expected_generation: 1, expected_binding_revision: 1, expected_policy_revision: 2, publication_hash: "a".repeat(64), target_hash: "b".repeat(64), root_revisions: [{root_id: "environment", revision: 3}]};
+const recovery: PublicationRecovery = {...recoveryTarget, kind: "project.instructions.recover.v1", idempotency_key: "recovery", disposition: "RESTORE_BASE"};
+void client.prepareInstructionEffect({effect: recovery}, "csrf");
+void client.inspectInstructionRecovery("project", {project_id: "project"}, "csrf");
+// @ts-expect-error Recovery must explicitly select the exact reconciliation effect.
+const missingRecoveryChoice: PublicationRecovery = {...recoveryTarget, kind: "project.instructions.recover.v1", idempotency_key: "recovery"};
+void missingRecoveryChoice;

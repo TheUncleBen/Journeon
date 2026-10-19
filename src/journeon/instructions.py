@@ -11,6 +11,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session, defer
 
 from journeon.contracts import ComponentRef, DomainError, InstructionTemplate, VariableBinding
+from journeon.instruction_config import InstructionConfiguration
 from journeon.models import InstructionAsset, InstructionBundle, InstructionRevision
 from journeon.permissions import AuthenticatedContext
 
@@ -133,7 +134,16 @@ def authorized_bundle(db: Session, actor: AuthenticatedContext, identity: str) -
     authorize(db, actor, "profile", row.profile_id, "read")
     if row.bot_id is not None:
         authorize(db, actor, "bot", row.bot_id, "read")
-    require_grant(db, actor, "project.instruction.read", project_id=row.project_id)
+    require_grant(
+        db, actor, "project.instruction.read", resource_kind="project", resource_id=row.project_id
+    )
+    from journeon.models import InstructionRoot, ProjectInstructionBinding
+
+    binding = db.get(ProjectInstructionBinding, row.project_id)
+    if binding is not None:
+        root = db.get(InstructionRoot, binding.root_id)
+        if root is None or not root.enabled or root.revision != binding.root_revision:
+            raise DomainError("PERMISSION_DENIED", "Current instruction root is unavailable")
     if row.task_id is not None:
         require_grant(db, actor, "task.read", project_id=row.project_id)
 
@@ -199,8 +209,11 @@ def render_components(
 
 
 class InstructionService:
-    def __init__(self, engine: "Engine") -> None:
+    def __init__(
+        self, engine: "Engine", configuration: InstructionConfiguration | None = None
+    ) -> None:
         self.engine = engine
+        self.configuration = configuration
 
     def read(self, actor: AuthenticatedContext, identity: str) -> "BundleView":
         from journeon.agents import configuration_transaction
@@ -210,6 +223,14 @@ class InstructionService:
         with configuration_transaction(self.engine) as db:
             require_compatible_schema(db)
             row = authorized_bundle(db, actor, identity)
+            if self.configuration is not None:
+                from journeon.models import ProjectInstructionBinding
+                from journeon.project_instructions import ProjectInstructionService
+
+                if db.get(ProjectInstructionBinding, row.project_id) is not None:
+                    ProjectInstructionService(self.engine, self.configuration).binding(
+                        db, actor, row.project_id
+                    )
             return BundleView.model_validate(row.snapshot)
 
     def resolve(self, actor: AuthenticatedContext, command: "BundleResolve") -> "BundleResult":
@@ -225,6 +246,25 @@ class InstructionService:
         from journeon.database import require_compatible_schema
         from journeon.models import InstructionBundle, Project, Task
         from journeon.permissions import require_grant
+
+        if self.configuration is not None:
+            from sqlalchemy import select
+
+            from journeon.models import Receipt
+            from journeon.project_instructions import ProjectInstructionService
+
+            owner = ProjectInstructionService(self.engine, self.configuration)
+            with configuration_transaction(self.engine) as check:
+                owner.binding(check, actor, command.project_id)
+                existing = check.scalar(
+                    select(Receipt.id).where(
+                        Receipt.principal_id == actor.principal_id,
+                        Receipt.command == "instruction.bundle.resolve.v1",
+                        Receipt.idempotency_key == command.idempotency_key,
+                    )
+                )
+            if existing is None:
+                owner.read(actor, command.project_id)
 
         with configuration_transaction(self.engine) as db:
             require_compatible_schema(db)
@@ -260,9 +300,56 @@ class InstructionService:
                     bundle=accepted,
                     rendering=rendering,
                 )
+            from journeon.models import InstructionInstallation, ProjectInstructionBinding
+
+            installation = db.get(InstructionInstallation, 1)
+            binding = db.get(ProjectInstructionBinding, command.project_id)
+            require_grant(
+                db,
+                actor,
+                "project.instruction.read",
+                resource_kind="project",
+                resource_id=command.project_id,
+            )
+            if installation is None or binding is None or binding.active_operation:
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE",
+                    "Active protected and Project instruction dependencies are required",
+                )
+            protected_refs = installation.snapshot["components"]
+            selected = {ref.asset_id: ref.model_dump(mode="json") for ref in command.components}
+            for expected in protected_refs:
+                if selected.get(expected["asset_id"]) != expected:
+                    raise DomainError(
+                        "REVISION_CONFLICT", "Active protected instruction dependencies changed"
+                    )
+            project_asset = (
+                db.get(InstructionAsset, binding.entry_asset_id) if binding.entry_asset_id else None
+            )
+            if project_asset is not None and project_asset.revision != binding.revision:
+                raise DomainError(
+                    "REVISION_CONFLICT", "Active Project instruction revision changed"
+                )
+            if project_asset is None:
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Active Project instruction entry is unavailable"
+                )
+            project_ref = next(
+                (ref for ref in command.components if ref.asset_id == project_asset.id), None
+            )
+            if project_ref is None or project_ref.revision != binding.revision:
+                raise DomainError(
+                    "REVISION_CONFLICT", "Active Project instruction selection changed"
+                )
             profile = profile_view(db, actor, command.profile_id)
             authorize(db, actor, "profile", command.profile_id, "use")
-            require_grant(db, actor, "project.instruction.read", project_id=command.project_id)
+            require_grant(
+                db,
+                actor,
+                "project.instruction.read",
+                resource_kind="project",
+                resource_id=command.project_id,
+            )
             project = db.get(Project, command.project_id)
             if (
                 project is None
@@ -311,6 +398,18 @@ class InstructionService:
                     raise DomainError(
                         "DEPENDENCY_UNAVAILABLE", "Required instruction dependency is unavailable"
                     )
+                if (
+                    asset.purpose in {"CORE", "NAVIGATION"}
+                    and ref.model_dump(mode="json") not in protected_refs
+                ):
+                    raise DomainError(
+                        "PERMISSION_DENIED",
+                        "Protected asset is not selected by its installation owner",
+                    )
+                if asset.purpose == "PROJECT" and asset.id != project_asset.id:
+                    raise DomainError(
+                        "PERMISSION_DENIED", "Project asset is not selected by its canonical owner"
+                    )
                 authorize_component(db, actor, asset, command)
                 if ref.revision != asset.revision:
                     raise DomainError("REVISION_CONFLICT", "Instruction revision changed")
@@ -333,7 +432,20 @@ class InstructionService:
                 )
             rendering = render_components(db, assets, command.components, command.variables)
             identity = str(uuid4())
+            from journeon.contracts import ProductionInstructionProvenance
+
             view = BundleView(
+                production=ProductionInstructionProvenance.model_validate(
+                    {
+                        "installation_revision": installation.revision,
+                        "installation_manifest": installation.manifest_digest,
+                        "installation_provenance": installation.provenance,
+                        "project_instruction_revision": binding.revision,
+                        "project_tree_hash": binding.tree_hash,
+                        "root_id": binding.root_id,
+                        "root_revision": binding.root_revision,
+                    }
+                ),
                 bundle_id=identity,
                 initiating_principal_id=actor.principal_id,
                 profile_id=profile.profile_id,

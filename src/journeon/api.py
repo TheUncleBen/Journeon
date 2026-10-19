@@ -49,6 +49,7 @@ from journeon.contracts import (
     TeamView,
 )
 from journeon.factors import FactorService
+from journeon.instruction_config import InstructionConfiguration
 from journeon.instructions import InstructionService
 from journeon.passkey_api import routes as passkey_routes
 from journeon.passkeys import PasskeyService, RejectedPasskeyInput
@@ -71,6 +72,7 @@ def create_app(
     *,
     browser_auth: BrowserAuth | None = None,
     passkeys: PasskeyService | None = None,
+    instructions: InstructionConfiguration | None = None,
 ) -> FastAPI:
     if passkeys is not None and (
         browser_auth is None
@@ -162,7 +164,7 @@ def create_app(
         operation_id: Identifier,
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> CanonicalReceipt:
-        return OperationService(engine).receipt(actor, operation_id)
+        return OperationService(engine, instructions).receipt(actor, operation_id)
 
     @app.post(
         "/api/v1/auth/passkeys/label",
@@ -365,7 +367,11 @@ def create_app(
         command: BundleResolve,
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> BundleResult:
-        return InstructionService(engine).resolve(actor, command)
+        if instructions is None:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Explicit instruction runtime configuration is required"
+            )
+        return InstructionService(engine, instructions).resolve(actor, command)
 
     @app.get(
         "/api/v1/profiles/{identity}",
@@ -425,7 +431,7 @@ def create_app(
     def read_configuration_read(
         identity: Identifier, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
     ) -> BundleView:
-        return InstructionService(engine).read(actor, identity)
+        return InstructionService(engine, instructions).read(actor, identity)
 
     @app.get(
         "/api/v1/permissions/effective",
@@ -443,4 +449,7 @@ def create_app(
         return AgentService(engine).permission(actor, resource_kind, resource_id, action)
 
     app.include_router(passkey_routes(passkeys, browser_auth))
+    from journeon.instruction_api import bind_instruction_api
+
+    bind_instruction_api(app, engine, instructions)
     return app

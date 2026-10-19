@@ -99,7 +99,7 @@ class Project(Base):
     created_at: Mapped[str] = mapped_column(String(40))
     __table_args__ = (
         CheckConstraint("revision >= 1", name="project_revision"),
-        CheckConstraint("instruction_owner = 'ENVIRONMENT'", name="instruction_owner"),
+        CheckConstraint("instruction_owner IN ('ENVIRONMENT','PROJECT')", name="instruction_owner"),
     )
 
 
@@ -118,13 +118,18 @@ class Receipt(Base):
     result: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (
         CheckConstraint(
-            "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
-            "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
+            "(owner = 'projects' AND target_kind = 'project' AND project_id IS"
+            " NOT NULL "
+            "AND target_id = project_id) OR (owner = 'identity' AND target_kin"
+            "d = 'passkey' "
             "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
             "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
             "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
             "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
-            "AND project_id IS NOT NULL)",
+            "AND project_id IS NOT NULL) OR (owner = 'project_instructions' AND "
+            "((target_kind = 'project_instructions' AND project_id = target_id) OR "
+            "(target_kind IN ('instruction_root','instruction_install') AND pr"
+            "oject_id IS NULL)))",
             name="receipt_target",
         ),
         Index(
@@ -151,15 +156,25 @@ class OutboxEvent(Base):
     target_revision: Mapped[int] = mapped_column(Integer)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (
-        CheckConstraint("target_revision >= 1", name="event_target_revision"),
         CheckConstraint(
-            "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL "
-            "AND target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' "
+            "target_revision >= 1 OR (target_revision = 0 AND owner = 'project_instructions' "
+            "AND target_kind = 'project_instructions' "
+            "AND event_type = 'project.instructions.bind.abandoned')",
+            name="event_target_revision",
+        ),
+        CheckConstraint(
+            "(owner = 'projects' AND target_kind = 'project' AND project_id IS"
+            " NOT NULL "
+            "AND target_id = project_id) OR (owner = 'identity' AND target_kin"
+            "d = 'passkey' "
             "AND project_id IS NULL) OR (owner = 'work' AND target_kind = 'task' "
             "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
             "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
             "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
-            "AND project_id IS NOT NULL)",
+            "AND project_id IS NOT NULL) OR (owner = 'project_instructions' AND "
+            "((target_kind = 'project_instructions' AND project_id = target_id) OR "
+            "(target_kind IN ('instruction_root','instruction_install') AND pr"
+            "oject_id IS NULL)))",
             name="event_target",
         ),
         {"sqlite_autoincrement": True},
@@ -199,7 +214,8 @@ class BrowserSession(Base):
         CheckConstraint("strong_freshness_seconds > 0", name="session_strong_freshness"),
         CheckConstraint(
             "strong_authenticated_at IS NULL OR "
-            "(strong_authenticated_at >= issued_at AND strong_authenticated_at <= last_observed)",
+            "(strong_authenticated_at >= issued_at AND strong_authenticated_at"
+            " <= last_observed)",
             name="session_strong_time",
         ),
     )
@@ -323,7 +339,13 @@ class ProtectedRequest(Base):
             name="protected_state",
         ),
         CheckConstraint("deadline > issued_at AND issued_at >= 0", name="protected_deadline"),
-        CheckConstraint("command = 'passkey.label.v1'", name="protected_command"),
+        CheckConstraint(
+            "command IN ('passkey.label.v1','project.root.admit.v1','project.r"
+            "oot.revoke.v1','project.instructions.policy.configure.v1','instru"
+            "ction.candidate.register.v1','instruction.release.install.v1','pr"
+            "oject.instructions.accept.v1', 'project.instructions.recover.v1')",
+            name="protected_command",
+        ),
     )
 
 
@@ -465,3 +487,170 @@ class InstructionBundle(Base):
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
     task_id: Mapped[str | None] = mapped_column(ForeignKey("tasks.id"))
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class InstructionRoot(Base):
+    __tablename__ = "instruction_roots"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    root_key: Mapped[str] = mapped_column(String(128), unique=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    config_revision: Mapped[int] = mapped_column(Integer)
+    project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"))
+    role: Mapped[str] = mapped_column(String(20))
+    device: Mapped[int] = mapped_column(Integer)
+    inode: Mapped[int] = mapped_column(Integer)
+    git_identity: Mapped[str] = mapped_column(String(64))
+    enabled: Mapped[bool] = mapped_column(Boolean)
+    __table_args__ = (
+        CheckConstraint("revision >= 1 AND config_revision >= 1", name="root_revision"),
+        CheckConstraint("role IN ('ENVIRONMENT','PROJECT')", name="root_role"),
+        CheckConstraint("enabled IN (0, 1)", name="root_enabled"),
+    )
+
+
+class ProjectInstructionBinding(Base):
+    __tablename__ = "project_instruction_bindings"
+    entry_asset_id: Mapped[str | None] = mapped_column(ForeignKey("instruction_assets.id"))
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+    root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"))
+    root_revision: Mapped[int] = mapped_column(Integer)
+    owner: Mapped[str] = mapped_column(String(20))
+    revision: Mapped[int] = mapped_column(Integer)
+    tree_hash: Mapped[str] = mapped_column(String(64))
+    policy_revision: Mapped[int] = mapped_column(Integer)
+    generation: Mapped[int] = mapped_column(Integer)
+    active_operation: Mapped[str | None] = mapped_column(String(128))
+    __table_args__ = (
+        CheckConstraint(
+            "revision >= 0 AND policy_revision >= 0 AND generation >= 1", name="binding_revisions"
+        ),
+        CheckConstraint("owner IN ('ENVIRONMENT','PROJECT')", name="binding_owner"),
+    )
+
+
+class ProjectInstructionRevision(Base):
+    __tablename__ = "project_instruction_revisions"
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    tree_hash: Mapped[str] = mapped_column(String(64))
+    author: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    reason: Mapped[str] = mapped_column(Text)
+    __table_args__ = (
+        CheckConstraint("revision >= 1", name="project_instruction_history_revision"),
+    )
+
+
+class ProjectInstructionPolicy(Base):
+    __tablename__ = "project_instruction_policies"
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    author: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    __table_args__ = (CheckConstraint("revision >= 1", name="instruction_policy_revision"),)
+
+
+class InstructionCandidate(Base):
+    __tablename__ = "instruction_candidates"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint(
+            "principal_id", "project_id", "idempotency_key", name="instruction_candidate_identity"
+        ),
+    )
+
+
+class InstructionEvidence(Base):
+    __tablename__ = "instruction_evidence"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    candidate_id: Mapped[str] = mapped_column(ForeignKey("instruction_candidates.id"))
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    session_id: Mapped[str] = mapped_column(ForeignKey("browser_sessions.id"))
+    kind: Mapped[str] = mapped_column(String(16))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        CheckConstraint("kind IN ('REVIEW','EVAL')", name="instruction_evidence_kind"),
+    )
+
+
+class InstructionPublication(Base):
+    __tablename__ = "instruction_publications"
+    target_root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"))
+    projection: Mapped[bool] = mapped_column(Boolean, default=False)
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    authentication_ref: Mapped[str] = mapped_column(String(128))
+    principal_epoch: Mapped[int] = mapped_column(Integer)
+    generation: Mapped[int] = mapped_column(Integer)
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(30))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint(
+            "principal_id", "project_id", "idempotency_key", name="publication_identity"
+        ),
+        CheckConstraint(
+            "status IN ('PENDING','RECOVERY_NEEDED','CONFLICT','CANONICAL_COMMITTED','ABANDONED')",
+            name="publication_status",
+        ),
+        CheckConstraint("projection IN (0, 1)", name="publication_projection_boolean"),
+    )
+
+
+class InstructionInstallation(Base):
+    __tablename__ = "instruction_installations"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    manifest_digest: Mapped[str] = mapped_column(String(64))
+    provenance: Mapped[str] = mapped_column(String(30))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        CheckConstraint("id = 1 AND revision >= 1", name="installation_revision"),
+        CheckConstraint(
+            "provenance IN ('DEVELOPMENT_CANDIDATE','VERIFIED_RELEASE')",
+            name="installation_provenance",
+        ),
+    )
+
+
+class InstalledReleaseEvidence(Base):
+    __tablename__ = "installed_release_evidence"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    manifest_digest: Mapped[str] = mapped_column(String(64))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class InstructionProjection(Base):
+    __tablename__ = "instruction_projections"
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+    root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"), primary_key=True)
+    filename: Mapped[str] = mapped_column(String(20), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (
+        CheckConstraint(
+            "filename IN ('AGENTS.md','CLAUDE.md','GEMINI.md')", name="projection_filename"
+        ),
+    )
+
+
+class InstructionRequestScope(Base):
+    __tablename__ = "instruction_request_scopes"
+    __table_args__ = (
+        CheckConstraint("projection IN (0, 1)", name="request_scope_projection_boolean"),
+    )
+    request_id: Mapped[str] = mapped_column(ForeignKey("protected_requests.id"), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+
+    publication_id: Mapped[str | None] = mapped_column(ForeignKey("instruction_publications.id"))
+
+    projection: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -13,6 +13,9 @@ from journeon.models import Base, OutboxEvent, Project, Receipt
 from journeon.projects import ProjectService
 
 BOOLEAN_DOMAINS = {
+    ("instruction_roots", "enabled"): "root_enabled",
+    ("instruction_publications", "projection"): "publication_projection_boolean",
+    ("instruction_request_scopes", "projection"): "request_scope_projection_boolean",
     ("bots", "memory_enabled"): "bot_memory_boolean",
     ("passkeys", "revoked"): "passkey_revoked_boolean",
     ("passkeys", "backup_eligible"): "passkey_eligible_boolean",

@@ -183,7 +183,7 @@ def test_lost_response_reconciles_from_new_current_session(database, actor, prot
         protected.commit(actor, request_id)
 
 
-def test_no_production_protected_configuration_or_routes(database):
+def test_fixture_passkey_protected_routes_remain_unavailable(database):
     from journeon.api import create_app
 
     with pytest.raises(TypeError):
@@ -191,9 +191,25 @@ def test_no_production_protected_configuration_or_routes(database):
     with pytest.raises(ValueError):
         FixtureProtectedPolicy(request_seconds=503, preview_seconds=97, fixture_only=False)
     paths = create_app(database[0]).openapi()["paths"]
-    assert all(
-        "protected" not in path and "/add" not in path and "/remove" not in path for path in paths
-    )
+    assert {path for path in paths if "protected" in path} == {
+        "/api/v1/protected-operations/prepare",
+        "/api/v1/protected-operations/preview",
+        "/api/v1/protected-operations/confirm",
+        "/api/v1/protected-operations/cancel",
+    }
+    assert all("/add" not in path and "/remove" not in path for path in paths)
+    effect = create_app(database[0]).openapi()["components"]["schemas"]["ProtectedPrepare"][
+        "properties"
+    ]["effect"]
+    assert set(effect["discriminator"]["mapping"]) == {
+        "project.root.admit.v1",
+        "project.root.revoke.v1",
+        "project.instructions.policy.configure.v1",
+        "instruction.candidate.register.v1",
+        "instruction.release.install.v1",
+        "project.instructions.accept.v1",
+        "project.instructions.recover.v1",
+    }
 
 
 def test_concurrent_protected_consumers_commit_once(database, actor, protected):

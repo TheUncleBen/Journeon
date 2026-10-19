@@ -2,7 +2,7 @@
 
 Journeon is being developed as a service-owned project environment. This source-tree foundation implements internal Project creation, passkey labeling and local Task lifecycle commands with transactional authorization, persistence and receipt reconciliation. It is an early development slice, not an operational installation or release candidate.
 
-The FastAPI authentication dependency denies access unless explicitly configured with a canonical HTTPS origin and a valid durable session. Session primitives validate opaque cookies, CSRF, expiry and revocation; explicitly configured passkey ceremonies can issue sessions after WebAuthn verification. Bootstrap requires a secret prepared through trusted local administration. Complete protected-confirmation interfaces, passkey management, recovery, provider approval editing and grant administration remain dependencies for a usable application.
+The FastAPI authentication dependency denies access unless explicitly configured with a canonical HTTPS origin and a valid durable session. Session primitives validate opaque cookies, CSRF, expiry and revocation; explicitly configured passkey ceremonies can issue sessions after WebAuthn verification. Bootstrap requires a secret prepared through trusted local administration. Closed instruction administration APIs provide exact protected confirmation. Complete management interfaces, passkey management, recovery, provider approval editing and grant administration remain dependencies for a usable application.
 
 ## Verify this slice
 
@@ -30,7 +30,7 @@ The [local runtime guide](docs/runtime.md) describes the explicit TLS launcher a
 
 ## Service boundary
 
-`ProjectService.create` owns Project registration. The command accepts a name, description, idempotency key, expected deployment-policy revision and an inheritance/narrowing choice. It creates no files, Git repository, graph, provider request, implicit verification policy or automatic sharing grant. Environment-owned instruction authority is represented by a stable reference; instruction editing is a later operation.
+`ProjectService.create` owns Project registration. The command accepts a name, description, idempotency key, expected deployment-policy revision and an inheritance/narrowing choice. It creates no files, Git repository, graph, provider request, implicit verification policy or automatic sharing grant. Environment-owned instruction authority starts with a stable reference. The [local instruction service](docs/project-instructions.md) separately admits roots, binds and versions canonical trees, evaluates candidates and journals publication.
 
 Creation requires a current durable session, a current enabled Owner and two explicit deployment grants: `project.create` and `project.receipt.read`. The receipt grant authorizes the normal creation response without inventing a grant for a Project that does not yet exist. It does not authorize general Project reads. Shared-user Project creation is outside this slice.
 

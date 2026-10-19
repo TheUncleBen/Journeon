@@ -3,7 +3,6 @@
 
 import hashlib
 import sqlite3
-from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -102,31 +101,10 @@ def verified_snapshot(config: InstructionConfiguration) -> dict[str, Any]:
         artifact = regular_bytes(trust.artifact_path, 512 * 1024 * 1024)
         if hashlib.sha256(artifact).hexdigest() != manifest.artifact_sha256:
             raise ValueError("Artifact hash mismatch")
-        backup = regular_bytes(trust.backup_path, 512 * 1024 * 1024)
-        # Inspect the supplied coherent backup through a private in-memory SQLite copy.
-        with closing(sqlite3.connect(":memory:")) as db:
-            db.deserialize(backup)
-            if (
-                db.execute("PRAGMA integrity_check").fetchall() != [("ok",)]
-                or db.execute("PRAGMA foreign_key_check").fetchall()
-            ):
-                raise ValueError("Backup validation failed")
-            from journeon.models import Base
-
-            tables = {
-                row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            }
-            if not set(Base.metadata.tables) <= tables:
-                raise ValueError("Backup does not contain the complete canonical store")
-            if db.execute("SELECT version_num FROM alembic_version").fetchall() != [
-                (SCHEMA_REVISION,)
-            ]:
-                raise ValueError("Backup schema mismatch")
         return {
             "manifest": manifest.model_dump(mode="json"),
             "manifest_hash": hashlib.sha256(raw).hexdigest(),
             "signature_hash": hashlib.sha256(signature).hexdigest(),
-            "backup_hash": hashlib.sha256(backup).hexdigest(),
             "trust_revision": trust.revision,
             "authority": trust.authority,
             "public_key_hash": hashlib.sha256(bytes.fromhex(trust.public_key_hex)).hexdigest(),
@@ -135,8 +113,18 @@ def verified_snapshot(config: InstructionConfiguration) -> dict[str, Any]:
         raise DomainError("PERMISSION_DENIED", "Installed release verification failed") from None
 
 
-def verify_current_evidence(config: InstructionConfiguration, stored: dict[str, Any]) -> None:
-    if verified_snapshot(config) != stored:
+def verify_current_evidence(
+    engine: Engine,
+    config: InstructionConfiguration,
+    stored: dict[str, Any],
+    actor: AuthenticatedContext,
+) -> None:
+    from journeon.release_qualification import verify
+
+    verify(engine, config, stored.get("qualification", {}), actor)
+    if verified_snapshot(config) != {
+        key: value for key, value in stored.items() if key != "qualification"
+    }:
         raise DomainError("PERMISSION_DENIED", "Installed release evidence changed")
 
 
@@ -148,6 +136,9 @@ def verify_release(
     with transaction(engine) as db:
         current_owner(db, actor)
     snapshot = verified_snapshot(config)
+    from journeon.release_qualification import produce
+
+    snapshot["qualification"] = produce(engine, config, actor)
     with transaction(engine) as db:
         current_owner(db, actor)
         identity = str(uuid4())

@@ -30,6 +30,9 @@ from journeon.permissions import AuthenticatedContext
 def bind_instruction_api(
     app: FastAPI, engine: Engine, configuration: InstructionConfiguration | None
 ) -> None:
+    from journeon.instruction_surface import bind_surface
+
+    bind_surface(app, engine, configuration)
     errors: dict[int | str, dict[str, Any]] = {
         status: {"model": ErrorEnvelope} for status in (401, 403, 404, 409, 413, 422, 503)
     }

@@ -794,7 +794,9 @@ for operation_id, (name, input_model, result_model, action) in INSTRUCTION_ROUTE
         result_model=result_model,
         permissions=permissions,
         risk="SCOPED_INSTRUCTION_OPERATION",
-        external_effects=("ADMITTED_LOCAL_FILESYSTEM",)
+        external_effects=("CONFIGURED_RELEASE_BACKUP",)
+        if operation_id == "verifyInstalledRelease"
+        else ("ADMITTED_LOCAL_FILESYSTEM",)
         if operation_id
         in {
             "bindProjectInstructions",
@@ -876,12 +878,12 @@ MODULES["project_instructions"] = {
             }
         )
     ),
-    "migration": "0008_project_instructions",
+    "migration": "0009_instruction_scope",
     "settings": (),
     "environment_migrations": (),
 }
 for module in ("projects", "identity", "operations", "instructions"):
-    MODULES[module]["migration"] = "0008_project_instructions"
+    MODULES[module]["migration"] = "0009_instruction_scope"
 
 
 @dataclass(frozen=True)
@@ -898,6 +900,32 @@ AUTHENTICATION = {
         ("passkey.begin.v1", PasskeyBegin, PasskeyChallenge),
         ("passkey.finish.v1", PasskeyFinish, PasskeyAuthenticated),
     )
+}
+
+
+INSTRUCTION_SURFACES = {
+    "instructionConfirmationPage": {
+        "path": "/instructions/confirmation/{request_id}",
+        "authorization": (
+            "Current Owner official session, strong authentication and "
+            "exact stored request scopes; nonce issuance"
+        ),
+    },
+    "instructionAuthenticationPage": {
+        "path": "/instructions/authenticate",
+        "authorization": (
+            "Public trusted authentication controls; authentication and "
+            "step-up require their existing API checks"
+        ),
+    },
+    "instructionSurfaceScript": {
+        "path": "/instructions/surface.js",
+        "authorization": "Public trusted static script",
+    },
+    "instructionSurfaceStyles": {
+        "path": "/instructions/surface.css",
+        "authorization": "Public trusted static stylesheet",
+    },
 }
 
 
@@ -932,6 +960,7 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         ):
             raise ValueError("Command effect and verification metadata is incomplete")
     operations = []
+    bound_surfaces: set[str] = set()
     bound_commands: set[str] = set()
     bound_queries: set[str] = set()
     bound_authentication: set[str] = set()
@@ -944,6 +973,23 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         if route.path is None or route.endpoint is None:
             raise ValueError("API operation requires a path and endpoint")
         metadata = route.openapi_extra or {}
+        surface = metadata.get("x-journeon-surface")
+        if surface:
+            declaration = INSTRUCTION_SURFACES.get(surface)
+            if (
+                declaration is None
+                or surface in bound_surfaces
+                or route.path != declaration["path"]
+                or route.operation_id != surface
+                or route.methods != {"GET"}
+                or route.original_route.include_in_schema
+                or route.endpoint.__module__ != "journeon.instruction_surface"
+                or metadata
+                != {"x-journeon-surface": surface, "x-journeon-owner": "project_instructions"}
+            ):
+                raise ValueError("Instruction surface differs from its registered binding")
+            bound_surfaces.add(surface)
+            continue
         owner = metadata.get("x-journeon-owner")
         if owner not in MODULES:
             raise ValueError("API operation has no registered module owner")
@@ -1037,11 +1083,17 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 "endpoint": f"{route.endpoint.__module__}.{route.endpoint.__qualname__}",
             }
         )
+    if bound_surfaces != set(INSTRUCTION_SURFACES):
+        raise ValueError("Instruction surfaces require actual registered bindings")
     if bound_commands != set(COMMANDS) or bound_queries != set(QUERIES):
         raise ValueError("Registered commands and queries must have actual API bindings")
     if bound_authentication != set(AUTHENTICATION):
         raise ValueError("Registered authentication operations must have actual API bindings")
     return {
+        "surfaces": [
+            {"operation_id": name, "owner": "project_instructions", **definition}
+            for name, definition in sorted(INSTRUCTION_SURFACES.items())
+        ],
         "modules": [
             {
                 "module_id": name,

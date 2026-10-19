@@ -2640,7 +2640,9 @@
         "semantics": "exact Project grants and admitted roots; no authority follows from metadata"
       },
       "dry_run": false,
-      "external_effects": [],
+      "external_effects": [
+        "CONFIGURED_RELEASE_BACKUP"
+      ],
       "idempotent": false,
       "input_model": "ReleaseVerify",
       "name": "release.evidence.verify.v1",
@@ -2871,7 +2873,7 @@
         "passkey.labelled"
       ],
       "health": "schema_and_database",
-      "migration": "0008_project_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "identity",
       "permission_namespaces": [
         "passkey"
@@ -2905,7 +2907,7 @@
         "instruction.bundle.resolve.committed"
       ],
       "health": "schema_and_database",
-      "migration": "0008_project_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "instructions",
       "permission_namespaces": [
         "bot",
@@ -2943,7 +2945,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0008_project_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -3019,7 +3021,7 @@
         "instruction.release.install.committed"
       ],
       "health": "schema_and_database",
-      "migration": "0008_project_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "project_instructions",
       "permission_namespaces": [
         "project"
@@ -3063,7 +3065,7 @@
         "project.created"
       ],
       "health": "schema_and_database",
-      "migration": "0008_project_instructions",
+      "migration": "0009_instruction_scope",
       "module_id": "projects",
       "permission_namespaces": [
         "project"
@@ -3355,6 +3357,32 @@
         "project.instruction.read"
       ],
       "result_model": "InstructionView"
+    }
+  ],
+  "surfaces": [
+    {
+      "authorization": "Public trusted authentication controls; authentication and step-up require their existing API checks",
+      "operation_id": "instructionAuthenticationPage",
+      "owner": "project_instructions",
+      "path": "/instructions/authenticate"
+    },
+    {
+      "authorization": "Current Owner official session, strong authentication and exact stored request scopes; nonce issuance",
+      "operation_id": "instructionConfirmationPage",
+      "owner": "project_instructions",
+      "path": "/instructions/confirmation/{request_id}"
+    },
+    {
+      "authorization": "Public trusted static script",
+      "operation_id": "instructionSurfaceScript",
+      "owner": "project_instructions",
+      "path": "/instructions/surface.js"
+    },
+    {
+      "authorization": "Public trusted static stylesheet",
+      "operation_id": "instructionSurfaceStyles",
+      "owner": "project_instructions",
+      "path": "/instructions/surface.css"
     }
   ]
 }

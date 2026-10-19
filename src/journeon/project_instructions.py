@@ -359,7 +359,9 @@ class ProjectInstructionService:
             if previous:
                 return previous
             pending = db.scalar(
-                select(InstructionPublication).where(
+                select(InstructionPublication)
+                .options(defer(InstructionPublication.snapshot))
+                .where(
                     InstructionPublication.project_id == project.id,
                     InstructionPublication.principal_id == actor.principal_id,
                     InstructionPublication.idempotency_key == command.idempotency_key,
@@ -695,7 +697,9 @@ class ProjectInstructionService:
             if previous:
                 return previous
             pending = db.scalar(
-                select(InstructionPublication).where(
+                select(InstructionPublication)
+                .options(defer(InstructionPublication.snapshot))
+                .where(
                     InstructionPublication.project_id == command.project_id,
                     InstructionPublication.principal_id == actor.principal_id,
                     InstructionPublication.idempotency_key == command.idempotency_key,
@@ -962,6 +966,8 @@ class ProjectInstructionService:
     ) -> None:
         require_project(db, actor, row.project_id, "read")
         if recovery is None:
+            self.binding(db, actor, row.project_id)
+            self.root_identity(db, actor, row.target_root_id, row.project_id)
             if row.principal_id != actor.principal_id:
                 raise DomainError("NOT_FOUND", "Publication is unavailable")
             return
@@ -1611,6 +1617,21 @@ class ProjectInstructionService:
             target = data["target"][command.filename]
             if previous not in (data["base"].get(command.filename), target):
                 raise ValueError("Projection external edit is preserved")
+            with transaction(self.engine) as db:
+                current = self.binding(db, actor, row.project_id, "projection")
+                self.root_path(
+                    db, actor, command.root_id, command.expected_root_revision, command.project_id
+                )
+                if (
+                    current.active_operation != operation
+                    or current.generation != generation
+                    or current.revision != data["base_revision"]
+                    or current.policy_revision != data["policy_revision"]
+                ):
+                    raise DomainError(
+                        "REVISION_CONFLICT", "Projection publication authority changed"
+                    )
+                self.publication_consent(db, actor, self.journal(db, operation), recovery)
             if previous != target:
                 replace_document(root, command.filename, previous, target, anchor=anchor)
             if regular_bytes(str(destination), 65536).decode() != target:

@@ -135,3 +135,28 @@ upgrade(engine)
             == receipt
         )
     reopened.dispose()
+
+
+def test_populated_0008_successor_preserves_rows_and_sequence(populated_0007):
+    engine, path, receipts, previous = populated_0007
+    with engine.begin() as db:
+        config = configuration()
+        config.attributes["connection"] = db
+        command.upgrade(config, "0008_project_instructions")
+        snapshot = {
+            name: db.execute(text(f"SELECT * FROM {name}")).all()
+            for name in inspect(db).get_table_names()
+            if name != "alembic_version"
+        }
+    upgrade(engine)
+    with engine.begin() as db:
+        for name, rows in snapshot.items():
+            assert db.execute(text(f"SELECT * FROM {name}")).all() == rows
+        assert db.scalar(text("SELECT seq FROM sqlite_sequence WHERE name='outbox_events'")) == 400
+        assert (
+            db.scalar(text("SELECT version_num FROM alembic_version")) == "0009_instruction_scope"
+        )
+        assert db.execute(text("PRAGMA foreign_key_check")).all() == []
+        for name in ("operation_receipts", "outbox_events"):
+            ddl = db.scalar(text("SELECT sql FROM sqlite_master WHERE name=:name"), {"name": name})
+            assert "target_kind = 'project_instructions' AND project_id IS NOT NULL" in ddl

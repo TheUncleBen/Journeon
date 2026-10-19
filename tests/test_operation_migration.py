@@ -202,6 +202,6 @@ def test_explicit_snapshot_migration_preserves_populated_identity_and_receipts(
     engine, path, receipt, now = legacy_store
     snapshot = tmp_path / "before-upgrade"
     result = migrate_database(path, snapshot)
-    assert result == {"status": "PASS", "schema": "0008_project_instructions"}
+    assert result == {"status": "PASS", "schema": "0009_instruction_scope"}
     assert validate_snapshot(snapshot)["schema"] == "0003_passkeys"
     verify_preserved(engine, receipt, now)

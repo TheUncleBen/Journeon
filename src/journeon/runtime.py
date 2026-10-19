@@ -91,8 +91,8 @@ def application(config: RuntimeConfig) -> FastAPI:
             else "UNCONFIGURED",
             "publication": "UNRESOLVED"
             if db.execute(
-                "SELECT 1 FROM instruction_publications WHERE status != 'CANONICAL"
-                "_COMMITTED' LIMIT 1"
+                "SELECT 1 FROM instruction_publications WHERE status NOT IN "
+                "('CANONICAL_COMMITTED', 'ABANDONED') LIMIT 1"
             ).fetchone()
             else "NO_PENDING_JOURNAL",
         }

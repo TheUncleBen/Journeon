@@ -81,7 +81,7 @@ class InstructionAdministration:
                 stored = evidence.snapshot
             from journeon.release_evidence import verify_current_evidence
 
-            verify_current_evidence(self.configuration, stored)
+            verify_current_evidence(self.engine, self.configuration, stored, actor)
             self.release_observation = stored
             return candidate_manifest()
         if isinstance(effect, CandidateRegister):
@@ -248,6 +248,12 @@ class InstructionAdministration:
             if evidence.snapshot != self.release_observation:
                 raise DomainError(
                     "PERMISSION_DENIED", "Current verified release observation is required"
+                )
+            from journeon.release_qualification import state
+
+            if state(db) != evidence.snapshot["qualification"]["health"]["state"]:
+                raise DomainError(
+                    "PERMISSION_DENIED", "Release qualification changed before installation"
                 )
             provenance = "VERIFIED_RELEASE"
         components = []

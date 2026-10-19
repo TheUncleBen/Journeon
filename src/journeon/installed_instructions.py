@@ -59,7 +59,7 @@ def candidate_manifest() -> CandidateManifest:
         path.relative_to(package).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in sorted(package.rglob("*"))
         if path.is_file()
-        and path.suffix in {".py", ".md", ".json"}
+        and path.suffix in {".py", ".md", ".json", ".js", ".css"}
         and "__pycache__" not in path.parts
     }
     source_digest = digest(sources)

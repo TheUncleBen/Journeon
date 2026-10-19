@@ -127,7 +127,8 @@ class Receipt(Base):
             "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
             "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
             "AND project_id IS NOT NULL) OR (owner = 'project_instructions' AND "
-            "((target_kind = 'project_instructions' AND project_id = target_id) OR "
+            "((target_kind = 'project_instructions' AND project_id IS NOT NULL "
+            "AND project_id = target_id) OR "
             "(target_kind IN ('instruction_root','instruction_install') AND pr"
             "oject_id IS NULL)))",
             name="receipt_target",
@@ -172,7 +173,8 @@ class OutboxEvent(Base):
             "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
             "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
             "AND project_id IS NOT NULL) OR (owner = 'project_instructions' AND "
-            "((target_kind = 'project_instructions' AND project_id = target_id) OR "
+            "((target_kind = 'project_instructions' AND project_id IS NOT NULL "
+            "AND project_id = target_id) OR "
             "(target_kind IN ('instruction_root','instruction_install') AND pr"
             "oject_id IS NULL)))",
             name="event_target",

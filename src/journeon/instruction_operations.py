@@ -15,6 +15,31 @@ from journeon.permissions import AuthenticatedContext, current_owner, require_gr
 
 
 def authorized(db: Session, actor: AuthenticatedContext, row: Receipt) -> InstructionReceipt:
+    kinds = {
+        "project.root.admit.v1": "instruction_root",
+        "project.root.revoke.v1": "instruction_root",
+        "instruction.candidate.register.v1": "instruction_install",
+        "instruction.release.install.v1": "instruction_install",
+        "project.instructions.policy.configure.v1": "project_instructions",
+        "project.instructions.bind.v1": "project_instructions",
+        "project.instructions.accept.v1": "project_instructions",
+        "project.instructions.projection.v1": "project_instructions",
+    }
+    if (
+        kinds.get(row.command) != row.target_kind
+        or row.owner != "project_instructions"
+        or (
+            row.target_kind == "project_instructions"
+            and (row.project_id is None or row.project_id != row.target_id)
+        )
+        or (
+            row.target_kind in {"instruction_root", "instruction_install"}
+            and row.project_id is not None
+        )
+        or row.target_kind
+        not in {"project_instructions", "instruction_root", "instruction_install"}
+    ):
+        raise DomainError("PERMISSION_DENIED", "Instruction receipt scope is unavailable")
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
     if row.project_id is None:

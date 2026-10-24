@@ -486,6 +486,355 @@
     },
     {
       "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.review.select",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "task.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion with configured requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current target and admission authority; historical receipts retain their original candidate"
+      },
+      "command": "task.review.select.v1",
+      "endpoint": "journeon.api.create_app.<locals>.select_review_target",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "selectReviewTarget",
+      "owner": "work",
+      "path": "/api/v1/tasks/review-targets",
+      "permissions": [
+        "task.review.select",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "task.review.read",
+        "task.read",
+        "project.review.read",
+        "attempt.read",
+        "project.instruction.read",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.review.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.review.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Target and Attempt belong to the initiating Principal and current admitted root"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_review_target",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getReviewTarget",
+      "owner": "work",
+      "path": "/api/v1/review-targets/{identity}",
+      "permissions": [
+        "task.review.read",
+        "task.read",
+        "project.review.read",
+        "attempt.read",
+        "project.instruction.read"
+      ],
+      "query": "task.review.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.complete",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "task.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion with configured requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current target and admission authority; historical receipts retain their original candidate"
+      },
+      "command": "task.complete.v1",
+      "endpoint": "journeon.api.create_app.<locals>.complete_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "completeTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/complete",
+      "permissions": [
+        "task.complete",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "execution.read",
+        "execution.receipt.read",
+        "project.read",
+        "job.read",
+        "task.review.read",
+        "task.read",
+        "project.review.read",
+        "attempt.read",
+        "project.instruction.read",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": "project.review.configure.v1",
+      "endpoint": "journeon.api.create_app.<locals>.configure_review_policy",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "configureReviewPolicy",
+      "owner": "projects",
+      "path": "/api/v1/projects/review-policy",
+      "permissions": [
+        "project.review.configure",
+        "project.review.read",
+        "project.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.get_review_policy",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getReviewPolicy",
+      "owner": "projects",
+      "path": "/api/v1/projects/{project_id}/review-policy",
+      "permissions": [
+        "project.review.read"
+      ],
+      "query": "project.review.read.v1"
+    },
+    {
+      "authentication": null,
       "command": "project.verification.configure.v1",
       "endpoint": "journeon.api.create_app.<locals>.configure_verification",
       "methods": [
@@ -4265,6 +4614,288 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Immutable proof definitions confer no execution authority"
+    },
+    {
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ReviewPolicyConfigure",
+      "name": "project.review.configure.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.review.configure",
+        "project.review.read",
+        "project.receipt.read"
+      ],
+      "result_model": "ReviewPolicyReceipt",
+      "reversibility": "A subsequent policy revision retains previous review rules",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Versioned review rules confer no reviewer execution authority"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.review.select",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "task.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion with configured requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current target and admission authority; historical receipts retain their original candidate"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "ReviewTargetSelect",
+      "name": "task.review.select.v1",
+      "owner": "work",
+      "permissions": [
+        "task.review.select",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "task.review.read",
+        "task.read",
+        "project.review.read",
+        "attempt.read",
+        "project.instruction.read",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "result_model": "ReviewTargetReceipt",
+      "reversibility": "Immutable candidate and completion receipts retain the selected snapshot",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact candidate, policy and service-produced evidence bindings"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.complete",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "execution.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "task.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.review.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion; historical receipt replay retains its own grants"
+          },
+          {
+            "capability": "bot.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "bot.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.bot_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.read",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "profile.use",
+            "owner_configuration_authority": true,
+            "resource": "receiver.profile_id",
+            "when": "new target or completion with Bot assignment"
+          },
+          {
+            "capability": "{policy.required_capability}",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "new target or completion with configured requirement"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current target and admission authority; historical receipts retain their original candidate"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "TaskComplete",
+      "name": "task.complete.v1",
+      "owner": "work",
+      "permissions": [
+        "task.complete",
+        "task.receipt.read",
+        "project.verification.read",
+        "execution.admit",
+        "execution.read",
+        "execution.receipt.read",
+        "project.read",
+        "job.read",
+        "task.review.read",
+        "task.read",
+        "project.review.read",
+        "attempt.read",
+        "project.instruction.read",
+        "bot.read",
+        "bot.use",
+        "profile.read",
+        "profile.use"
+      ],
+      "result_model": "TaskReceipt",
+      "reversibility": "Immutable candidate and completion receipts retain the selected snapshot",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current exact candidate, policy and service-produced evidence bindings"
     }
   ],
   "internal_services": [
@@ -4664,10 +5295,11 @@
       "events_consumed": [],
       "events_published": [
         "project.created",
-        "project.verification.configured"
+        "project.verification.configured",
+        "project.review.configured"
       ],
       "health": "schema_and_database",
-      "migration": "0011_task_admission",
+      "migration": "0014_review_completion",
       "module_id": "projects",
       "permission_namespaces": [
         "project"
@@ -4677,19 +5309,23 @@
         "project.receipt.read",
         "project.verification.configure",
         "project.verification.read",
+        "project.review.configure",
+        "project.review.read",
         "project.read"
       ],
       "settings": [],
       "tables": [
         "projects",
-        "verification_policy_revisions"
+        "verification_policy_revisions",
+        "review_policy_revisions"
       ],
       "version": "0.0.0.dev1"
     },
     {
       "api_prefixes": [
         "/api/v1/tasks",
-        "/api/v1/attempts"
+        "/api/v1/attempts",
+        "/api/v1/review-targets"
       ],
       "backup_class": "R0",
       "core": true,
@@ -4706,10 +5342,12 @@
         "execution.stop_requested",
         "task.revised",
         "task.assigned",
-        "task.admission.checked"
+        "task.admission.checked",
+        "task.review.target.selected",
+        "task.completed"
       ],
       "health": "schema_and_database",
-      "migration": "0013_task_dispatch",
+      "migration": "0014_review_completion",
       "module_id": "work",
       "permission_namespaces": [
         "attempt",
@@ -4747,6 +5385,10 @@
         "task.revise",
         "task.assign",
         "task.admit",
+        "task.review.select",
+        "task.review.read",
+        "task.complete",
+        "project.review.read",
         "bot.read",
         "bot.use",
         "profile.read",
@@ -4762,7 +5404,8 @@
         "executions",
         "execution_manifests",
         "execution_effects",
-        "task_revisions"
+        "task_revisions",
+        "review_targets"
       ],
       "version": "0.0.0.dev1"
     }
@@ -5207,6 +5850,14 @@
       "result_model": "AttemptView"
     },
     {
+      "name": "project.review.read.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.review.read"
+      ],
+      "result_model": "ReviewPolicy"
+    },
+    {
       "name": "project.read.v1",
       "owner": "projects",
       "permissions": [
@@ -5221,6 +5872,54 @@
         "project.verification.read"
       ],
       "result_model": "VerificationPolicy"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "task.review.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.review.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "target.project_id",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Target and Attempt belong to the initiating Principal and current admitted root"
+      },
+      "name": "task.review.read.v1",
+      "owner": "work",
+      "permissions": [
+        "task.review.read",
+        "task.read",
+        "project.review.read",
+        "attempt.read",
+        "project.instruction.read"
+      ],
+      "result_model": "ReviewTarget"
     },
     {
       "name": "task.workflows.read.v1",

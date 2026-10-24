@@ -44,8 +44,15 @@ from journeon.contracts import (
     ProfileView,
     ProjectCreate,
     ProjectView,
+    ReviewPolicy,
+    ReviewPolicyConfigure,
+    ReviewPolicyReceipt,
+    ReviewTarget,
+    ReviewTargetReceipt,
+    ReviewTargetSelect,
     TaskAdmission,
     TaskAssign,
+    TaskComplete,
     TaskControl,
     TaskCreate,
     TaskReceipt,
@@ -380,6 +387,86 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> TaskReceipt:
         return WorkService(engine).create_or_continue_task(actor, command)
+
+    from journeon.review_targets import ReviewTargetService
+    from journeon.reviews import ReviewService
+
+    @app.post(
+        "/api/v1/tasks/review-targets",
+        response_model=ReviewTargetReceipt,
+        operation_id="selectReviewTarget",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.review.select.v1"),
+    )
+    def select_review_target(
+        command: ReviewTargetSelect,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ReviewTargetReceipt:
+        return ReviewTargetService(engine, instructions).select(actor, command)
+
+    @app.get(
+        "/api/v1/review-targets/{identity}",
+        response_model=ReviewTarget,
+        operation_id="getReviewTarget",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.review.read.v1"),
+    )
+    def get_review_target(
+        identity: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ReviewTarget:
+        return ReviewTargetService(engine, instructions).read(actor, identity)
+
+    @app.post(
+        "/api/v1/tasks/complete",
+        response_model=TaskReceipt,
+        operation_id="completeTask",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.complete.v1"),
+    )
+    def complete_task(
+        command: TaskComplete,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> TaskReceipt:
+        return WorkService(engine).complete(actor, command, instructions)
+
+    @app.post(
+        "/api/v1/projects/review-policy",
+        response_model=ReviewPolicyReceipt,
+        operation_id="configureReviewPolicy",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "projects",
+            "x-journeon-command": "project.review.configure.v1",
+            "x-journeon-permissions": [
+                "project.review.configure",
+                "project.review.read",
+                "project.receipt.read",
+            ],
+        },
+    )
+    def configure_review_policy(
+        command: ReviewPolicyConfigure,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ReviewPolicyReceipt:
+        return ReviewService(engine).configure(actor, command)
+
+    @app.get(
+        "/api/v1/projects/{project_id}/review-policy",
+        response_model=ReviewPolicy,
+        operation_id="getReviewPolicy",
+        responses=errors,
+        openapi_extra={
+            "x-journeon-owner": "projects",
+            "x-journeon-query": "project.review.read.v1",
+            "x-journeon-permissions": ["project.review.read"],
+        },
+    )
+    def get_review_policy(
+        project_id: Identifier,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> ReviewPolicy:
+        return ReviewService(engine).policy(actor, project_id)
 
     @app.post(
         "/api/v1/projects/verification",

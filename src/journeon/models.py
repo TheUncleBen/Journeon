@@ -763,6 +763,39 @@ class VerificationPolicyRevision(Base):
     __table_args__ = (CheckConstraint("revision >= 1", name="verification_policy_revision"),)
 
 
+class ReviewPolicyRevision(Base):
+    __tablename__ = "review_policy_revisions"
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (CheckConstraint("revision >= 1", name="review_policy_revision"),)
+
+
+class ReviewTargetRecord(Base):
+    __tablename__ = "review_targets"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"))
+    task_revision: Mapped[int] = mapped_column(Integer)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("attempts.id"))
+    manifest_id: Mapped[str] = mapped_column(ForeignKey("attempt_manifests.id"))
+    review_policy_revision: Mapped[int] = mapped_column(Integer)
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    operation_id: Mapped[str] = mapped_column(ForeignKey("operation_receipts.id"), unique=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["task_id", "task_revision"], ["task_revisions.task_id", "task_revisions.revision"]
+        ),
+        ForeignKeyConstraint(
+            ["project_id", "review_policy_revision"],
+            ["review_policy_revisions.project_id", "review_policy_revisions.revision"],
+        ),
+    )
+
+
 class TaskRevision(Base):
     __tablename__ = "task_revisions"
     task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), primary_key=True)

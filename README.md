@@ -125,9 +125,11 @@ Admission retries recheck current eligibility. A historical denial remains a den
 replaying it cannot grant execution authority.
 Task verification dispatch now runs configured deterministic checks through durable
 Jobs against immutable Attempt snapshots. See [execution operations](docs/execution.md)
-for dispatch, evidence, configuration and grants. Native/model execution, workflow
-loops, semantic approval settlement, evidence-driven Task completion and an
-operational Work UI remain unavailable.
+for dispatch, evidence, configuration and grants. [Review and completion](docs/reviews.md)
+adds explicit review policy, immutable candidate selection and deterministic-only
+completion through current evidence gates. Native/model execution, independent
+review execution, workflow loops, semantic approval settlement and an operational
+Work UI remain unavailable.
 
 ## Identity configuration and instruction provenance
 

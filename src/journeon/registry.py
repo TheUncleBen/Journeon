@@ -34,8 +34,15 @@ from journeon.contracts import (
     ProfileView,
     ProjectCreate,
     ProjectView,
+    ReviewPolicy,
+    ReviewPolicyConfigure,
+    ReviewPolicyReceipt,
+    ReviewTarget,
+    ReviewTargetReceipt,
+    ReviewTargetSelect,
     TaskAdmission,
     TaskAssign,
+    TaskComplete,
     TaskControl,
     TaskCreate,
     TaskReceipt,
@@ -1207,6 +1214,36 @@ COMMANDS["project.verification.configure.v1"] = CommandDefinition(
     idempotent=True,
     verification="Immutable proof definitions confer no execution authority",
 )
+MODULES["projects"]["tables"] += ("review_policy_revisions",)
+MODULES["projects"]["permissions"] += (
+    "project.review.configure",
+    "project.review.read",
+)
+MODULES["projects"]["events_published"] += ("project.review.configured",)
+MODULES["projects"]["migration"] = "0014_review_completion"
+COMMANDS["project.review.configure.v1"] = CommandDefinition(
+    name="project.review.configure.v1",
+    owner="projects",
+    input_model=ReviewPolicyConfigure,
+    result_model=ReviewPolicyReceipt,
+    permissions=(
+        "project.review.configure",
+        "project.review.read",
+        "project.receipt.read",
+    ),
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="A subsequent policy revision retains previous review rules",
+    dry_run=False,
+    idempotent=True,
+    verification="Versioned review rules confer no reviewer execution authority",
+)
+QUERIES["project.review.read.v1"] = {
+    "owner": "projects",
+    "permissions": ("project.review.read",),
+    "result_model": ReviewPolicy,
+}
+
 MODULES["projects"]["permissions"] += ("project.read",)
 QUERIES["project.read.v1"] = {
     "owner": "projects",
@@ -1217,6 +1254,131 @@ QUERIES["project.verification.read.v1"] = {
     "owner": "projects",
     "permissions": ("project.verification.read",),
     "result_model": VerificationPolicy,
+}
+
+MODULES["work"]["tables"] += ("review_targets",)
+MODULES["work"]["api_prefixes"] += ("/api/v1/review-targets",)
+MODULES["work"]["permissions"] += ("task.review.select", "task.review.read", "task.complete")
+MODULES["work"]["events_published"] += ("task.review.target.selected", "task.completed")
+MODULES["work"]["migration"] = "0014_review_completion"
+REVIEW_TARGET_READ_PERMISSIONS = (
+    "task.review.read",
+    "task.read",
+    "project.review.read",
+    "attempt.read",
+    "project.instruction.read",
+)
+for name, input_model, result_model, permissions in (
+    (
+        "task.review.select.v1",
+        ReviewTargetSelect,
+        ReviewTargetReceipt,
+        (
+            "task.review.select",
+            "task.receipt.read",
+            "project.verification.read",
+            "execution.admit",
+            *REVIEW_TARGET_READ_PERMISSIONS,
+        ),
+    ),
+    (
+        "task.complete.v1",
+        TaskComplete,
+        TaskReceipt,
+        (
+            "task.complete",
+            "task.receipt.read",
+            "project.verification.read",
+            "execution.admit",
+            "execution.read",
+            "execution.receipt.read",
+            "project.read",
+            "job.read",
+            *REVIEW_TARGET_READ_PERMISSIONS,
+        ),
+    ),
+):
+    COMMANDS[name] = CommandDefinition(
+        name=name,
+        owner="work",
+        input_model=input_model,
+        result_model=result_model,
+        permissions=permissions,
+        risk="LOCAL_CANONICAL_MUTATION",
+        external_effects=(),
+        reversibility="Immutable candidate and completion receipts retain the selected snapshot",
+        dry_run=False,
+        idempotent=True,
+        verification="Current exact candidate, policy and service-produced evidence bindings",
+    )
+    checks = [
+        grant_check(
+            capability,
+            "task.project_id",
+            "always"
+            if capability in ("task.complete", "task.read", "task.receipt.read")
+            or (
+                name == "task.review.select.v1"
+                and capability not in ("project.verification.read", "execution.admit")
+            )
+            else "new target or completion; historical receipt replay retains its own grants",
+            owner=False,
+        )
+        for capability in permissions
+    ]
+    checks.extend(
+        [
+            grant_check(
+                "bot.read", "receiver.bot_id", "new target or completion with Bot assignment"
+            ),
+            grant_check(
+                "bot.use", "receiver.bot_id", "new target or completion with Bot assignment"
+            ),
+            grant_check(
+                "profile.read",
+                "receiver.profile_id",
+                "new target or completion with Bot assignment",
+            ),
+            grant_check(
+                "profile.use", "receiver.profile_id", "new target or completion with Bot assignment"
+            ),
+            grant_check(
+                "{policy.required_capability}",
+                "task.project_id",
+                "new target or completion with configured requirement",
+                owner=False,
+            ),
+        ]
+    )
+    CONFIGURATION_AUTHORIZATION[name] = {
+        "owner_only": False,
+        "grant_checks": checks,
+        "semantics": (
+            "Current target and admission authority; "
+            "historical receipts retain their original candidate"
+        ),
+    }
+    COMMANDS[name] = replace(
+        COMMANDS[name],
+        permissions=tuple(
+            dict.fromkeys(check["capability"] for check in checks if "{" not in check["capability"])
+        ),
+    )
+    MODULES["work"]["permissions"] = tuple(
+        dict.fromkeys((*MODULES["work"]["permissions"], *COMMANDS[name].permissions))
+    )
+QUERIES["task.review.read.v1"] = {
+    "owner": "work",
+    "permissions": REVIEW_TARGET_READ_PERMISSIONS,
+    "result_model": ReviewTarget,
+}
+CONFIGURATION_AUTHORIZATION["task.review.read.v1"] = {
+    "owner_only": False,
+    "grant_checks": [
+        grant_check(capability, "target.project_id", owner=False)
+        for capability in REVIEW_TARGET_READ_PERMISSIONS
+    ],
+    "semantics": "Target and Attempt belong to the initiating Principal and current admitted root",
 }
 
 QUERIES["task.workflows.read.v1"] = {

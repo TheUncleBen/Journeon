@@ -923,6 +923,78 @@ export type RestoreReceipt = {
   "target_kind"?: "store";
 };
 
+export type ReviewPolicy = {
+  "automatic_round_limit": number | null;
+  "created_at": string;
+  "created_by": string;
+  "independent_review_required": boolean;
+  "material_severities": Array<string>;
+  "minimum_independence": Array<"FRESH_SESSION" | "DISTINCT_AGENT" | "DISTINCT_MODEL_FAMILY" | "DISTINCT_PROVIDER" | "DISTINCT_HARNESS">;
+  "owner_override_severities": Array<string>;
+  "preferred_diversity": Array<"FRESH_SESSION" | "DISTINCT_AGENT" | "DISTINCT_MODEL_FAMILY" | "DISTINCT_PROVIDER" | "DISTINCT_HARNESS">;
+  "project_id": string;
+  "required_coverage": Array<string>;
+  "revision": number;
+  "stop_on_cycle": boolean;
+  "stop_on_unchanged_target": boolean;
+};
+
+export type ReviewPolicyConfigure = {
+  "automatic_round_limit": number | null;
+  "expected_policy_revision": number;
+  "expected_project_revision": number;
+  "idempotency_key": string;
+  "independent_review_required": boolean;
+  "material_severities": Array<string>;
+  "minimum_independence": Array<"FRESH_SESSION" | "DISTINCT_AGENT" | "DISTINCT_MODEL_FAMILY" | "DISTINCT_PROVIDER" | "DISTINCT_HARNESS">;
+  "owner_override_severities": Array<string>;
+  "preferred_diversity": Array<"FRESH_SESSION" | "DISTINCT_AGENT" | "DISTINCT_MODEL_FAMILY" | "DISTINCT_PROVIDER" | "DISTINCT_HARNESS">;
+  "project_id": string;
+  "required_coverage": Array<string>;
+  "schema_version": 1;
+  "stop_on_cycle": boolean;
+  "stop_on_unchanged_target": boolean;
+};
+
+export type ReviewPolicyReceipt = {
+  "command"?: "project.review.configure.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "policy": ReviewPolicy;
+  "schema_version"?: 1;
+};
+
+export type ReviewTarget = {
+  "authorship_status"?: "UNAVAILABLE";
+  "candidate"?: "ADMITTED_ATTEMPT_SNAPSHOT";
+  "content_digest": string;
+  "kind"?: "CHANGESET";
+  "manifest": RunManifest;
+  "review_policy": ReviewPolicy;
+  "selected_at": string;
+  "selected_by": string;
+  "target_id": string;
+};
+
+export type ReviewTargetReceipt = {
+  "command"?: "task.review.select.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "schema_version"?: 1;
+  "target": ReviewTarget;
+};
+
+export type ReviewTargetSelect = {
+  "attempt_id": string;
+  "expected_review_policy_revision": number;
+  "expected_revision": number;
+  "idempotency_key": string;
+  "schema_version": 1;
+  "task_id": string;
+};
+
 export type RootAdmit = {
   "config_revision": number;
   "expected_revision": number;
@@ -1024,6 +1096,26 @@ export type TaskAttemptOrigin = {
   "task_revision": number;
 };
 
+export type TaskComplete = {
+  "expected_revision": number;
+  "idempotency_key": string;
+  "reason": string;
+  "schema_version": 1;
+  "target_digest": string;
+  "target_id": string;
+  "task_id": string;
+};
+
+export type TaskCompletionBinding = {
+  "attempt_id": string;
+  "evidence_ids": Array<string>;
+  "manifest_id": string;
+  "review_policy_revision": number;
+  "snapshot_hash": string;
+  "target_digest": string;
+  "target_id": string;
+};
+
 export type TaskControl = {
   "expected_revision": number;
   "idempotency_key": string;
@@ -1092,7 +1184,7 @@ export type TaskPolicyBinding = {
 };
 
 export type TaskReceipt = {
-  "command": "task.create.v1" | "task.pause.v1" | "task.resume.v1" | "task.cancel.v1" | "task.revise.v1" | "task.assign.v1" | "task.admit.v1";
+  "command": "task.create.v1" | "task.pause.v1" | "task.resume.v1" | "task.cancel.v1" | "task.revise.v1" | "task.assign.v1" | "task.admit.v1" | "task.complete.v1";
   "committed_at": string;
   "operation_id": string;
   "outcome"?: "CANONICAL_COMMITTED";
@@ -1116,6 +1208,7 @@ export type TaskView = {
   "assignment": TaskAssignment;
   "assignment_history": Array<TaskAssignment>;
   "blocker": string | null;
+  "completion"?: TaskCompletionBinding | null;
   "contributors"?: Array<TaskAssignment>;
   "created_at": string;
   "criteria_revision": number;
@@ -1234,7 +1327,7 @@ export type WorkflowTemplates = {
   "templates": Array<WorkflowTemplate>;
 };
 
-export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt;
+export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | ReviewPolicyReceipt | ReviewTargetReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -1466,6 +1559,26 @@ export class JourneonClient {
     return this.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`, {method: "GET"});
   }
 
+  configureReviewPolicy(command: ReviewPolicyConfigure,
+    csrfToken: string): Promise<ReviewPolicyReceipt> {
+    return this.request('/api/v1/projects/review-policy', {method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
+  }
+  getReviewPolicy(projectId: string): Promise<ReviewPolicy> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}/review-policy`,
+      {method: 'GET'});
+  }
+  selectReviewTarget(command: ReviewTargetSelect, csrfToken: string): Promise<ReviewTargetReceipt> {
+    return this.request('/api/v1/tasks/review-targets', {method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
+  }
+  getReviewTarget(identity: string): Promise<ReviewTarget> {
+    return this.request(`/api/v1/review-targets/${encodeURIComponent(identity)}`, {method: 'GET'});
+  }
+  completeTask(command: TaskComplete, csrfToken: string): Promise<TaskReceipt> {
+    return this.request('/api/v1/tasks/complete', {method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
+  }
   configureVerification(command: VerificationPolicyConfigure,
     csrfToken?: string): Promise<VerificationPolicyReceipt> {
     return this.request("/api/v1/projects/verification",

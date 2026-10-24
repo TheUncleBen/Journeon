@@ -16,7 +16,10 @@ async function main() {
   });
   for (const [method, path] of [["admitTask", "/api/v1/tasks/admit"],
     ["assignTask", "/api/v1/tasks/assign"], ["reviseTask", "/api/v1/tasks/revise"],
-    ["configureVerification", "/api/v1/projects/verification"]]) {
+    ["configureVerification", "/api/v1/projects/verification"],
+    ["configureReviewPolicy", "/api/v1/projects/review-policy"],
+    ["selectReviewTarget", "/api/v1/tasks/review-targets"],
+    ["completeTask", "/api/v1/tasks/complete"]]) {
     assert.deepEqual(await successor[method]({idempotency_key: "fixture"}, "csrf"), receipt);
     const call = successorCalls.at(-1);
     assert.equal(call.url, path);
@@ -30,6 +33,12 @@ async function main() {
   assert.equal(successorCalls.at(-1).init.credentials, "same-origin");
   await successor.getVerification("encoded/project");
   assert.equal(successorCalls.at(-1).url, "/api/v1/projects/encoded%2Fproject/verification");
+  await successor.getReviewPolicy("encoded/project");
+  assert.equal(successorCalls.at(-1).url, "/api/v1/projects/encoded%2Fproject/review-policy");
+  assert.equal(successorCalls.at(-1).init.method, "GET");
+  await successor.getReviewTarget("encoded/target");
+  assert.equal(successorCalls.at(-1).url, "/api/v1/review-targets/encoded%2Ftarget");
+  assert.equal(successorCalls.at(-1).init.method, "GET");
   await successor.getWorkflowTemplates("encoded/project");
   assert.equal(successorCalls.at(-1).url, "/api/v1/tasks/workflow-templates?project_id=encoded%2Fproject");
   const client = new JourneonClient("", transport);

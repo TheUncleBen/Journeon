@@ -5341,6 +5341,443 @@
         "title": "RestoreReceipt",
         "type": "object"
       },
+      "ReviewPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "automatic_round_limit": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Automatic Round Limit"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "independent_review_required": {
+            "title": "Independent Review Required",
+            "type": "boolean"
+          },
+          "material_severities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Material Severities",
+            "type": "array"
+          },
+          "minimum_independence": {
+            "items": {
+              "enum": [
+                "FRESH_SESSION",
+                "DISTINCT_AGENT",
+                "DISTINCT_MODEL_FAMILY",
+                "DISTINCT_PROVIDER",
+                "DISTINCT_HARNESS"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Minimum Independence",
+            "type": "array"
+          },
+          "owner_override_severities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Owner Override Severities",
+            "type": "array"
+          },
+          "preferred_diversity": {
+            "items": {
+              "enum": [
+                "FRESH_SESSION",
+                "DISTINCT_AGENT",
+                "DISTINCT_MODEL_FAMILY",
+                "DISTINCT_PROVIDER",
+                "DISTINCT_HARNESS"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Preferred Diversity",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_coverage": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Coverage",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "stop_on_cycle": {
+            "title": "Stop On Cycle",
+            "type": "boolean"
+          },
+          "stop_on_unchanged_target": {
+            "title": "Stop On Unchanged Target",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "independent_review_required",
+          "minimum_independence",
+          "preferred_diversity",
+          "required_coverage",
+          "material_severities",
+          "owner_override_severities",
+          "automatic_round_limit",
+          "stop_on_cycle",
+          "stop_on_unchanged_target",
+          "project_id",
+          "revision",
+          "created_by",
+          "created_at"
+        ],
+        "title": "ReviewPolicy",
+        "type": "object"
+      },
+      "ReviewPolicyConfigure": {
+        "additionalProperties": false,
+        "properties": {
+          "automatic_round_limit": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Automatic Round Limit"
+          },
+          "expected_policy_revision": {
+            "minimum": 0.0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "expected_project_revision": {
+            "minimum": 1.0,
+            "title": "Expected Project Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "independent_review_required": {
+            "title": "Independent Review Required",
+            "type": "boolean"
+          },
+          "material_severities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Material Severities",
+            "type": "array"
+          },
+          "minimum_independence": {
+            "items": {
+              "enum": [
+                "FRESH_SESSION",
+                "DISTINCT_AGENT",
+                "DISTINCT_MODEL_FAMILY",
+                "DISTINCT_PROVIDER",
+                "DISTINCT_HARNESS"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Minimum Independence",
+            "type": "array"
+          },
+          "owner_override_severities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Owner Override Severities",
+            "type": "array"
+          },
+          "preferred_diversity": {
+            "items": {
+              "enum": [
+                "FRESH_SESSION",
+                "DISTINCT_AGENT",
+                "DISTINCT_MODEL_FAMILY",
+                "DISTINCT_PROVIDER",
+                "DISTINCT_HARNESS"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Preferred Diversity",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_coverage": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Coverage",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "stop_on_cycle": {
+            "title": "Stop On Cycle",
+            "type": "boolean"
+          },
+          "stop_on_unchanged_target": {
+            "title": "Stop On Unchanged Target",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "independent_review_required",
+          "minimum_independence",
+          "preferred_diversity",
+          "required_coverage",
+          "material_severities",
+          "owner_override_severities",
+          "automatic_round_limit",
+          "stop_on_cycle",
+          "stop_on_unchanged_target",
+          "schema_version",
+          "idempotency_key",
+          "project_id",
+          "expected_project_revision",
+          "expected_policy_revision"
+        ],
+        "title": "ReviewPolicyConfigure",
+        "type": "object"
+      },
+      "ReviewPolicyReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "project.review.configure.v1",
+            "default": "project.review.configure.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/ReviewPolicy"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "policy"
+        ],
+        "title": "ReviewPolicyReceipt",
+        "type": "object"
+      },
+      "ReviewTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "authorship_status": {
+            "const": "UNAVAILABLE",
+            "default": "UNAVAILABLE",
+            "title": "Authorship Status",
+            "type": "string"
+          },
+          "candidate": {
+            "const": "ADMITTED_ATTEMPT_SNAPSHOT",
+            "default": "ADMITTED_ATTEMPT_SNAPSHOT",
+            "title": "Candidate",
+            "type": "string"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "kind": {
+            "const": "CHANGESET",
+            "default": "CHANGESET",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/RunManifest"
+          },
+          "review_policy": {
+            "$ref": "#/components/schemas/ReviewPolicy"
+          },
+          "selected_at": {
+            "title": "Selected At",
+            "type": "string"
+          },
+          "selected_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Selected By",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "manifest",
+          "review_policy",
+          "selected_by",
+          "selected_at",
+          "content_digest"
+        ],
+        "title": "ReviewTarget",
+        "type": "object"
+      },
+      "ReviewTargetReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "task.review.select.v1",
+            "default": "task.review.select.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ReviewTarget"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "target"
+        ],
+        "title": "ReviewTargetReceipt",
+        "type": "object"
+      },
+      "ReviewTargetSelect": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "expected_review_policy_revision": {
+            "minimum": 1.0,
+            "title": "Expected Review Policy Revision",
+            "type": "integer"
+          },
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "task_id",
+          "expected_revision",
+          "attempt_id",
+          "expected_review_policy_revision"
+        ],
+        "title": "ReviewTargetSelect",
+        "type": "object"
+      },
       "RootAdmit": {
         "additionalProperties": false,
         "properties": {
@@ -5913,6 +6350,112 @@
         "title": "TaskAttemptOrigin",
         "type": "object"
       },
+      "TaskComplete": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_digest": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Target Digest",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "task_id",
+          "expected_revision",
+          "reason",
+          "target_id",
+          "target_digest"
+        ],
+        "title": "TaskComplete",
+        "type": "object"
+      },
+      "TaskCompletionBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "manifest_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Manifest Id",
+            "type": "string"
+          },
+          "review_policy_revision": {
+            "minimum": 1.0,
+            "title": "Review Policy Revision",
+            "type": "integer"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "target_digest": {
+            "title": "Target Digest",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "target_digest",
+          "attempt_id",
+          "manifest_id",
+          "snapshot_hash",
+          "review_policy_revision",
+          "evidence_ids"
+        ],
+        "title": "TaskCompletionBinding",
+        "type": "object"
+      },
       "TaskControl": {
         "additionalProperties": false,
         "properties": {
@@ -6300,7 +6843,8 @@
               "task.cancel.v1",
               "task.revise.v1",
               "task.assign.v1",
-              "task.admit.v1"
+              "task.admit.v1",
+              "task.complete.v1"
             ],
             "title": "Command",
             "type": "string"
@@ -6436,6 +6980,16 @@
               }
             ],
             "title": "Blocker"
+          },
+          "completion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskCompletionBinding"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "contributors": {
             "items": {
@@ -9490,6 +10044,12 @@
                       "$ref": "#/components/schemas/VerificationPolicyReceipt"
                     },
                     {
+                      "$ref": "#/components/schemas/ReviewPolicyReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReviewTargetReceipt"
+                    },
+                    {
                       "$ref": "#/components/schemas/RestoreReceipt"
                     },
                     {
@@ -10478,6 +11038,111 @@
         "x-journeon-owner": "projects",
         "x-journeon-permissions": [
           "project.create",
+          "project.receipt.read"
+        ]
+      }
+    },
+    "/api/v1/projects/review-policy": {
+      "post": {
+        "operationId": "configureReviewPolicy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewPolicyConfigure"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewPolicyReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Configure Review Policy",
+        "x-journeon-command": "project.review.configure.v1",
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.review.configure",
+          "project.review.read",
           "project.receipt.read"
         ]
       }
@@ -12599,6 +13264,111 @@
         "x-journeon-query": "project.read.v1"
       }
     },
+    "/api/v1/projects/{project_id}/review-policy": {
+      "get": {
+        "operationId": "getReviewPolicy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewPolicy"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Review Policy",
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.review.read"
+        ],
+        "x-journeon-query": "project.review.read.v1"
+      }
+    },
     "/api/v1/projects/{project_id}/verification": {
       "get": {
         "operationId": "getVerification",
@@ -13344,6 +14114,151 @@
         "x-journeon-permissions": []
       }
     },
+    "/api/v1/review-targets/{identity}": {
+      "get": {
+        "operationId": "getReviewTarget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewTarget"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Review Target",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.review.read",
+              "owner_configuration_authority": false,
+              "resource": "target.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "target.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.review.read",
+              "owner_configuration_authority": false,
+              "resource": "target.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "target.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "target.project_id",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Target and Attempt belong to the initiating Principal and current admitted root"
+        },
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.review.read",
+          "task.read",
+          "project.review.read",
+          "attempt.read",
+          "project.instruction.read"
+        ],
+        "x-journeon-query": "task.review.read.v1"
+      }
+    },
     "/api/v1/tasks": {
       "post": {
         "operationId": "createTask",
@@ -13908,6 +14823,239 @@
         ]
       }
     },
+    "/api/v1/tasks/complete": {
+      "post": {
+        "operationId": "completeTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskComplete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Complete Task",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.complete",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "execution.admit",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "execution.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "execution.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "task.review.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.review.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "bot.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "{policy.required_capability}",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion with configured requirement"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current target and admission authority; historical receipts retain their original candidate"
+        },
+        "x-journeon-command": "task.complete.v1",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.complete",
+          "task.receipt.read",
+          "project.verification.read",
+          "execution.admit",
+          "execution.read",
+          "execution.receipt.read",
+          "project.read",
+          "job.read",
+          "task.review.read",
+          "task.read",
+          "project.review.read",
+          "attempt.read",
+          "project.instruction.read",
+          "bot.read",
+          "bot.use",
+          "profile.read",
+          "profile.use"
+        ]
+      }
+    },
     "/api/v1/tasks/dispatch": {
       "post": {
         "operationId": "dispatchTask",
@@ -14339,6 +15487,211 @@
           "task.resume",
           "task.read",
           "task.receipt.read"
+        ]
+      }
+    },
+    "/api/v1/tasks/review-targets": {
+      "post": {
+        "operationId": "selectReviewTarget",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewTargetSelect"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewTargetReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Select Review Target",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.review.select",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "execution.admit",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion; historical receipt replay retains its own grants"
+            },
+            {
+              "capability": "task.review.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.review.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "bot.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "bot.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.bot_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "profile.read",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "profile.use",
+              "owner_configuration_authority": true,
+              "resource": "receiver.profile_id",
+              "when": "new target or completion with Bot assignment"
+            },
+            {
+              "capability": "{policy.required_capability}",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "new target or completion with configured requirement"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current target and admission authority; historical receipts retain their original candidate"
+        },
+        "x-journeon-command": "task.review.select.v1",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.review.select",
+          "task.receipt.read",
+          "project.verification.read",
+          "execution.admit",
+          "task.review.read",
+          "task.read",
+          "project.review.read",
+          "attempt.read",
+          "project.instruction.read",
+          "bot.read",
+          "bot.use",
+          "profile.read",
+          "profile.use"
         ]
       }
     },

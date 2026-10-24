@@ -39,8 +39,15 @@ from journeon.contracts import (
     ProfileView,
     ProjectCreate,
     ProjectView,
+    ReviewPolicy,
+    ReviewPolicyConfigure,
+    ReviewPolicyReceipt,
+    ReviewTarget,
+    ReviewTargetReceipt,
+    ReviewTargetSelect,
     TaskAdmission,
     TaskAssign,
+    TaskComplete,
     TaskControl,
     TaskCreate,
     TaskReceipt,
@@ -143,6 +150,11 @@ def artifacts() -> dict[str, str]:
         "reviseTask": ("POST", "/api/v1/tasks/revise"),
         "assignTask": ("POST", "/api/v1/tasks/assign"),
         "admitTask": ("POST", "/api/v1/tasks/admit"),
+        "configureReviewPolicy": ("POST", "/api/v1/projects/review-policy"),
+        "getReviewPolicy": ("GET", "/api/v1/projects/{project_id}/review-policy"),
+        "selectReviewTarget": ("POST", "/api/v1/tasks/review-targets"),
+        "getReviewTarget": ("GET", "/api/v1/review-targets/{identity}"),
+        "completeTask": ("POST", "/api/v1/tasks/complete"),
         "configureVerification": ("POST", "/api/v1/projects/verification"),
         "getProject": ("GET", "/api/v1/projects/{project_id}"),
         "getVerification": ("GET", "/api/v1/projects/{project_id}/verification"),
@@ -416,6 +428,26 @@ export class JourneonClient {
     return this.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`, {method: "GET"});
   }
 
+  configureReviewPolicy(command: ReviewPolicyConfigure,
+    csrfToken: string): Promise<ReviewPolicyReceipt> {
+    return this.request('/api/v1/projects/review-policy', {method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
+  }
+  getReviewPolicy(projectId: string): Promise<ReviewPolicy> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}/review-policy`,
+      {method: 'GET'});
+  }
+  selectReviewTarget(command: ReviewTargetSelect, csrfToken: string): Promise<ReviewTargetReceipt> {
+    return this.request('/api/v1/tasks/review-targets', {method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
+  }
+  getReviewTarget(identity: string): Promise<ReviewTarget> {
+    return this.request(`/api/v1/review-targets/${encodeURIComponent(identity)}`, {method: 'GET'});
+  }
+  completeTask(command: TaskComplete, csrfToken: string): Promise<TaskReceipt> {
+    return this.request('/api/v1/tasks/complete', {method: 'POST',
+      headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
+  }
   configureVerification(command: VerificationPolicyConfigure,
     csrfToken?: string): Promise<VerificationPolicyReceipt> {
     return this.request("/api/v1/projects/verification",
@@ -480,6 +512,13 @@ export class JourneonClient {
             TaskRevise,
             TaskAssign,
             TaskAdmission,
+            ReviewPolicyConfigure,
+            ReviewPolicyReceipt,
+            ReviewPolicy,
+            ReviewTargetSelect,
+            ReviewTargetReceipt,
+            ReviewTarget,
+            TaskComplete,
             VerificationPolicyConfigure,
             VerificationPolicyReceipt,
             VerificationPolicy,

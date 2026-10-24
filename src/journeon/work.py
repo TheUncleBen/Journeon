@@ -20,6 +20,7 @@ from journeon.contracts import (
     TaskAdmission,
     TaskAssign,
     TaskAssignment,
+    TaskComplete,
     TaskControl,
     TaskCreate,
     TaskCriterion,
@@ -32,6 +33,7 @@ from journeon.contracts import (
     VerificationPolicyReceipt,
 )
 from journeon.database import require_compatible_schema, transaction
+from journeon.instruction_config import InstructionConfiguration
 from journeon.models import OutboxEvent, Project, Receipt, Task, TaskRevision
 from journeon.permissions import AuthenticatedContext, require_grant
 from journeon.sessions import current_session
@@ -198,6 +200,7 @@ def commit_task(
         "task.revise.v1": "task.revised",
         "task.assign.v1": "task.assigned",
         "task.admit.v1": "task.admission.checked",
+        "task.complete.v1": "task.completed",
     }
     db.add(
         OutboxEvent(
@@ -224,6 +227,17 @@ def commit_task(
 class WorkService:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def complete(
+        self,
+        actor: AuthenticatedContext,
+        command: TaskComplete,
+        configuration: InstructionConfiguration | None = None,
+    ) -> TaskReceipt:
+        from journeon.work_completion import complete
+
+        with work_transaction(self.engine, actor) as db:
+            return complete(db, self.engine, actor, command, configuration)
 
     def read(self, actor: AuthenticatedContext, task_id: str) -> TaskView:
         with work_transaction(self.engine, actor) as db:

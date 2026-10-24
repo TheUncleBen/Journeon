@@ -105,8 +105,16 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         from journeon.attempts import authorized_attempt_receipt
 
         return authorized_attempt_receipt(db, actor, row)
+    if row.owner == "work" and row.command == "task.review.select.v1":
+        from journeon.review_targets import target_receipt
+
+        return target_receipt(db, actor, row)
     if row.owner == "work":
         return authorized_work_receipt(db, actor, row)
+    if row.command == "project.review.configure.v1" and row.owner == "projects":
+        from journeon.reviews import policy_receipt as review_policy_receipt
+
+        return review_policy_receipt(db, actor, row)
     if row.command == "project.verification.configure.v1" and row.owner == "projects":
         from journeon.verification import policy_receipt
 
@@ -140,6 +148,20 @@ def check_receipt_configuration(
     engine: Engine,
     configuration: InstructionConfiguration | None,
 ) -> None:
+    if row.command == "task.review.select.v1" and row.owner == "work":
+        from journeon.models import ReviewTargetRecord
+        from journeon.permissions import require_grant
+        from journeon.review_targets import ReviewTargetService
+
+        if row.principal_id != actor.principal_id:
+            raise DomainError("NOT_FOUND", "Operation is unavailable")
+        require_grant(db, actor, "task.receipt.read", project_id=row.project_id)
+        identity = db.scalar(
+            select(ReviewTargetRecord.id).where(ReviewTargetRecord.operation_id == row.id)
+        )
+        if identity is None:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Review target receipt requires repair")
+        ReviewTargetService(engine, configuration).check_configuration(db, actor, identity)
     if row.owner == "jobs":
         from journeon.jobs import authorize
         from journeon.models import Job

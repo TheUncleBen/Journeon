@@ -76,7 +76,9 @@ def test_registry_owns_every_canonical_table_and_api(database):
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0013_task_dispatch"
+            "0014_review_completion"
+            if set(module["tables"]) & {"review_policy_revisions", "review_targets"}
+            else "0013_task_dispatch"
             if set(module["tables"]) & {"attempts", "executions", "jobs"}
             else "0011_task_admission"
             if set(module["tables"]) & {"tasks", "verification_policy_revisions"}

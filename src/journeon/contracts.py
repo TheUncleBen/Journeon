@@ -309,6 +309,73 @@ class VerificationPolicyReceipt(Contract):
     policy: VerificationPolicy
 
 
+ReviewIndependence = Literal[
+    "FRESH_SESSION",
+    "DISTINCT_AGENT",
+    "DISTINCT_MODEL_FAMILY",
+    "DISTINCT_PROVIDER",
+    "DISTINCT_HARNESS",
+]
+ReviewSeverity = Identifier
+
+
+class ReviewPolicyRules(Contract):
+    independent_review_required: bool
+    minimum_independence: list[ReviewIndependence] = Field(max_length=5)
+    preferred_diversity: list[ReviewIndependence] = Field(max_length=5)
+    required_coverage: list[Identifier] = Field(max_length=128)
+    material_severities: list[ReviewSeverity] = Field(max_length=128)
+    owner_override_severities: list[ReviewSeverity] = Field(max_length=128)
+    automatic_round_limit: PositiveRevision | None
+    stop_on_cycle: bool
+    stop_on_unchanged_target: bool
+
+    @model_validator(mode="after")
+    def consistent_review_rules(self) -> "ReviewPolicyRules":
+        for values in (
+            self.minimum_independence,
+            self.preferred_diversity,
+            self.required_coverage,
+            self.material_severities,
+            self.owner_override_severities,
+        ):
+            if len(values) != len(set(values)):
+                raise ValueError("Review policy entries must be distinct")
+        if self.independent_review_required and (
+            "FRESH_SESSION" not in self.minimum_independence or not self.required_coverage
+        ):
+            raise ValueError(
+                "Required independent review needs a fresh Session and explicit coverage"
+            )
+        if not set(self.owner_override_severities) <= set(self.material_severities):
+            raise ValueError("Owner override severities must be material under this policy")
+        return self
+
+
+class ReviewPolicyConfigure(ReviewPolicyRules):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    project_id: Identifier
+    expected_project_revision: PositiveRevision
+    expected_policy_revision: int = Field(ge=0)
+
+
+class ReviewPolicy(ReviewPolicyRules):
+    project_id: Identifier
+    revision: PositiveRevision
+    created_by: Identifier
+    created_at: str
+
+
+class ReviewPolicyReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["project.review.configure.v1"] = "project.review.configure.v1"
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    policy: ReviewPolicy
+
+
 class TaskRevise(TaskControl):
     success_conditions: list[Name] = Field(min_length=1, max_length=128)
     workflow: TaskWorkflow
@@ -387,6 +454,30 @@ class TaskAssignment(Contract):
         return self
 
 
+class TaskCompletionBinding(Contract):
+    target_id: Identifier
+    target_digest: str
+    attempt_id: Identifier
+    manifest_id: Identifier
+    snapshot_hash: str
+    review_policy_revision: PositiveRevision
+    evidence_ids: list[Identifier] = Field(min_length=1, max_length=128)
+
+
+class TaskComplete(TaskControl):
+    target_id: Identifier
+    target_digest: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
+
+
+class ReviewTargetSelect(Contract):
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    task_id: Identifier
+    expected_revision: PositiveRevision
+    attempt_id: Identifier
+    expected_review_policy_revision: PositiveRevision
+
+
 class TaskView(Contract):
     task_id: Identifier
     project_id: Identifier
@@ -399,6 +490,9 @@ class TaskView(Contract):
     verification_policy: TaskPolicyBinding
     assignment: TaskAssignment
     assignment_history: list[TaskAssignment]
+    completion: TaskCompletionBinding | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     contributors: list[TaskAssignment] = Field(default_factory=list)
     workflow: TaskWorkflow | None = None
     workflow_revision: PositiveRevision = 1
@@ -424,6 +518,7 @@ class TaskReceipt(Contract):
         "task.revise.v1",
         "task.assign.v1",
         "task.admit.v1",
+        "task.complete.v1",
     ]
     outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
     committed_at: str
@@ -882,6 +977,27 @@ class RunManifest(Contract):
     content_digest: str
 
 
+class ReviewTarget(Contract):
+    target_id: Identifier
+    kind: Literal["CHANGESET"] = "CHANGESET"
+    candidate: Literal["ADMITTED_ATTEMPT_SNAPSHOT"] = "ADMITTED_ATTEMPT_SNAPSHOT"
+    manifest: RunManifest
+    review_policy: ReviewPolicy
+    authorship_status: Literal["UNAVAILABLE"] = "UNAVAILABLE"
+    selected_by: Identifier
+    selected_at: str
+    content_digest: str
+
+
+class ReviewTargetReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    operation_id: Identifier
+    command: Literal["task.review.select.v1"] = "task.review.select.v1"
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    target: ReviewTarget
+
+
 class AttemptView(Contract):
     attempt_id: Identifier
     project_id: Identifier
@@ -1010,6 +1126,8 @@ CanonicalReceipt = (
     ExecutionReceipt
     | AttemptReceipt
     | VerificationPolicyReceipt
+    | ReviewPolicyReceipt
+    | ReviewTargetReceipt
     | RestoreReceipt
     | JobReceipt
     | OperationReceipt

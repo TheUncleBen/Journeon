@@ -79,9 +79,11 @@ missing history metadata or fetch objects to fill it in.
 A verification prerequisite needs passing service-produced evidence from the same
 Attempt manifest. WORK, CONDITION, REVIEW and APPROVAL steps have no execution
 producer here. Loop execution is also unavailable. These steps block dependent
-verification; they are never treated as passing. Native/model execution, semantic
-approval settlement, evidence-driven Task completion and an operational Work UI
-remain unavailable. Successful verification does not mark a Task DONE.
+verification; they are never treated as passing. Native/model execution, independent
+review execution, semantic approval settlement and an operational Work UI remain
+unavailable. Successful verification does not itself mark a Task DONE. The separate
+[completion command](reviews.md) can consume exact evidence under an explicitly
+configured policy that requires deterministic verification only.
 
 Evidence binds the exact criterion text and Task, criteria, workflow, assignment,
 policy, Attempt, Job claim, Execution, invocation, drained completion and output.

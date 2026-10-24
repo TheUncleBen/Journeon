@@ -391,44 +391,47 @@ class TaskDispatchService:
             return view(row)
 
     def evidence(self, actor: AuthenticatedContext, identity: str) -> TaskEvidence:
+        with work_transaction(self.engine, actor) as db:
+            return self.evidence_in(db, actor, identity)
+
+    def evidence_in(self, db: Session, actor: AuthenticatedContext, identity: str) -> TaskEvidence:
         from journeon.executions import authorized_execution
 
-        with work_transaction(self.engine, actor) as db:
-            row = db.get(Job, identity)
-            if row is None or row.kind != "TASK_VERIFICATION":
-                raise DomainError("NOT_FOUND", "Task verification Job is unavailable")
-            require_grant(db, actor, "execution.read", project_id=row.project_id)
-            require_grant(db, actor, "project.read", project_id=row.project_id)
-            binding, _, manifest = self.bound(db, actor, row)
-            if binding.execution_id is None:
-                raise DomainError("NOT_FOUND", "Task verification evidence is unavailable")
-            authorized_execution(db, actor, binding.execution_id)
-            evidence = db.scalar(
-                select(TaskVerificationEvidence).where(TaskVerificationEvidence.job_id == identity)
+        row = db.get(Job, identity)
+        if row is None or row.kind != "TASK_VERIFICATION":
+            raise DomainError("NOT_FOUND", "Task verification Job is unavailable")
+        require_grant(db, actor, "execution.read", project_id=row.project_id)
+        require_grant(db, actor, "project.read", project_id=row.project_id)
+        binding, _, manifest = self.bound(db, actor, row)
+        if binding.execution_id is None:
+            raise DomainError("NOT_FOUND", "Task verification evidence is unavailable")
+        authorized_execution(db, actor, binding.execution_id)
+        evidence = db.scalar(
+            select(TaskVerificationEvidence).where(TaskVerificationEvidence.job_id == identity)
+        )
+        if evidence is None:
+            raise DomainError("NOT_FOUND", "Task verification evidence is unavailable")
+        try:
+            result = TaskEvidence.model_validate(evidence.snapshot)
+        except ValueError:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Task verification evidence requires repair"
+            ) from None
+        if (
+            result.evidence_id != evidence.id
+            or result.job_id != row.id
+            or result.attempt_id != binding.attempt_id
+            or result.execution.execution_id != binding.execution_id
+            or result.manifest != manifest
+            or result.step_id != binding.step_id
+            or result.content_digest != evidence.content_hash
+            or digest(result.model_dump(mode="json", exclude={"content_digest"}))
+            != evidence.content_hash
+        ):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Task verification evidence requires repair"
             )
-            if evidence is None:
-                raise DomainError("NOT_FOUND", "Task verification evidence is unavailable")
-            try:
-                result = TaskEvidence.model_validate(evidence.snapshot)
-            except ValueError:
-                raise DomainError(
-                    "DEPENDENCY_UNAVAILABLE", "Task verification evidence requires repair"
-                ) from None
-            if (
-                result.evidence_id != evidence.id
-                or result.job_id != row.id
-                or result.attempt_id != binding.attempt_id
-                or result.execution.execution_id != binding.execution_id
-                or result.manifest != manifest
-                or result.step_id != binding.step_id
-                or result.content_digest != evidence.content_hash
-                or digest(result.model_dump(mode="json", exclude={"content_digest"}))
-                != evidence.content_hash
-            ):
-                raise DomainError(
-                    "DEPENDENCY_UNAVAILABLE", "Task verification evidence requires repair"
-                )
-            return result
+        return result
 
     def settle(self, db: Session, row: Job, *, reconcile: bool = False) -> bool:
         from journeon.executions import execution_view

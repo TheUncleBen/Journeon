@@ -464,21 +464,30 @@ class JobService:
                     found = db.get(Job, identity.job_id)
                     assert found is not None
                     row = found
-                    linked_binding = db.get(TaskVerificationJob, row.id)
+                    linked_binding = db.get(
+                        TaskVerificationJob, row.id, options=[defer(TaskVerificationJob.inputs)]
+                    )
                     assert linked_binding is not None
                     binding = linked_binding
                     execution = (
-                        db.get(Execution, binding.execution_id) if binding.execution_id else None
+                        db.get(
+                            Execution,
+                            binding.execution_id,
+                            options=[defer(Execution.snapshot), defer(Execution.inputs)],
+                        )
+                        if binding.execution_id
+                        else None
                     )
                     if execution is None:
                         break
                     if execution.state not in ("STARTING", "RUNNING"):
                         dispatcher.settle(db, row)
                         return
-                    try:
-                        self.check(db, identity, renew=True)
-                    except DomainError:
-                        pass
+                    if row.lease_deadline is None or utc_seconds() + interval >= row.lease_deadline:
+                        try:
+                            self.check(db, identity, renew=True)
+                        except DomainError:
+                            pass
                 self.stopping.wait(interval)
         except (DomainError, OSError, ValueError, RuntimeError):
             self.reconcile(identity.job_id, expected=identity)
@@ -526,7 +535,9 @@ class JobService:
                         db, row, reconcile=True
                     ):
                         continue
-                    binding = db.get(TaskVerificationJob, row.id)
+                    binding = db.get(
+                        TaskVerificationJob, row.id, options=[defer(TaskVerificationJob.inputs)]
+                    )
                     if binding is not None and binding.execution_id is not None:
                         row.effect, row.state, row.reason = (
                             "UNKNOWN",

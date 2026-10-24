@@ -123,7 +123,10 @@ Identical assignment retries recheck the applicable current grants; human and
 unassigned responsibility do not acquire Bot execution prerequisites on replay.
 Admission retries recheck current eligibility. A historical denial remains a denial;
 replaying it cannot grant execution authority.
-Actual Task execution, approval settlement, evidence-driven completion and an
+Task verification dispatch now runs configured deterministic checks through durable
+Jobs against immutable Attempt snapshots. See [execution operations](docs/execution.md)
+for dispatch, evidence, configuration and grants. Native/model execution, workflow
+loops, semantic approval settlement, evidence-driven Task completion and an
 operational Work UI remain unavailable.
 
 ## Identity configuration and instruction provenance

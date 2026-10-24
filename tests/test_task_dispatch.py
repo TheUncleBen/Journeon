@@ -321,7 +321,7 @@ def test_healthy_task_process_renews_job_lease(dispatch_environment):
     ["import time; print('active',flush=True); time.sleep(60)"],
     indirect=True,
 )
-@pytest.mark.parametrize("stop", ["job", "task", "grant", "fence"])
+@pytest.mark.parametrize("stop", ["job", "task", "grant", "grant_corrupt", "fence"])
 def test_current_stop_boundaries_drain_without_publishing(dispatch_environment, stop):
     import threading
     import time
@@ -372,8 +372,12 @@ def test_current_stop_boundaries_drain_without_publishing(dispatch_environment, 
             assert paused.status_code == 200, paused.text
         else:
             with transaction(engine) as db:
-                if stop == "grant":
+                if stop in ("grant", "grant_corrupt"):
                     db.get(AccessGrant, "dispatch:execution.start").enabled = False
+                    if stop == "grant_corrupt":
+                        from sqlalchemy import text
+
+                        db.execute(text("UPDATE task_verification_jobs SET inputs='{'"))
                 else:
                     db.get(Job, identity).fence += 1
         thread.join(30)

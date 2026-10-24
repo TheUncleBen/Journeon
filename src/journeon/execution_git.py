@@ -2,7 +2,10 @@
 """Clean Git metadata for bounded verification projections and admitted object stores."""
 
 import codecs
+import hashlib
 import os
+import re
+import zlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -30,6 +33,7 @@ def project_git_view(
     admitted_roots: list[Path],
     max_bytes: int,
     max_files: int,
+    snapshot_bound: bool = False,
 ) -> GitProjection:
     from journeon.instruction_config import open_directory
 
@@ -38,6 +42,7 @@ def project_git_view(
     identities: dict[Path, int] = {}
     remaining_bytes, remaining_files = max_bytes, max_files
     storage = target.parent / "git-objects"
+    repositories: list[tuple[Path, CapturedSnapshot, int, str]] = []
 
     def capture_objects(objects: Path) -> int:
         nonlocal remaining_bytes, remaining_files
@@ -91,7 +96,12 @@ def project_git_view(
                 path = Path(os.fsdecode(raw))
                 if not path.is_absolute():
                     path = objects / path
-                references.append("/git-objects/" + str(capture_objects(path)))
+                alternate_index = capture_objects(path)
+                references.append(
+                    str(mounts[alternate_index])
+                    if snapshot_bound
+                    else "/git-objects/" + str(alternate_index)
+                )
             (copied / "info" / "alternates").write_text(
                 "".join(reference + "\n" for reference in references)
             )
@@ -137,7 +147,10 @@ def project_git_view(
             max_output_bytes=max_bytes,
         )
         metadata = destination / ".git"
-        (metadata / "objects" / "info" / "alternates").write_text(f"/git-objects/{index}\n")
+        (metadata / "objects" / "info" / "alternates").write_text(
+            (str(mounts[index]) if snapshot_bound else f"/git-objects/{index}") + "\n"
+        )
+        repositories.append((destination, snapshot, index, object_format))
         branch = (
             git(original, "rev-parse", "--abbrev-ref", "HEAD", max_output_bytes=max_bytes)
             .decode()
@@ -172,4 +185,68 @@ def project_git_view(
     if captured.snapshot.kind == "GIT":
         storage.mkdir(mode=0o700)
         project(source, target, captured)
+    if snapshot_bound and mounts:
+        sealed = [target.parent / "git-snapshot-objects" / str(i) for i in range(len(mounts))]
+        for directory in sealed:
+            directory.mkdir(parents=True, mode=0o700)
+        retained: set[tuple[int, str]] = set()
+        for destination, snapshot, index, object_format in repositories:
+            roots = {entry.object_id for entry in snapshot.snapshot.index if entry.mode != "160000"}
+            if snapshot.snapshot.head is not None:
+                roots.add(snapshot.snapshot.head)
+            reachable = (
+                git(
+                    destination,
+                    "rev-list",
+                    "--objects",
+                    "--no-object-names",
+                    "--stdin",
+                    data="".join(root + "\n" for root in sorted(roots)).encode(),
+                    max_output_bytes=max_bytes,
+                )
+                .decode()
+                .splitlines()
+            )
+            for object_id in reachable:
+                if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", object_id):
+                    raise DomainError("DEPENDENCY_UNAVAILABLE", "Git object identity is malformed")
+                if (index, object_id) in retained:
+                    continue
+                kind = git(destination, "cat-file", "-t", object_id, max_output_bytes=32).strip()
+                if kind not in (b"blob", b"tree", b"commit", b"tag"):
+                    raise DomainError("DEPENDENCY_UNAVAILABLE", "Git object type is unsupported")
+                content = git(
+                    destination,
+                    "cat-file",
+                    kind.decode(),
+                    object_id,
+                    max_output_bytes=max(1, remaining_bytes),
+                )
+                raw = kind + b" " + str(len(content)).encode() + b"\0" + content
+                if hashlib.new(object_format, raw).hexdigest() != object_id:
+                    raise DomainError(
+                        "DEPENDENCY_UNAVAILABLE", "Git object content differs from its identity"
+                    )
+                compressed = zlib.compress(raw)
+                remaining_bytes -= max(len(raw), len(compressed))
+                remaining_files -= 1
+                if remaining_bytes < 0 or remaining_files < 0:
+                    raise DomainError(
+                        "DEPENDENCY_UNAVAILABLE",
+                        "Git snapshot object closure exceeds configured limits",
+                    )
+                output = sealed[index] / object_id[:2] / object_id[2:]
+                output.parent.mkdir(exist_ok=True)
+                with output.open("xb") as stream:
+                    stream.write(compressed)
+                retained.add((index, object_id))
+        for destination, _, index, _ in repositories:
+            (destination / ".git" / "objects" / "info" / "alternates").write_text(
+                f"/git-objects/{index}\n"
+            )
+        mounts = sealed
+        for index, directory in enumerate(mounts):
+            observations[index]["projection"] = capture_snapshot(
+                directory, max_bytes=max_bytes, max_files=max_files
+            ).snapshot.model_dump(mode="json")
     return GitProjection(mounts, observations)

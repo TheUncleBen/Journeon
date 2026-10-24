@@ -2074,6 +2074,18 @@
             "when": "always"
           },
           {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
             "capability": "task.read",
             "owner_configuration_authority": false,
             "resource": "current target scope",
@@ -2111,6 +2123,8 @@
       "path": "/api/v1/jobs/{identity}/evidence",
       "permissions": [
         "job.read",
+        "execution.read",
+        "project.read",
         "task.read",
         "attempt.read",
         "project.instruction.read",
@@ -5005,6 +5019,18 @@
             "when": "always"
           },
           {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
             "capability": "task.read",
             "owner_configuration_authority": false,
             "resource": "current target scope",
@@ -5036,6 +5062,8 @@
       "owner": "jobs",
       "permissions": [
         "job.read",
+        "execution.read",
+        "project.read",
         "task.read",
         "attempt.read",
         "project.instruction.read",

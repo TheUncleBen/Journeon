@@ -3,7 +3,7 @@
 Attempt preparation and direct verification have separate authorization and evidence.
 Preparing a Task does not start a process. Direct verification does not dispatch a
 Task, change its completion state, invoke a model, or establish native coding-tool
-readiness. Task execution remains unavailable through this interface.
+readiness. Task verification dispatch uses the canonical Job worker described below.
 
 ## Preparing an Attempt
 
@@ -39,6 +39,55 @@ silently repeats its filesystem effect.
 Only the Task origin currently has a preparation producer. Other typed origin
 shapes do not create admission authority; their owning services must provide the
 corresponding producer and current authorization before they can be used.
+
+## Task verification dispatch
+
+`POST /api/v1/tasks/dispatch` accepts `TaskDispatch` and returns the durable Job.
+`GET /api/v1/jobs/{job_id}/evidence` returns `TaskEvidence` after an authenticated,
+drained process completion can be published under current authority. The generated
+client exposes `dispatchTask` and `readTaskEvidence`. Job read, cancellation,
+Attention and event replay use the existing typed Job interfaces.
+
+Dispatch identifies an existing Task, current Task/criteria/workflow/assignment and
+policy revisions, a verification step, configured workspace and configured route.
+It prepares one durable Attempt or selects an existing exact Attempt using
+`attempt_id`. The same idempotency key reconciles the original operation; changing
+its input produces a conflict. Dispatch requires `task.dispatch`, Job read/cancel,
+Task read/receipt, Attempt prepare/read/receipt, the applicable execution grants,
+and current Project, policy and instruction read grants. Policy-required grants
+remain additional checks. Evidence reads require `job.read`, `task.read`,
+`attempt.read`, `execution.read`, `project.read`, `project.instruction.read` and
+`project.verification.read`. Stored payloads do not confer authority.
+
+Configure `instructions.jobs`, `instructions.attempts` and
+`instructions.executions` explicitly. The existing Job claim loop owns both
+instruction navigation and Task verification; there is no separate Task worker.
+The execution uses the immutable Attempt manifest and its retained workspace under
+an exclusive physical lock. Source edits after preparation do not enter the
+verification input. Task Git projections expose only objects reachable from the
+captured HEAD history and index, recursively including captured submodules.
+Alternate stores still require admission; future and unreachable objects are not
+exposed to the command. The copied stores and sealed object closure share the
+configured snapshot byte and file budgets.
+
+A verification prerequisite needs passing service-produced evidence from the same
+Attempt manifest. WORK, CONDITION, REVIEW and APPROVAL steps have no execution
+producer here. Loop execution is also unavailable. These steps block dependent
+verification; they are never treated as passing. Native/model execution, semantic
+approval settlement, evidence-driven Task completion and an operational Work UI
+remain unavailable. Successful verification does not mark a Task DONE.
+
+Evidence binds the exact criterion text and Task, criteria, workflow, assignment,
+policy, Attempt, Job claim, Execution, invocation, drained completion and output.
+A zero exit satisfies only that exact configured check; a nonzero exit retains
+failed verification. Cancellation or lost current authority stops new effects and
+publication while retaining actual observations. Unknown launch or completion
+requires canonical Attention and never causes an automatic process rerun. A known
+completed and drained execution can reconcile publication under its original
+claim identity and current original authority without starting another process.
+A lost response after publication returns the same immutable evidence. Authorized
+history remains readable after a Task revision, but old evidence cannot satisfy
+new criteria. Evidence and retained completion are separate records.
 
 ## Direct verification service
 
@@ -107,10 +156,11 @@ output where available; reconciliation does not rerun the command.
 The execution manifest binds the source, policy, route, original session, root,
 resource observation and native installation hashes. Completion retains actual
 exit status, output, artifacts, invocation identity and observed kernel limits.
-`doctor` assesses an existing direct operation under current authority and current
-installation bytes. Its result is limited to that operation and route; it is not
-independent review approval or qualification of Task dispatch, native tools, other
-routes or other hosts. The database `doctor` command continues to inspect copied
+`doctor` assesses an existing execution under current authority and current
+installation bytes. Its scope identifies direct verification or Task verification
+from the persisted execution origin. Its result is limited to that operation and
+route; it is not independent review approval or qualification of an entire Task
+workflow, native tools, other routes or other hosts. The database `doctor` command continues to inspect copied
 SQLite bytes and does not launch verification processes.
 
 All evidence and workspaces are retained. Automatic garbage collection, broad

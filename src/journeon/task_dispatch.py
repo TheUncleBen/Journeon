@@ -381,11 +381,18 @@ class TaskDispatchService:
             return view(row)
 
     def evidence(self, actor: AuthenticatedContext, identity: str) -> TaskEvidence:
+        from journeon.executions import authorized_execution
+
         with work_transaction(self.engine, actor) as db:
             row = db.get(Job, identity)
             if row is None or row.kind != "TASK_VERIFICATION":
                 raise DomainError("NOT_FOUND", "Task verification Job is unavailable")
+            require_grant(db, actor, "execution.read", project_id=row.project_id)
+            require_grant(db, actor, "project.read", project_id=row.project_id)
             binding, _, manifest = self.bound(db, actor, row)
+            if binding.execution_id is None:
+                raise DomainError("NOT_FOUND", "Task verification evidence is unavailable")
+            authorized_execution(db, actor, binding.execution_id)
             evidence = db.scalar(
                 select(TaskVerificationEvidence).where(TaskVerificationEvidence.job_id == identity)
             )
@@ -419,7 +426,7 @@ class TaskDispatchService:
 
         if row.state != "RUNNING":
             return True
-        binding = db.get(TaskVerificationJob, row.id)
+        binding = db.get(TaskVerificationJob, row.id, options=[defer(TaskVerificationJob.inputs)])
         if binding is None or binding.execution_id is None:
             return False
         execution = db.get(Execution, binding.execution_id)

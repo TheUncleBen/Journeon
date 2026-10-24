@@ -201,7 +201,7 @@ class CurrentExecution:
                 row = authorized_execution(db, self.actor, self.identity, "start")
                 self.service.check_job(db, self.actor, row, renew=True)
                 view = execution_view(db, row)
-                self.service.check_configuration(db, self.actor, row)
+                self.service.check_execution_configuration(db, row)
                 if view.stop_requested or view.state not in ("STARTING", "RUNNING"):
                     return False
                 command = ExecutionStart.model_validate(row.inputs["command"])
@@ -232,11 +232,12 @@ class CurrentExecution:
         phase: str,
         process_id: int | None = None,
     ) -> None:
-        if not self.current():
+        if self.service.stopping.is_set():
             raise PermissionError("Current execution authority is unavailable")
         with work_transaction(self.service.engine, self.actor) as db:
             row = authorized_execution(db, self.actor, self.identity, "start")
             self.service.check_job(db, self.actor, row, renew=True)
+            self.service.check_execution_configuration(db, row)
             view = execution_view(db, row)
             if (
                 view.state != "STARTING"
@@ -328,6 +329,9 @@ class ExecutionService:
             if job is None or self.configuration is None:
                 raise DomainError("PERMISSION_DENIED", "Execution Task origin is unavailable")
             TaskDispatchService(self.engine, self.configuration).bound(db, actor, job)
+        self.check_execution_configuration(db, row)
+
+    def check_execution_configuration(self, db: Session, row: Execution) -> None:
         root = workspace_root(db, row.project_id, row.root_id, row.root_revision)
         root_config = self.root_configuration(root)
         view = execution_view(db, row)
@@ -810,6 +814,7 @@ class ExecutionService:
                 admitted_roots=[Path(binding["configuration"]["path"]) for binding in git_roots],
                 max_bytes=config.snapshot_bytes - captured.snapshot.byte_count,
                 max_files=config.snapshot_files - len(captured.snapshot.working),
+                snapshot_bound=manifest is not None,
             )
             used_roots = [
                 binding
@@ -984,7 +989,11 @@ class ExecutionService:
             "qualified": qualified,
             "installation": observed,
             "evidence_digest": current.evidence_digest,
-            "scope": "CURRENT_DIRECT_VERIFICATION_ROUTE",
+            "scope": (
+                "CURRENT_TASK_VERIFICATION_ROUTE"
+                if current.origin == "TASK_VERIFICATION"
+                else "CURRENT_DIRECT_VERIFICATION_ROUTE"
+            ),
         }
 
     def stop(self, actor: AuthenticatedContext, command: ExecutionStop) -> ExecutionReceipt:

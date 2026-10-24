@@ -9126,6 +9126,18 @@
               "when": "always"
             },
             {
+              "capability": "execution.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
               "capability": "task.read",
               "owner_configuration_authority": false,
               "resource": "current target scope",
@@ -9156,6 +9168,8 @@
         "x-journeon-owner": "jobs",
         "x-journeon-permissions": [
           "job.read",
+          "execution.read",
+          "project.read",
           "task.read",
           "attempt.read",
           "project.instruction.read",

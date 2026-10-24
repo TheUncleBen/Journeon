@@ -978,6 +978,8 @@ JOB_ROUTES: dict[str, tuple[str, type[BaseModel] | None, type[BaseModel], tuple[
         TaskEvidence,
         (
             "job.read",
+            "execution.read",
+            "project.read",
             "task.read",
             "attempt.read",
             "project.instruction.read",

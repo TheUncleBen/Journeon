@@ -19,7 +19,8 @@ def repository(path):
     git(path, "commit", "-qm", "fixture")
 
 
-def test_git_projection_keeps_dirty_submodule_index_and_working_bytes(tmp_path):
+@pytest.mark.parametrize("snapshot_bound", [False, True])
+def test_git_projection_keeps_dirty_submodule_index_and_working_bytes(tmp_path, snapshot_bound):
     dependency = tmp_path / "dependency"
     repository(dependency)
     source = tmp_path / "source"
@@ -33,7 +34,13 @@ def test_git_projection_keeps_dirty_submodule_index_and_working_bytes(tmp_path):
     target = tmp_path / "input"
     materialize_projection(target, captured)
     projection = project_git_view(
-        source, target, captured, admitted_roots=[source], max_bytes=1048576, max_files=100
+        source,
+        target,
+        captured,
+        admitted_roots=[source],
+        max_bytes=1048576,
+        max_files=100,
+        snapshot_bound=snapshot_bound,
     )
     configured = route().model_copy(
         update={
@@ -54,7 +61,8 @@ def test_git_projection_keeps_dirty_submodule_index_and_working_bytes(tmp_path):
     assert result["completion"]["exit_code"] == 0
 
 
-def test_git_alternate_objects_require_admission_and_are_copied(tmp_path):
+@pytest.mark.parametrize("snapshot_bound", [False, True])
+def test_git_alternate_objects_require_admission_and_are_copied(tmp_path, snapshot_bound):
     dependency = tmp_path / "dependency"
     repository(dependency)
     source = tmp_path / "source"
@@ -75,6 +83,7 @@ def test_git_alternate_objects_require_admission_and_are_copied(tmp_path):
         source,
         target,
         captured,
+        snapshot_bound=snapshot_bound,
         admitted_roots=[source, dependency],
         max_bytes=1048576,
         max_files=100,

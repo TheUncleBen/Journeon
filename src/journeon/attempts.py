@@ -324,7 +324,9 @@ class AttemptService:
             for action in ("attempt.prepare", "attempt.read", "attempt.receipt.read"):
                 require_grant(db, actor, action, project_id=command.project_id)
             prior = db.scalar(
-                select(Attempt).where(
+                select(Attempt)
+                .options(defer(Attempt.snapshot), defer(Attempt.inputs))
+                .where(
                     Attempt.principal_id == actor.principal_id,
                     Attempt.idempotency_key == command.idempotency_key,
                 )

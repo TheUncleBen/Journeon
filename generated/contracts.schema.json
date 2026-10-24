@@ -5148,6 +5148,32 @@
       "ExecutionView": {
         "additionalProperties": false,
         "properties": {
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Id"
+          },
+          "attempt_manifest_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Manifest Id"
+          },
           "authentication_ref": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
             "title": "Authentication Ref",
@@ -5223,6 +5249,19 @@
             "default": null,
             "title": "Invocation Id"
           },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Job Id"
+          },
           "launcher_exit_code": {
             "anyOf": [
               {
@@ -5253,8 +5292,11 @@
             "title": "Manifest Id"
           },
           "origin": {
-            "const": "DIRECT_VERIFICATION",
             "default": "DIRECT_VERIFICATION",
+            "enum": [
+              "DIRECT_VERIFICATION",
+              "TASK_VERIFICATION"
+            ],
             "title": "Origin",
             "type": "string"
           },
@@ -5617,6 +5659,32 @@
     },
     "additionalProperties": false,
     "properties": {
+      "attempt_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Attempt Id"
+      },
+      "attempt_manifest_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Attempt Manifest Id"
+      },
       "authentication_ref": {
         "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
         "title": "Authentication Ref",
@@ -5692,6 +5760,19 @@
         "default": null,
         "title": "Invocation Id"
       },
+      "job_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Job Id"
+      },
       "launcher_exit_code": {
         "anyOf": [
           {
@@ -5722,8 +5803,11 @@
         "title": "Manifest Id"
       },
       "origin": {
-        "const": "DIRECT_VERIFICATION",
         "default": "DIRECT_VERIFICATION",
+        "enum": [
+          "DIRECT_VERIFICATION",
+          "TASK_VERIFICATION"
+        ],
         "title": "Origin",
         "type": "string"
       },
@@ -6420,9 +6504,16 @@
         "type": "string"
       },
       "candidate_id": {
-        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
-        "title": "Candidate Id",
-        "type": "string"
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Candidate Id"
       },
       "effect": {
         "enum": [
@@ -6437,6 +6528,14 @@
       "job_id": {
         "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
         "title": "Job Id",
+        "type": "string"
+      },
+      "kind": {
+        "enum": [
+          "INSTRUCTION_NAVIGATION",
+          "TASK_VERIFICATION"
+        ],
+        "title": "Kind",
         "type": "string"
       },
       "operation_id": {
@@ -6482,12 +6581,26 @@
         ],
         "title": "State",
         "type": "string"
+      },
+      "task_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Task Id"
       }
     },
     "required": [
       "job_id",
       "project_id",
+      "kind",
       "candidate_id",
+      "task_id",
       "revision",
       "state",
       "effect",
@@ -10477,6 +10590,1901 @@
       "responsibility"
     ],
     "title": "TaskCreate",
+    "type": "object"
+  },
+  "TaskDispatch": {
+    "$defs": {
+      "TaskAttemptOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "TASK",
+            "title": "Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "task_id",
+          "task_revision"
+        ],
+        "title": "TaskAttemptOrigin",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "attempt_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Attempt Id"
+      },
+      "expected_policy_revision": {
+        "minimum": 1,
+        "title": "Expected Policy Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "origin": {
+        "$ref": "#/$defs/TaskAttemptOrigin"
+      },
+      "previous_attempt_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Previous Attempt Id"
+      },
+      "project_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Project Id",
+        "type": "string"
+      },
+      "route_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Route Key",
+        "type": "string"
+      },
+      "route_revision": {
+        "minimum": 1,
+        "title": "Route Revision",
+        "type": "integer"
+      },
+      "schema_version": {
+        "const": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "step_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Step Id",
+        "type": "string"
+      },
+      "workspace_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Workspace Key",
+        "type": "string"
+      },
+      "workspace_revision": {
+        "minimum": 1,
+        "title": "Workspace Revision",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "schema_version",
+      "idempotency_key",
+      "origin",
+      "project_id",
+      "expected_policy_revision",
+      "workspace_key",
+      "workspace_revision",
+      "step_id",
+      "route_key",
+      "route_revision"
+    ],
+    "title": "TaskDispatch",
+    "type": "object"
+  },
+  "TaskEvidence": {
+    "$defs": {
+      "AdmissionDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Revision"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "criteria_revision": {
+            "minimum": 1,
+            "title": "Criteria Revision",
+            "type": "integer"
+          },
+          "decision": {
+            "enum": [
+              "ADMIT",
+              "QUEUE",
+              "DENY",
+              "REQUIRE_APPROVAL"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "execution_authorized": {
+            "const": false,
+            "default": false,
+            "title": "Execution Authorized",
+            "type": "boolean"
+          },
+          "execution_started": {
+            "const": false,
+            "default": false,
+            "title": "Execution Started",
+            "type": "boolean"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Revision"
+          },
+          "principal_epoch": {
+            "minimum": 1,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "profile_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile Revision"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "scope": {
+            "const": "TASK_PREPARATION",
+            "default": "TASK_PREPARATION",
+            "title": "Scope",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          },
+          "workflow_revision": {
+            "minimum": 1,
+            "title": "Workflow Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decision",
+          "reason",
+          "task_revision",
+          "criteria_revision",
+          "workflow_revision",
+          "policy_revision",
+          "authentication_ref",
+          "principal_epoch",
+          "checked_at"
+        ],
+        "title": "AdmissionDecision",
+        "type": "object"
+      },
+      "ChangeSetSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "base_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Commit"
+          },
+          "binary_diff_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Binary Diff Hash"
+          },
+          "byte_count": {
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Deleted",
+            "type": "array"
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head"
+          },
+          "index": {
+            "items": {
+              "$ref": "#/$defs/IndexEntry"
+            },
+            "title": "Index",
+            "type": "array"
+          },
+          "index_hash": {
+            "title": "Index Hash",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "GIT",
+              "DIRECTORY"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "submodules": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Submodules",
+            "type": "object"
+          },
+          "untracked": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Untracked",
+            "type": "array"
+          },
+          "working": {
+            "items": {
+              "$ref": "#/$defs/SourceEntry"
+            },
+            "title": "Working",
+            "type": "array"
+          },
+          "working_hash": {
+            "title": "Working Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "base_commit",
+          "head",
+          "index",
+          "working",
+          "deleted",
+          "untracked",
+          "index_hash",
+          "working_hash",
+          "binary_diff_hash",
+          "submodules",
+          "byte_count",
+          "snapshot_hash"
+        ],
+        "title": "ChangeSetSnapshot",
+        "type": "object"
+      },
+      "ComponentRef": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ComponentRef",
+        "type": "object"
+      },
+      "DeterministicInstructionBundle": {
+        "additionalProperties": false,
+        "properties": {
+          "bundle_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bundle Id",
+            "type": "string"
+          },
+          "byte_count": {
+            "minimum": 0,
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/$defs/ComponentRef"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "DETERMINISTIC",
+            "default": "DETERMINISTIC",
+            "title": "Kind",
+            "type": "string"
+          },
+          "production": {
+            "$ref": "#/$defs/ProductionInstructionProvenance"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "rendering": {
+            "title": "Rendering",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bundle_id",
+          "initiating_principal_id",
+          "project_id",
+          "task_id",
+          "task_revision",
+          "production",
+          "components",
+          "rendering",
+          "content_digest",
+          "byte_count"
+        ],
+        "title": "DeterministicInstructionBundle",
+        "type": "object"
+      },
+      "ExecutionArtifact": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_count": {
+            "minimum": 0,
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "data": {
+            "title": "Data",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "byte_count",
+          "sha256",
+          "data"
+        ],
+        "title": "ExecutionArtifact",
+        "type": "object"
+      },
+      "ExecutionCompletion": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/$defs/ExecutionArtifact"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "drained": {
+            "title": "Drained",
+            "type": "boolean"
+          },
+          "exit_code": {
+            "title": "Exit Code",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "RESULT",
+            "default": "RESULT",
+            "title": "Kind",
+            "type": "string"
+          },
+          "output_bytes": {
+            "minimum": 0,
+            "title": "Output Bytes",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "EXITED",
+              "AUTHORITY_EXPIRED",
+              "CANCELLED",
+              "CONTROLLER_LOST",
+              "OUTPUT_LIMIT",
+              "DRAIN_INCOMPLETE",
+              "ARTIFACT_LIMIT",
+              "ARTIFACT_UNAVAILABLE"
+            ],
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "exit_code",
+          "reason",
+          "drained",
+          "output_bytes",
+          "artifacts"
+        ],
+        "title": "ExecutionCompletion",
+        "type": "object"
+      },
+      "ExecutionOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "string"
+          },
+          "kind": {
+            "const": "OUTPUT",
+            "default": "OUTPUT",
+            "title": "Kind",
+            "type": "string"
+          },
+          "stream": {
+            "enum": [
+              "stdout",
+              "stderr"
+            ],
+            "title": "Stream",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stream",
+          "data"
+        ],
+        "title": "ExecutionOutput",
+        "type": "object"
+      },
+      "ExecutionView": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Id"
+          },
+          "attempt_manifest_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Manifest Id"
+          },
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "check_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Check Id",
+            "type": "string"
+          },
+          "completion": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ExecutionCompletion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "containment": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Containment",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "drained": {
+            "default": false,
+            "title": "Drained",
+            "type": "boolean"
+          },
+          "evidence_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Digest"
+          },
+          "execution_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "host_fingerprint": {
+            "title": "Host Fingerprint",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "invocation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Invocation Id"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Job Id"
+          },
+          "launcher_exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Launcher Exit Code"
+          },
+          "manifest_digest": {
+            "title": "Manifest Digest",
+            "type": "string"
+          },
+          "manifest_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Manifest Id"
+          },
+          "origin": {
+            "default": "DIRECT_VERIFICATION",
+            "enum": [
+              "DIRECT_VERIFICATION",
+              "TASK_VERIFICATION"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "output": {
+            "items": {
+              "$ref": "#/$defs/ExecutionOutput"
+            },
+            "title": "Output",
+            "type": "array"
+          },
+          "policy_revision": {
+            "minimum": 1,
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "principal_epoch": {
+            "minimum": 1,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "root_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Key",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          },
+          "route_digest": {
+            "title": "Route Digest",
+            "type": "string"
+          },
+          "route_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Route Key",
+            "type": "string"
+          },
+          "route_revision": {
+            "minimum": 1,
+            "title": "Route Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "STARTING",
+              "RUNNING",
+              "COMPLETED",
+              "CANCELLED",
+              "UNKNOWN"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "stop_requested": {
+            "default": false,
+            "title": "Stop Requested",
+            "type": "boolean"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "verification_passed": {
+            "default": false,
+            "title": "Verification Passed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "execution_id",
+          "project_id",
+          "root_key",
+          "root_revision",
+          "policy_revision",
+          "revision",
+          "state",
+          "manifest_digest",
+          "route_key",
+          "route_revision",
+          "route_digest",
+          "check_id",
+          "initiating_principal_id",
+          "authentication_ref",
+          "principal_epoch",
+          "host_fingerprint",
+          "created_at",
+          "unit"
+        ],
+        "title": "ExecutionView",
+        "type": "object"
+      },
+      "IndexEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "object_id": {
+            "title": "Object Id",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "stage": {
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Stage",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "mode",
+          "object_id",
+          "stage",
+          "content_hash"
+        ],
+        "title": "IndexEntry",
+        "type": "object"
+      },
+      "JobAttemptOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_revision": {
+            "minimum": 1,
+            "title": "Job Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "JOB",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "job_id",
+          "job_revision"
+        ],
+        "title": "JobAttemptOrigin",
+        "type": "object"
+      },
+      "ProductionInstructionProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "installation_manifest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Installation Manifest",
+            "type": "string"
+          },
+          "installation_provenance": {
+            "enum": [
+              "DEVELOPMENT_CANDIDATE",
+              "VERIFIED_RELEASE"
+            ],
+            "title": "Installation Provenance",
+            "type": "string"
+          },
+          "installation_revision": {
+            "minimum": 1,
+            "title": "Installation Revision",
+            "type": "integer"
+          },
+          "project_instruction_revision": {
+            "minimum": 1,
+            "title": "Project Instruction Revision",
+            "type": "integer"
+          },
+          "project_tree_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Project Tree Hash",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "installation_revision",
+          "installation_manifest",
+          "installation_provenance",
+          "project_instruction_revision",
+          "project_tree_hash",
+          "root_id",
+          "root_revision"
+        ],
+        "title": "ProductionInstructionProvenance",
+        "type": "object"
+      },
+      "RunManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "instruction_bundle": {
+            "$ref": "#/$defs/DeterministicInstructionBundle"
+          },
+          "manifest_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Manifest Id",
+            "type": "string"
+          },
+          "origin": {
+            "discriminator": {
+              "mapping": {
+                "JOB": "#/$defs/JobAttemptOrigin",
+                "TASK": "#/$defs/TaskAttemptOrigin"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TaskAttemptOrigin"
+              },
+              {
+                "$ref": "#/$defs/JobAttemptOrigin"
+              }
+            ],
+            "title": "Origin"
+          },
+          "previous_attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Attempt Id"
+          },
+          "principal_epoch": {
+            "minimum": 1,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "snapshot": {
+            "$ref": "#/$defs/ChangeSetSnapshot"
+          },
+          "task": {
+            "$ref": "#/$defs/TaskView"
+          },
+          "verification_policy": {
+            "$ref": "#/$defs/VerificationPolicy"
+          },
+          "workspace_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Workspace Key",
+            "type": "string"
+          },
+          "workspace_kind": {
+            "enum": [
+              "GIT",
+              "DIRECTORY"
+            ],
+            "title": "Workspace Kind",
+            "type": "string"
+          },
+          "workspace_revision": {
+            "minimum": 1,
+            "title": "Workspace Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "manifest_id",
+          "attempt_id",
+          "origin",
+          "initiating_principal_id",
+          "authentication_ref",
+          "principal_epoch",
+          "project_id",
+          "task",
+          "verification_policy",
+          "instruction_bundle",
+          "workspace_key",
+          "workspace_revision",
+          "root_id",
+          "root_revision",
+          "workspace_kind",
+          "snapshot",
+          "previous_attempt_id",
+          "created_at",
+          "content_digest"
+        ],
+        "title": "RunManifest",
+        "type": "object"
+      },
+      "SourceEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_count": {
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "FILE",
+              "DIRECTORY",
+              "SYMLINK"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "link_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Link Target"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "integer"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind",
+          "mode",
+          "content_hash",
+          "byte_count"
+        ],
+        "title": "SourceEntry",
+        "type": "object"
+      },
+      "TaskAssignment": {
+        "additionalProperties": false,
+        "properties": {
+          "assigned_at": {
+            "title": "Assigned At",
+            "type": "string"
+          },
+          "assigned_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Assigned By",
+            "type": "string"
+          },
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Id"
+          },
+          "kind": {
+            "default": "CREATE",
+            "enum": [
+              "CREATE",
+              "REASSIGN",
+              "HANDOFF"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "previous_bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Previous Bot Id"
+          },
+          "principal_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Principal Id"
+          },
+          "reason": {
+            "default": "Task created",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "responsibility": {
+            "enum": [
+              "HUMAN",
+              "UNASSIGNED",
+              "BOT"
+            ],
+            "title": "Responsibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "responsibility",
+          "principal_id",
+          "assigned_by",
+          "assigned_at"
+        ],
+        "title": "TaskAssignment",
+        "type": "object"
+      },
+      "TaskAttemptOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "TASK",
+            "title": "Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "task_id",
+          "task_revision"
+        ],
+        "title": "TaskAttemptOrigin",
+        "type": "object"
+      },
+      "TaskCriterion": {
+        "additionalProperties": false,
+        "properties": {
+          "objective_revision": {
+            "minimum": 1,
+            "title": "Objective Revision",
+            "type": "integer"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "provenance": {
+            "default": "USER",
+            "enum": [
+              "USER",
+              "PROJECT"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "principal_id",
+          "objective_revision"
+        ],
+        "title": "TaskCriterion",
+        "type": "object"
+      },
+      "TaskPolicyBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "policy_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Ref"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policy Revision"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1,
+            "title": "Project Revision",
+            "type": "integer"
+          },
+          "source": {
+            "const": "PROJECT",
+            "default": "PROJECT",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "project_revision",
+          "policy_ref"
+        ],
+        "title": "TaskPolicyBinding",
+        "type": "object"
+      },
+      "TaskView": {
+        "additionalProperties": false,
+        "properties": {
+          "admission": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AdmissionDecision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "assignment": {
+            "$ref": "#/$defs/TaskAssignment"
+          },
+          "assignment_history": {
+            "items": {
+              "$ref": "#/$defs/TaskAssignment"
+            },
+            "title": "Assignment History",
+            "type": "array"
+          },
+          "blocker": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocker"
+          },
+          "contributors": {
+            "items": {
+              "$ref": "#/$defs/TaskAssignment"
+            },
+            "title": "Contributors",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "criteria_revision": {
+            "minimum": 1,
+            "title": "Criteria Revision",
+            "type": "integer"
+          },
+          "dependencies": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "objective": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Objective",
+            "type": "string"
+          },
+          "objective_revision": {
+            "minimum": 1,
+            "title": "Objective Revision",
+            "type": "integer"
+          },
+          "pause_reason": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pause Reason"
+          },
+          "paused": {
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "BACKLOG",
+              "READY",
+              "RUNNING",
+              "WAITING",
+              "REVIEW",
+              "BLOCKED",
+              "DONE",
+              "CANCELLED",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Reason"
+          },
+          "success_conditions": {
+            "items": {
+              "$ref": "#/$defs/TaskCriterion"
+            },
+            "title": "Success Conditions",
+            "type": "array"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "verification_policy": {
+            "$ref": "#/$defs/TaskPolicyBinding"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TaskWorkflow"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "workflow_revision": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Workflow Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id",
+          "initiating_principal_id",
+          "revision",
+          "objective",
+          "objective_revision",
+          "criteria_revision",
+          "success_conditions",
+          "verification_policy",
+          "assignment",
+          "assignment_history",
+          "dependencies",
+          "state",
+          "paused",
+          "pause_reason",
+          "stop_reason",
+          "blocker",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskView",
+        "type": "object"
+      },
+      "TaskWorkflow": {
+        "additionalProperties": false,
+        "properties": {
+          "loops": {
+            "items": {
+              "$ref": "#/$defs/WorkflowLoop"
+            },
+            "maxItems": 128,
+            "title": "Loops",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/$defs/WorkflowStep"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "TaskWorkflow",
+        "type": "object"
+      },
+      "VerificationCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "argv": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Argv",
+            "type": "array"
+          },
+          "check_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Check Id",
+            "type": "string"
+          },
+          "criterion": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Criterion",
+            "type": "string"
+          },
+          "expected_exit_code": {
+            "title": "Expected Exit Code",
+            "type": "integer"
+          },
+          "working_directory": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Working Directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "criterion",
+          "argv",
+          "working_directory",
+          "expected_exit_code"
+        ],
+        "title": "VerificationCheck",
+        "type": "object"
+      },
+      "VerificationPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/$defs/VerificationCheck"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Checks",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_capabilities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Capabilities",
+            "type": "array"
+          },
+          "required_services": {
+            "items": {
+              "enum": [
+                "NATIVE",
+                "RESOURCE",
+                "SKILL",
+                "CONNECTION",
+                "TOOL"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Required Services",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/$defs/TaskWorkflow"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "enabled",
+          "checks",
+          "workflow",
+          "created_by",
+          "created_at"
+        ],
+        "title": "VerificationPolicy",
+        "type": "object"
+      },
+      "WorkflowLoop": {
+        "additionalProperties": false,
+        "properties": {
+          "maximum_iterations": {
+            "minimum": 1,
+            "title": "Maximum Iterations",
+            "type": "integer"
+          },
+          "steps": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps",
+          "maximum_iterations"
+        ],
+        "title": "WorkflowLoop",
+        "type": "object"
+      },
+      "WorkflowStep": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Check Id"
+          },
+          "condition_operator": {
+            "default": "EQ",
+            "enum": [
+              "EQ",
+              "LT",
+              "LE",
+              "GT",
+              "GE"
+            ],
+            "title": "Condition Operator",
+            "type": "string"
+          },
+          "condition_step": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Condition Step"
+          },
+          "condition_value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Condition Value"
+          },
+          "dependencies": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "WORK",
+              "CONDITION",
+              "APPROVAL",
+              "VERIFICATION",
+              "REVIEW"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "step_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Step Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "kind"
+        ],
+        "title": "WorkflowStep",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "attempt_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Attempt Id",
+        "type": "string"
+      },
+      "claim_fence": {
+        "minimum": 1,
+        "title": "Claim Fence",
+        "type": "integer"
+      },
+      "claim_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Claim Incarnation",
+        "type": "string"
+      },
+      "claim_owner": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Claim Owner",
+        "type": "string"
+      },
+      "content_digest": {
+        "title": "Content Digest",
+        "type": "string"
+      },
+      "criterion": {
+        "$ref": "#/$defs/TaskCriterion"
+      },
+      "evidence_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Evidence Id",
+        "type": "string"
+      },
+      "execution": {
+        "$ref": "#/$defs/ExecutionView"
+      },
+      "execution_operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Execution Operation Id",
+        "type": "string"
+      },
+      "job_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Job Id",
+        "type": "string"
+      },
+      "manifest": {
+        "$ref": "#/$defs/RunManifest"
+      },
+      "passed": {
+        "title": "Passed",
+        "type": "boolean"
+      },
+      "process_id": {
+        "exclusiveMinimum": 1,
+        "title": "Process Id",
+        "type": "integer"
+      },
+      "published_at": {
+        "title": "Published At",
+        "type": "string"
+      },
+      "step_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Step Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "evidence_id",
+      "job_id",
+      "attempt_id",
+      "manifest",
+      "step_id",
+      "criterion",
+      "claim_fence",
+      "claim_owner",
+      "claim_incarnation",
+      "execution",
+      "execution_operation_id",
+      "process_id",
+      "passed",
+      "published_at",
+      "content_digest"
+    ],
+    "title": "TaskEvidence",
     "type": "object"
   },
   "TaskReceipt": {

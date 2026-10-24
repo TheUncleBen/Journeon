@@ -16,7 +16,12 @@ from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session, defer
 
 from journeon.attempt_snapshots import capture_snapshot, materialize_projection
-from journeon.attempts import snapshot_storage_bytes, workspace_root, write_snapshot
+from journeon.attempts import (
+    snapshot_storage_bytes,
+    verify_snapshot_evidence,
+    workspace_root,
+    write_snapshot,
+)
 from journeon.contracts import (
     DomainError,
     ExecutionReceipt,
@@ -42,6 +47,7 @@ from journeon.instruction_config import (
     open_directory,
 )
 from journeon.instructions import digest
+from journeon.jobs import JobExecutionIdentity, JobService
 from journeon.models import (
     Execution,
     ExecutionEffect,
@@ -49,6 +55,7 @@ from journeon.models import (
     InstructionRoot,
     OutboxEvent,
     Receipt,
+    TaskVerificationJob,
 )
 from journeon.permissions import AuthenticatedContext, require_grant
 from journeon.verification import current_policy
@@ -71,6 +78,26 @@ def authorized_execution(
 
 def execution_view(db: Session, row: Execution) -> ExecutionView:
     view = ExecutionView.model_validate(row.snapshot)
+    if view.job_id != row.job_id:
+        raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored Execution origin requires repair")
+    if row.job_id is not None:
+        binding = db.get(
+            TaskVerificationJob, row.job_id, options=[defer(TaskVerificationJob.inputs)]
+        )
+        if (
+            binding is None
+            or (binding.execution_id, binding.attempt_id, binding.manifest_id)
+            != (row.id, view.attempt_id, view.attempt_manifest_id)
+            or row.inputs.get("origin")
+            != {
+                "kind": "TASK_VERIFICATION",
+                "attempt_id": view.attempt_id,
+                "manifest_id": view.attempt_manifest_id,
+            }
+        ):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Stored Execution Task binding requires repair"
+            )
     if view.manifest_digest != digest(row.inputs) or view.drained != row.drained:
         raise DomainError(
             "DEPENDENCY_UNAVAILABLE", "Stored Execution input binding requires repair"
@@ -172,6 +199,7 @@ class CurrentExecution:
         try:
             with work_transaction(self.service.engine, self.actor) as db:
                 row = authorized_execution(db, self.actor, self.identity, "start")
+                self.service.check_job(db, self.actor, row, renew=True)
                 view = execution_view(db, row)
                 self.service.check_configuration(db, self.actor, row)
                 if view.stop_requested or view.state not in ("STARTING", "RUNNING"):
@@ -208,6 +236,7 @@ class CurrentExecution:
             raise PermissionError("Current execution authority is unavailable")
         with work_transaction(self.service.engine, self.actor) as db:
             row = authorized_execution(db, self.actor, self.identity, "start")
+            self.service.check_job(db, self.actor, row, renew=True)
             view = execution_view(db, row)
             if (
                 view.state != "STARTING"
@@ -249,6 +278,35 @@ class ExecutionService:
         self.pool: ThreadPoolExecutor | None = None
         self.pool_lock = threading.Lock()
 
+    def check_job(
+        self, db: Session, actor: AuthenticatedContext, row: Execution, *, renew: bool = False
+    ) -> None:
+        if row.job_id is None:
+            return
+        binding = db.get(
+            TaskVerificationJob, row.job_id, options=[defer(TaskVerificationJob.inputs)]
+        )
+        if (
+            binding is None
+            or binding.execution_id != row.id
+            or binding.claim_fence is None
+            or binding.claim_owner is None
+            or binding.claim_incarnation is None
+        ):
+            raise DomainError("PERMISSION_DENIED", "Execution Job claim binding is unavailable")
+        identity = JobExecutionIdentity(
+            row.job_id, binding.claim_fence, binding.claim_owner, binding.claim_incarnation
+        )
+        assert self.configuration is not None
+        job, admitted = JobService(self.engine, self.configuration).check(db, identity, renew=renew)
+        if admitted != actor or row.inputs.get("job") != {
+            "job_id": job.id,
+            "fence": identity.fence,
+            "owner": identity.owner,
+            "incarnation": identity.incarnation,
+        }:
+            raise DomainError("PERMISSION_DENIED", "Execution Job identity changed")
+
     def route(self, key: str, revision: int) -> LocalRoute:
         if self.configuration is None or self.configuration.executions is None:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Local execution routes are not configured")
@@ -262,6 +320,14 @@ class ExecutionService:
         return route
 
     def check_configuration(self, db: Session, actor: AuthenticatedContext, row: Execution) -> None:
+        if row.job_id is not None:
+            from journeon.models import Job
+            from journeon.task_dispatch import TaskDispatchService
+
+            job = db.get(Job, row.job_id)
+            if job is None or self.configuration is None:
+                raise DomainError("PERMISSION_DENIED", "Execution Task origin is unavailable")
+            TaskDispatchService(self.engine, self.configuration).bound(db, actor, job)
         root = workspace_root(db, row.project_id, row.root_id, row.root_revision)
         root_config = self.root_configuration(root)
         view = execution_view(db, row)
@@ -394,11 +460,22 @@ class ExecutionService:
         )
         return result
 
-    def start(self, actor: AuthenticatedContext, command: ExecutionStart) -> ExecutionReceipt:
+    def start(
+        self,
+        actor: AuthenticatedContext,
+        command: ExecutionStart,
+        *,
+        job: JobExecutionIdentity | None = None,
+    ) -> ExecutionReceipt:
         if self.stopping.is_set():
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Execution service is draining")
         with work_transaction(self.engine, actor) as db:
             self.inputs(db, actor, command)
+            if job is not None:
+                assert self.configuration is not None
+                _, admitted = JobService(self.engine, self.configuration).check(db, job, renew=True)
+                if admitted != actor:
+                    raise DomainError("PERMISSION_DENIED", "Execution Job actor differs")
         assert self.configuration is not None and self.configuration.executions is not None
         config = self.configuration.executions
         resources = resource_observation(Path(config.storage_path))
@@ -436,15 +513,36 @@ class ExecutionService:
                     if prior is not None:
                         row = authorized_execution(db, actor, prior.target_id, "start")
                         self.check_configuration(db, actor, row)
-                        result = execution_receipt(db, actor, prior)
+                        if row.job_id != (job.job_id if job else None):
+                            raise DomainError("IDEMPOTENCY_CONFLICT", "Execution origin differs")
+                        if job is not None:
+                            self.check_job(db, actor, row, renew=True)
                         if prior.payload_hash != digest(
                             command.model_dump(mode="json", exclude={"idempotency_key"})
                         ):
                             raise DomainError(
                                 "IDEMPOTENCY_CONFLICT", "Execution identity has different input"
                             )
-                        return result
+                        return execution_receipt(db, actor, prior)
                     root, policy, route = self.inputs(db, actor, command)
+                    task_binding = None
+                    if job is not None:
+                        from journeon.task_dispatch import TaskDispatchService, execution_command
+
+                        job_row, admitted = JobService(self.engine, self.configuration).check(
+                            db, job, renew=True
+                        )
+                        task_binding, dispatch, manifest = TaskDispatchService(
+                            self.engine, self.configuration
+                        ).bound(db, actor, job_row, execution=True)
+                        if (
+                            admitted != actor
+                            or command != execution_command(dispatch, manifest, job.job_id)
+                            or task_binding.execution_id is not None
+                        ):
+                            raise DomainError(
+                                "REVISION_CONFLICT", "Execution differs from its admitted Task Job"
+                            )
                     retained = list(db.scalars(select(Execution)))
                     active = [row for row in retained if not row.drained]
                     storage_bytes = (
@@ -500,8 +598,25 @@ class ExecutionService:
                         "host_fingerprint": host,
                         "resource_admission": resources,
                     }
+                    if job is not None:
+                        assert task_binding is not None
+                        inputs["job"] = {
+                            "job_id": job.job_id,
+                            "fence": job.fence,
+                            "owner": job.owner,
+                            "incarnation": job.incarnation,
+                        }
+                        inputs["origin"] = {
+                            "kind": "TASK_VERIFICATION",
+                            "attempt_id": task_binding.attempt_id,
+                            "manifest_id": task_binding.manifest_id,
+                        }
                     view = ExecutionView(
                         execution_id=identity,
+                        origin="TASK_VERIFICATION" if job else "DIRECT_VERIFICATION",
+                        job_id=job.job_id if job else None,
+                        attempt_id=task_binding.attempt_id if task_binding else None,
+                        attempt_manifest_id=task_binding.manifest_id if task_binding else None,
                         project_id=command.project_id,
                         root_key=command.root_key,
                         root_revision=command.root_revision,
@@ -523,6 +638,7 @@ class ExecutionService:
                     db.add(
                         Execution(
                             id=identity,
+                            job_id=job.job_id if job else None,
                             root_id=root.id,
                             root_revision=root.revision,
                             project_id=command.project_id,
@@ -542,7 +658,18 @@ class ExecutionService:
                             inputs=inputs,
                         )
                     )
+                    db.flush()
+                    if job is not None:
+                        assert task_binding is not None
+                        task_binding.execution_id = identity
+                        (
+                            task_binding.claim_fence,
+                            task_binding.claim_owner,
+                            task_binding.claim_incarnation,
+                        ) = job.fence, job.owner, job.incarnation
                     result = self.receipt(db, actor, command, "execution.start.v1", view)
+                    if job is not None:
+                        job_row.operation_id = result.operation_id
                     db.add(
                         ExecutionEffect(
                             id=str(uuid4()),
@@ -569,9 +696,11 @@ class ExecutionService:
                 os.close(directory)
 
     def execute(self, actor: AuthenticatedContext, identity: str, lock: int) -> None:
+        workspace_lock = None
         try:
             with work_transaction(self.engine, actor) as db:
                 row = authorized_execution(db, actor, identity, "start")
+                self.check_job(db, actor, row, renew=True)
                 command = ExecutionStart.model_validate(row.inputs["command"])
                 root, policy, route = self.inputs(db, actor, command)
                 source = Path(self.root_configuration(root).path)
@@ -597,6 +726,16 @@ class ExecutionService:
                         }
                     )
                 view = execution_view(db, row)
+                manifest = None
+                if row.job_id is not None:
+                    from journeon.models import Job
+                    from journeon.task_dispatch import TaskDispatchService
+
+                    job_row = db.get(Job, row.job_id)
+                    assert job_row is not None and self.configuration is not None
+                    _, _, manifest = TaskDispatchService(self.engine, self.configuration).bound(
+                        db, actor, job_row, execution=True
+                    )
             assert self.configuration is not None and self.configuration.executions is not None
             config = self.configuration.executions
             installation = installation_observation()
@@ -607,9 +746,27 @@ class ExecutionService:
                 os.close(descriptor)
             if [observed.st_dev, observed.st_ino, git_identity(source)] != root_identity:
                 raise PermissionError("Admitted execution root identity changed")
+            if manifest is not None:
+                assert self.configuration.attempts is not None
+                attempt_directory = (
+                    Path(self.configuration.attempts.storage_path) / manifest.attempt_id
+                )
+                workspace_lock = os.open(
+                    attempt_directory / "execution.lock",
+                    os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW,
+                    0o600,
+                )
+                fcntl.flock(workspace_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                source = attempt_directory / "workspace"
             captured = capture_snapshot(
                 source, max_bytes=config.snapshot_bytes, max_files=config.snapshot_files
             )
+            if manifest is not None:
+                if captured.snapshot != manifest.snapshot:
+                    raise DomainError(
+                        "REVISION_CONFLICT", "Attempt workspace differs from its immutable manifest"
+                    )
+                verify_snapshot_evidence(attempt_directory / "evidence", captured)
             authority = CurrentExecution(self, actor, identity)
             if not authority.current():
                 raise PermissionError("Execution preparation authority was revoked")
@@ -617,6 +774,7 @@ class ExecutionService:
             resources = resource_observation(Path(config.storage_path))
             with work_transaction(self.engine, actor) as db:
                 row = authorized_execution(db, actor, identity, "start")
+                self.check_job(db, actor, row, renew=True)
                 self.check_configuration(db, actor, row)
                 self.inputs(db, actor, command)
                 storage_claim = sum(db.scalars(select(Execution.storage_bytes))) + metadata_bytes
@@ -670,6 +828,7 @@ class ExecutionService:
                 raise ValueError("Execution source changed during preparation")
             with work_transaction(self.engine, actor) as db:
                 row = authorized_execution(db, actor, identity, "start")
+                self.check_job(db, actor, row, renew=True)
                 self.inputs(db, actor, command)
                 view = execution_view(db, row)
                 row.inputs = row.inputs | {
@@ -714,6 +873,7 @@ class ExecutionService:
                 row = found
                 view = execution_view(db, row)
                 try:
+                    self.check_job(db, actor, row, renew=True)
                     self.check_configuration(db, actor, row)
                     self.inputs(db, actor, command)
                     permitted = permitted and not view.stop_requested and not self.stopping.is_set()
@@ -791,6 +951,8 @@ class ExecutionService:
                         )
                     )
         finally:
+            if workspace_lock is not None:
+                os.close(workspace_lock)
             os.close(lock)
 
     def doctor(self, actor: AuthenticatedContext, identity: str) -> dict[str, object]:

@@ -6,7 +6,11 @@ import hashlib
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from journeon.job_contracts import TaskDispatch
 
 from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import Session, defer
@@ -288,16 +292,33 @@ class AttemptService:
                 raise DomainError("PERMISSION_DENIED", "Previous Attempt belongs to another Task")
         return task, policy
 
-    def prepare(self, actor: AuthenticatedContext, command: AttemptPrepare) -> AttemptReceipt:
+    def prepare(
+        self,
+        actor: AuthenticatedContext,
+        command: AttemptPrepare,
+        *,
+        dispatch: "TaskDispatch | None" = None,
+    ) -> AttemptReceipt:
         try:
-            return self._prepare(actor, command)
+            return self._prepare(actor, command, dispatch=dispatch)
         except (OSError, ValueError, KeyError):
             raise DomainError(
                 "DEPENDENCY_UNAVAILABLE", "Attempt preparation dependencies require repair"
             ) from None
 
-    def _prepare(self, actor: AuthenticatedContext, command: AttemptPrepare) -> AttemptReceipt:
-        command_hash = digest(command.model_dump(mode="json", exclude={"idempotency_key"}))
+    def _prepare(
+        self,
+        actor: AuthenticatedContext,
+        command: AttemptPrepare,
+        *,
+        dispatch: "TaskDispatch | None" = None,
+    ) -> AttemptReceipt:
+        command_payload = command.model_dump(mode="json", exclude={"idempotency_key"})
+        if dispatch is not None:
+            command_payload["dispatch"] = dispatch.model_dump(
+                mode="json", exclude={"idempotency_key"}
+            )
+        command_hash = digest(command_payload)
         with work_transaction(self.engine, actor) as db:
             # Current grants precede replay decoding and configuration disclosure.
             for action in ("attempt.prepare", "attempt.read", "attempt.receipt.read"):
@@ -439,6 +460,11 @@ class AttemptService:
                             snapshot=view.model_dump(mode="json"),
                             inputs={
                                 "command": command.model_dump(mode="json"),
+                                **(
+                                    {"dispatch": dispatch.model_dump(mode="json")}
+                                    if dispatch is not None
+                                    else {}
+                                ),
                                 "task": task.model_dump(mode="json"),
                                 "policy": policy.model_dump(mode="json"),
                                 "bundle": bundle.model_dump(mode="json"),

@@ -184,6 +184,8 @@ def artifacts() -> dict[str, str]:
         "/api/v1/projects/{identity}/instructions",
     )
     job_paths = {
+        "dispatchTask": ("POST", "/api/v1/tasks/dispatch"),
+        "readTaskEvidence": ("GET", "/api/v1/jobs/{identity}/evidence"),
         "readJob": ("GET", "/api/v1/jobs/{identity}"),
         "cancelJob": ("POST", "/api/v1/jobs/{identity}/cancel"),
         "replayEvents": ("POST", "/api/v1/events/replay"),

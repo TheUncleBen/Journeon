@@ -18,6 +18,8 @@ from journeon.job_contracts import (
     ReplayEvent,
     ReplayPage,
     ReplayQuery,
+    TaskDispatch,
+    TaskEvidence,
 )
 from journeon.jobs import JobService, authorize
 from journeon.models import Attention, Job, OutboxEvent, Receipt, StoreIdentity
@@ -129,6 +131,33 @@ def bind_job_api(
             )
         return JobService(engine, configuration)
 
+    @app.post(
+        "/api/v1/tasks/dispatch",
+        responses=errors,
+        response_model=JobView,
+        operation_id="dispatchTask",
+    )
+    def dispatch_task(
+        command: TaskDispatch,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> JobView:
+        from journeon.task_dispatch import TaskDispatchService
+
+        return TaskDispatchService(engine, service().configuration).admit(actor, command)
+
+    @app.get(
+        "/api/v1/jobs/{identity}/evidence",
+        responses=errors,
+        response_model=TaskEvidence,
+        operation_id="readTaskEvidence",
+    )
+    def task_evidence(
+        identity: str, actor: Annotated[AuthenticatedContext, Depends(authenticated_context)]
+    ) -> TaskEvidence:
+        from journeon.task_dispatch import TaskDispatchService
+
+        return TaskDispatchService(engine, service().configuration).evidence(actor, identity)
+
     from journeon.restore_contracts import RestorePlan, RestorePreview
 
     @app.post(
@@ -191,6 +220,10 @@ def bind_job_api(
             if job is None:
                 raise DomainError("NOT_FOUND", "Job is unavailable")
             authorize(db, actor, job)
+            if job.kind == "TASK_VERIFICATION":
+                from journeon.task_dispatch import TaskDispatchService
+
+                TaskDispatchService(engine, service().configuration).bound(db, actor, job)
             return [
                 AttentionView.model_validate(
                     dict(

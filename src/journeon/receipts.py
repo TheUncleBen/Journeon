@@ -140,6 +140,19 @@ def check_receipt_configuration(
     engine: Engine,
     configuration: InstructionConfiguration | None,
 ) -> None:
+    if row.owner == "jobs":
+        from journeon.jobs import authorize
+        from journeon.models import Job
+        from journeon.task_dispatch import TaskDispatchService
+
+        job = db.get(Job, row.target_id)
+        if job is None:
+            raise DomainError("NOT_FOUND", "Job is unavailable")
+        authorize(db, actor, job, "receipt.read")
+        if job.kind == "TASK_VERIFICATION":
+            if configuration is None:
+                raise DomainError("DEPENDENCY_UNAVAILABLE", "Task dispatcher is not configured")
+            TaskDispatchService(engine, configuration).bound(db, actor, job)
     if row.owner == "work" and row.target_kind == "execution":
         from journeon.executions import ExecutionService, authorized_execution
 

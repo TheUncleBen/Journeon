@@ -50,7 +50,15 @@ from journeon.contracts import (
 )
 from journeon.health import schema_and_database
 from journeon.instruction_config import RootObservation
-from journeon.job_contracts import AttentionList, JobCancel, JobView, ReplayPage, ReplayQuery
+from journeon.job_contracts import (
+    AttentionList,
+    JobCancel,
+    JobView,
+    ReplayPage,
+    ReplayQuery,
+    TaskDispatch,
+    TaskEvidence,
+)
 from journeon.migrate import configuration
 from journeon.models import Base
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
@@ -939,8 +947,50 @@ for execution_module in MODULES.values():
         execution_module["migration"] = "0010_work_execution"
 
 JOB_ROUTES: dict[str, tuple[str, type[BaseModel] | None, type[BaseModel], tuple[str, ...]]] = {
-    "readJob": ("job.read.v1", None, JobView, ("project.instruction.read",)),
-    "cancelJob": ("job.cancel.v1", JobCancel, JobView, ("project.instruction.accept",)),
+    "dispatchTask": (
+        "task.dispatch.v1",
+        TaskDispatch,
+        JobView,
+        (
+            "task.dispatch",
+            "task.read",
+            "job.read",
+            "job.cancel",
+            "job.receipt.read",
+            "attempt.prepare",
+            "attempt.read",
+            "attempt.receipt.read",
+            "execution.admit",
+            "execution.start",
+            "execution.read",
+            "execution.stop",
+            "execution.drain",
+            "execution.complete",
+            "execution.receipt.read",
+            "project.read",
+            "project.verification.read",
+            "project.instruction.read",
+        ),
+    ),
+    "readTaskEvidence": (
+        "task.evidence.read.v1",
+        None,
+        TaskEvidence,
+        (
+            "job.read",
+            "task.read",
+            "attempt.read",
+            "project.instruction.read",
+            "project.verification.read",
+        ),
+    ),
+    "readJob": ("job.read.v1", None, JobView, ("project.instruction.read", "job.read")),
+    "cancelJob": (
+        "job.cancel.v1",
+        JobCancel,
+        JobView,
+        ("project.instruction.accept", "job.cancel"),
+    ),
     "replayEvents": ("event.replay.v1", ReplayQuery, ReplayPage, ("project.instruction.read",)),
     "readJobAttention": (
         "job.attention.read.v1",
@@ -969,17 +1019,72 @@ for operation, (name, job_input, job_result, permissions) in JOB_ROUTES.items():
     else:
         COMMANDS[name] = CommandDefinition(
             name=name,
-            owner="lifecycle" if operation == "previewRestore" else "jobs",
+            owner="lifecycle"
+            if operation == "previewRestore"
+            else "work"
+            if operation == "dispatchTask"
+            else "jobs",
             input_model=job_input,
             result_model=job_result,
             permissions=permissions,
-            risk="LOCAL_CANONICAL_CONTROL" if operation == "cancelJob" else "AUTHORIZED_QUERY",
+            risk="LOCAL_CANONICAL_CONTROL"
+            if operation in {"cancelJob", "dispatchTask"}
+            else "AUTHORIZED_QUERY",
             external_effects=(),
             reversibility="Prior canonical evidence is retained",
-            dry_run=operation != "cancelJob",
+            dry_run=operation not in {"cancelJob", "dispatchTask"},
             idempotent=True,
             verification="Current scope, revision and durable owning records",
         )
+
+
+for operation in ("readJob", "cancelJob", "readJobAttention", "replayEvents"):
+    name = JOB_ROUTES[operation][0]
+    authorization = CONFIGURATION_AUTHORIZATION[name]
+    authorization["semantics"] = (
+        "Authorize each typed target before decoding; instruction Jobs use instruction grants "
+        "and Task Jobs use Task, Attempt and verification grants"
+    )
+    authorization["grant_checks"] = [
+        grant_check(permission, "job.project_id", "instruction origin", owner=False)
+        for permission in JOB_ROUTES[operation][3]
+        if permission.startswith("project.instruction.")
+    ] + [
+        grant_check(permission, "job.project_id", "Task origin", owner=False)
+        for permission in (
+            ("job.cancel", "task.read")
+            if operation == "cancelJob"
+            else (
+                "job.read",
+                "task.read",
+                "attempt.read",
+                "project.instruction.read",
+                "project.verification.read",
+            )
+        )
+    ]
+    permissions = tuple(
+        dict.fromkeys(check["capability"] for check in authorization["grant_checks"])
+    )
+    if name in COMMANDS:
+        COMMANDS[name] = replace(COMMANDS[name], permissions=permissions)
+    else:
+        QUERIES[name]["permissions"] = permissions
+    prior = JOB_ROUTES[operation]
+    JOB_ROUTES[operation] = (prior[0], prior[1], prior[2], permissions)
+MODULES["jobs"]["tables"] += ("task_verification_jobs", "task_verification_evidence")
+MODULES["jobs"]["migration"] = "0013_task_dispatch"
+MODULES["jobs"]["permissions"] = tuple(
+    dict.fromkeys(
+        (
+            *MODULES["jobs"]["permissions"],
+            *(permission for item in JOB_ROUTES.values() for permission in item[3]),
+        )
+    )
+)
+MODULES["work"]["permissions"] = tuple(
+    dict.fromkeys((*MODULES["work"]["permissions"], *COMMANDS["task.dispatch.v1"].permissions))
+)
 
 
 for admission_action, admission_model in (
@@ -1075,7 +1180,7 @@ MODULES["work"]["permissions"] += (
 MODULES["work"]["permissions"] += ("task.revise", "task.assign", "task.admit", "execution.admit")
 MODULES["work"]["tables"] += ("task_revisions",)
 MODULES["work"]["events_published"] += ("task.revised", "task.assigned", "task.admission.checked")
-MODULES["work"]["migration"] = "0012_attempt_execution"
+MODULES["work"]["migration"] = "0013_task_dispatch"
 MODULES["projects"]["tables"] += ("verification_policy_revisions",)
 MODULES["projects"]["permissions"] += (
     "project.verification.configure",

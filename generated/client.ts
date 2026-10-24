@@ -347,6 +347,8 @@ export type ExecutionReceipt = {
 };
 
 export type ExecutionView = {
+  "attempt_id"?: string | null;
+  "attempt_manifest_id"?: string | null;
   "authentication_ref": string;
   "check_id": string;
   "completion"?: ExecutionCompletion | null;
@@ -358,10 +360,11 @@ export type ExecutionView = {
   "host_fingerprint": string;
   "initiating_principal_id": string;
   "invocation_id"?: string | null;
+  "job_id"?: string | null;
   "launcher_exit_code"?: number | null;
   "manifest_digest": string;
   "manifest_id"?: string | null;
-  "origin"?: "DIRECT_VERIFICATION";
+  "origin"?: "DIRECT_VERIFICATION" | "TASK_VERIFICATION";
   "output"?: Array<ExecutionOutput>;
   "policy_revision": number;
   "principal_epoch": number;
@@ -538,14 +541,16 @@ export type JobReceipt = {
 
 export type JobView = {
   "admission_id": string;
-  "candidate_id": string;
+  "candidate_id": string | null;
   "effect": "NONE" | "UNKNOWN" | "COMMITTED" | "ABANDONED";
   "job_id": string;
+  "kind": "INSTRUCTION_NAVIGATION" | "TASK_VERIFICATION";
   "operation_id": string | null;
   "project_id": string;
   "reason": string | null;
   "revision": number;
   "state": "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "RETRY_WAIT";
+  "task_id": string | null;
 };
 
 export type LegacyMapping = {
@@ -1039,6 +1044,39 @@ export type TaskCriterion = {
   "text": string;
 };
 
+export type TaskDispatch = {
+  "attempt_id"?: string | null;
+  "expected_policy_revision": number;
+  "idempotency_key": string;
+  "origin": TaskAttemptOrigin;
+  "previous_attempt_id"?: string | null;
+  "project_id": string;
+  "route_key": string;
+  "route_revision": number;
+  "schema_version": 1;
+  "step_id": string;
+  "workspace_key": string;
+  "workspace_revision": number;
+};
+
+export type TaskEvidence = {
+  "attempt_id": string;
+  "claim_fence": number;
+  "claim_incarnation": string;
+  "claim_owner": string;
+  "content_digest": string;
+  "criterion": TaskCriterion;
+  "evidence_id": string;
+  "execution": ExecutionView;
+  "execution_operation_id": string;
+  "job_id": string;
+  "manifest": RunManifest;
+  "passed": boolean;
+  "process_id": number;
+  "published_at": string;
+  "step_id": string;
+};
+
 export type TaskPolicyBinding = {
   "policy_ref": string | null;
   "policy_revision"?: number | null;
@@ -1269,6 +1307,8 @@ export class JourneonClient {
     return this.request(`/api/v1/releases/evidence/verify`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
   }
   readProjectInstructions(identity: string): Promise<InstructionView> { return this.request(`/api/v1/projects/${encodeURIComponent(identity)}/instructions`, {method: 'GET'}); }
+  dispatchTask(command: TaskDispatch, csrfToken: string): Promise<JobView> { return this.request(`/api/v1/tasks/dispatch`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
+  readTaskEvidence(identity: string): Promise<TaskEvidence> { return this.request(`/api/v1/jobs/${encodeURIComponent(identity)}/evidence`, {method: 'GET'}); }
   readJob(identity: string): Promise<JobView> { return this.request(`/api/v1/jobs/${encodeURIComponent(identity)}`, {method: 'GET'}); }
   cancelJob(identity: string, command: JobCancel, csrfToken: string): Promise<JobView> { return this.request(`/api/v1/jobs/${encodeURIComponent(identity)}/cancel`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
   replayEvents(command: ReplayQuery, csrfToken: string): Promise<ReplayPage> { return this.request(`/api/v1/events/replay`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }

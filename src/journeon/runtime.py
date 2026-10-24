@@ -129,9 +129,9 @@ def application(config: RuntimeConfig) -> FastAPI:
     worker = None
     if config.instructions is not None and config.instructions.jobs is not None:
         worker = threading.Thread(
-            target=JobService(engine, config.instructions).run,
+            target=JobService(engine, config.instructions, executions=execution_service).run,
             args=(stop,),
-            name="instruction-jobs",
+            name="deterministic-jobs",
         )
 
     @app.middleware("http")
@@ -148,7 +148,7 @@ def application(config: RuntimeConfig) -> FastAPI:
                 status_code=503,
                 content=ErrorEnvelope(
                     code="DEPENDENCY_UNAVAILABLE",
-                    reason="The instruction dispatcher is unavailable",
+                    reason="The Job dispatcher is unavailable",
                 ).model_dump(),
             )
         return await call_next(request)

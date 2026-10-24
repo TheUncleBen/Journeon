@@ -4,7 +4,11 @@ import sqlite3
 import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from journeon.executions import ExecutionService
 
 from sqlalchemy import Engine, func, select
 from sqlalchemy.exc import OperationalError
@@ -29,11 +33,14 @@ from journeon.sessions import current_session, utc_seconds
 
 
 @dataclass(frozen=True)
-class ExecutionIdentity:
+class JobExecutionIdentity:
     job_id: str
     fence: int
     owner: str
     incarnation: str
+
+
+ExecutionIdentity = JobExecutionIdentity
 
 
 def view(row: Job) -> JobView:
@@ -41,7 +48,9 @@ def view(row: Job) -> JobView:
         dict(
             job_id=row.id,
             project_id=row.project_id,
+            kind=row.kind,
             candidate_id=row.candidate_id,
+            task_id=row.task_id,
             revision=row.revision,
             state=row.state,
             effect=row.effect,
@@ -53,6 +62,17 @@ def view(row: Job) -> JobView:
 
 
 def authorize(db: Session, actor: AuthenticatedContext, row: Job, action: str = "read") -> None:
+    if row.kind == "TASK_VERIFICATION":
+        require_grant(
+            db,
+            actor,
+            "job." + ("cancel" if action == "accept" else action),
+            project_id=row.project_id,
+        )
+        require_grant(db, actor, "task.read", project_id=row.project_id)
+        if actor.principal_id != row.principal_id:
+            raise DomainError("NOT_FOUND", "Job is unavailable")
+        return
     require_grant(
         db,
         actor,
@@ -213,10 +233,18 @@ def admit(
 
 
 class JobService:
-    def __init__(self, engine: Engine, configuration: InstructionConfiguration):
+    def __init__(
+        self,
+        engine: Engine,
+        configuration: InstructionConfiguration,
+        *,
+        executions: "ExecutionService | None" = None,
+    ):
         self.engine = engine
         self.configuration = configuration
         self.owner = str(uuid4())
+        self.executions = executions
+        self.stopping = threading.Event()
 
     def authority(self, db: Session, row: Job, *, candidate: bool = True) -> AuthenticatedContext:
         current = current_session(
@@ -226,6 +254,13 @@ class JobService:
         store = db.get(StoreIdentity, 1)
         if store is None or not store.security_reconciled or row.incarnation != store.incarnation:
             raise DomainError("PERMISSION_DENIED", "Job store incarnation is no longer current")
+        if row.kind == "TASK_VERIFICATION":
+            from journeon.task_dispatch import TaskDispatchService
+
+            TaskDispatchService(self.engine, self.configuration).bound(
+                db, actor, row, execution=True
+            )
+            return actor
         for action in ("read", "evaluate", "accept", "receipt.read"):
             authorize(db, actor, row, action)
         from journeon.instruction_contracts import InstructionPolicy
@@ -267,6 +302,10 @@ class JobService:
             if row is None:
                 raise DomainError("NOT_FOUND", "Job is unavailable")
             authorize(db, actor, row)
+            if row.kind == "TASK_VERIFICATION":
+                from journeon.task_dispatch import TaskDispatchService
+
+                TaskDispatchService(self.engine, self.configuration).bound(db, actor, row)
             return view(row)
 
     def cancel(self, actor: AuthenticatedContext, identity: str, command: JobCancel) -> JobView:
@@ -323,7 +362,9 @@ class JobService:
                 return ExecutionIdentity(row.id, row.fence, self.owner, row.incarnation)
         return None
 
-    def check(self, db: Session, identity: ExecutionIdentity) -> tuple[Job, AuthenticatedContext]:
+    def check(
+        self, db: Session, identity: ExecutionIdentity, *, renew: bool = False
+    ) -> tuple[Job, AuthenticatedContext]:
         row = db.get(Job, identity.job_id, populate_existing=True)
         if (
             row is None
@@ -335,11 +376,24 @@ class JobService:
             or utc_seconds() >= row.lease_deadline
         ):
             raise DomainError("PERMISSION_DENIED", "Job execution ownership is no longer current")
-        return row, self.authority(db, row, candidate=row.operation_id is None)
+        actor = self.authority(db, row, candidate=row.operation_id is None)
+        if renew:
+            assert self.configuration.jobs is not None
+            row.lease_deadline = utc_seconds() + self.configuration.jobs.lease_seconds
+        return row, actor
 
     def execute(self, identity: ExecutionIdentity) -> None:
         from journeon.project_instructions import ProjectInstructionService
 
+        with transaction(self.engine) as db:
+            row = db.get(Job, identity.job_id)
+            if row is not None and row.kind == "TASK_VERIFICATION":
+                task_job = True
+            else:
+                task_job = False
+        if task_job:
+            self.execute_task(identity)
+            return
         service = ProjectInstructionService(self.engine, self.configuration, execution=identity)
         try:
             with transaction(self.engine) as db:
@@ -382,6 +436,53 @@ class JobService:
         except (DomainError, OSError, ValueError):
             self.reconcile(identity.job_id, expected=identity)
 
+    def execute_task(self, identity: ExecutionIdentity) -> None:
+        from journeon.executions import ExecutionService
+        from journeon.models import Execution, TaskVerificationJob
+        from journeon.task_dispatch import TaskDispatchService, execution_command
+
+        if self.executions is None:
+            self.executions = ExecutionService(self.engine, self.configuration)
+        dispatcher = TaskDispatchService(self.engine, self.configuration)
+        try:
+            with transaction(self.engine) as db:
+                row, actor = self.check(db, identity, renew=True)
+                binding, command, manifest = dispatcher.bound(db, actor, row, execution=True)
+                linked = binding.execution_id
+            if linked is None:
+                self.executions.start(
+                    actor, execution_command(command, manifest, row.id), job=identity
+                )
+            assert self.configuration.jobs is not None
+            interval = min(
+                self.configuration.jobs.poll_seconds, self.configuration.jobs.lease_seconds / 3
+            )
+            while True:
+                if self.stopping.is_set():
+                    self.executions.shutdown()
+                with transaction(self.engine) as db:
+                    found = db.get(Job, identity.job_id)
+                    assert found is not None
+                    row = found
+                    linked_binding = db.get(TaskVerificationJob, row.id)
+                    assert linked_binding is not None
+                    binding = linked_binding
+                    execution = (
+                        db.get(Execution, binding.execution_id) if binding.execution_id else None
+                    )
+                    if execution is None:
+                        break
+                    if execution.state not in ("STARTING", "RUNNING"):
+                        dispatcher.settle(db, row)
+                        return
+                    try:
+                        self.check(db, identity, renew=True)
+                    except DomainError:
+                        pass
+                self.stopping.wait(interval)
+        except (DomainError, OSError, ValueError, RuntimeError):
+            self.reconcile(identity.job_id, expected=identity)
+
     def reconcile(
         self, identity: str | None = None, *, expected: ExecutionIdentity | None = None
     ) -> None:
@@ -417,6 +518,25 @@ class JobService:
                     and utc_seconds() < row.lease_deadline
                 ):
                     continue
+                if row.kind == "TASK_VERIFICATION":
+                    from journeon.models import TaskVerificationJob
+                    from journeon.task_dispatch import TaskDispatchService
+
+                    if TaskDispatchService(self.engine, self.configuration).settle(
+                        db, row, reconcile=True
+                    ):
+                        continue
+                    binding = db.get(TaskVerificationJob, row.id)
+                    if binding is not None and binding.execution_id is not None:
+                        row.effect, row.state, row.reason = (
+                            "UNKNOWN",
+                            "FAILED",
+                            "EXECUTION_RECONCILIATION_REQUIRED",
+                        )
+                        row.revision += 1
+                        attention(db, row, row.reason)
+                        record(db, row)
+                        continue
                 journal = (
                     db.get(InstructionPublication, row.operation_id) if row.operation_id else None
                 )
@@ -461,6 +581,7 @@ class JobService:
         if config is None:
             return
         pressure = 0
+        self.stopping = stop
         try:
             while not stop.is_set():
                 try:

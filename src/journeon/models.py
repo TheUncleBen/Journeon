@@ -690,7 +690,10 @@ class Job(Base):
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     kind: Mapped[str] = mapped_column(String(40))
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
-    candidate_id: Mapped[str] = mapped_column(ForeignKey("instruction_candidates.id"), unique=True)
+    candidate_id: Mapped[str | None] = mapped_column(
+        ForeignKey("instruction_candidates.id"), unique=True
+    )
+    task_id: Mapped[str | None] = mapped_column(ForeignKey("tasks.id"))
     input_hash: Mapped[str] = mapped_column(String(64))
     binding_revision: Mapped[int] = mapped_column(Integer)
     policy_revision: Mapped[int] = mapped_column(Integer)
@@ -713,7 +716,11 @@ class Job(Base):
     evidence_id: Mapped[str | None] = mapped_column(String(128))
     byte_count: Mapped[int] = mapped_column(Integer)
     __table_args__ = (
-        CheckConstraint("kind = 'INSTRUCTION_NAVIGATION'", name="job_kind"),
+        CheckConstraint(
+            "(kind = 'INSTRUCTION_NAVIGATION' AND candidate_id IS NOT NULL AND task_id IS NULL) "
+            "OR (kind = 'TASK_VERIFICATION' AND candidate_id IS NULL AND task_id IS NOT NULL)",
+            name="job_kind",
+        ),
         CheckConstraint("cancel_requested IN (0, 1)", name="job_cancel_boolean"),
         CheckConstraint(
             "state IN ('QUEUED','RUNNING','SUCCEEDED','FAILED','CANCELLED','RETRY_WAIT')",
@@ -827,6 +834,7 @@ class WorkspaceLease(Base):
 
 class Execution(Base):
     __tablename__ = "executions"
+    job_id: Mapped[str | None] = mapped_column(ForeignKey("jobs.id"))
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     root_id: Mapped[str] = mapped_column(ForeignKey("instruction_roots.id"))
     root_revision: Mapped[int] = mapped_column(Integer)
@@ -844,6 +852,7 @@ class Execution(Base):
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
     inputs: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (
+        Index("execution_job_identity", "job_id", unique=True),
         UniqueConstraint("principal_id", "idempotency_key", name="execution_identity"),
         CheckConstraint(
             "revision >= 1 AND principal_epoch >= 1 AND root_revision >= 1",
@@ -881,3 +890,42 @@ class ExecutionEffect(Base):
             name="execution_effect_kind",
         ),
     )
+
+
+class TaskVerificationJob(Base):
+    __tablename__ = "task_verification_jobs"
+    job_id: Mapped[str] = mapped_column(ForeignKey("jobs.id"), primary_key=True)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("attempts.id"))
+    manifest_id: Mapped[str] = mapped_column(ForeignKey("attempt_manifests.id"))
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    step_id: Mapped[str] = mapped_column(String(128))
+    route_digest: Mapped[str] = mapped_column(String(64))
+    configuration_revision: Mapped[int] = mapped_column(Integer)
+    inputs: Mapped[dict[str, Any]] = mapped_column(JSON)
+    execution_id: Mapped[str | None] = mapped_column(ForeignKey("executions.id"), unique=True)
+    claim_fence: Mapped[int | None] = mapped_column(Integer)
+    claim_owner: Mapped[str | None] = mapped_column(String(128))
+    claim_incarnation: Mapped[str | None] = mapped_column(String(128))
+    __table_args__ = (
+        UniqueConstraint("principal_id", "idempotency_key", name="task_dispatch_identity"),
+        UniqueConstraint("attempt_id", "step_id", name="task_dispatch_step"),
+        CheckConstraint(
+            "(execution_id IS NULL AND claim_fence IS NULL AND claim_owner IS NULL "
+            "AND claim_incarnation IS NULL) OR (execution_id IS NOT NULL "
+            "AND claim_fence IS NOT NULL "
+            "AND typeof(claim_fence) = 'integer' AND claim_fence >= 1 "
+            "AND claim_owner IS NOT NULL AND claim_incarnation IS NOT NULL)",
+            name="task_execution_claim",
+        ),
+    )
+
+
+class TaskVerificationEvidence(Base):
+    __tablename__ = "task_verification_evidence"
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    job_id: Mapped[str] = mapped_column(ForeignKey("task_verification_jobs.job_id"), unique=True)
+    execution_id: Mapped[str] = mapped_column(ForeignKey("executions.id"), unique=True)
+    manifest_id: Mapped[str] = mapped_column(ForeignKey("attempt_manifests.id"))
+    content_hash: Mapped[str] = mapped_column(String(64))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)

@@ -2005,6 +2005,30 @@
       "ExecutionView": {
         "additionalProperties": false,
         "properties": {
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          },
+          "attempt_manifest_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Manifest Id"
+          },
           "authentication_ref": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
             "title": "Authentication Ref",
@@ -2077,6 +2101,18 @@
             ],
             "title": "Invocation Id"
           },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
           "launcher_exit_code": {
             "anyOf": [
               {
@@ -2105,8 +2141,11 @@
             "title": "Manifest Id"
           },
           "origin": {
-            "const": "DIRECT_VERIFICATION",
             "default": "DIRECT_VERIFICATION",
+            "enum": [
+              "DIRECT_VERIFICATION",
+              "TASK_VERIFICATION"
+            ],
             "title": "Origin",
             "type": "string"
           },
@@ -3145,9 +3184,16 @@
             "type": "string"
           },
           "candidate_id": {
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
-            "title": "Candidate Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
           },
           "effect": {
             "enum": [
@@ -3162,6 +3208,14 @@
           "job_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
             "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "INSTRUCTION_NAVIGATION",
+              "TASK_VERIFICATION"
+            ],
+            "title": "Kind",
             "type": "string"
           },
           "operation_id": {
@@ -3207,12 +3261,26 @@
             ],
             "title": "State",
             "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
           }
         },
         "required": [
           "job_id",
           "project_id",
+          "kind",
           "candidate_id",
+          "task_id",
           "revision",
           "state",
           "effect",
@@ -5955,6 +6023,187 @@
         "title": "TaskCriterion",
         "type": "object"
       },
+      "TaskDispatch": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          },
+          "expected_policy_revision": {
+            "minimum": 1.0,
+            "title": "Expected Policy Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/TaskAttemptOrigin"
+          },
+          "previous_attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Attempt Id"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "route_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Route Key",
+            "type": "string"
+          },
+          "route_revision": {
+            "minimum": 1.0,
+            "title": "Route Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "step_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Step Id",
+            "type": "string"
+          },
+          "workspace_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Workspace Key",
+            "type": "string"
+          },
+          "workspace_revision": {
+            "minimum": 1.0,
+            "title": "Workspace Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "origin",
+          "project_id",
+          "expected_policy_revision",
+          "workspace_key",
+          "workspace_revision",
+          "step_id",
+          "route_key",
+          "route_revision"
+        ],
+        "title": "TaskDispatch",
+        "type": "object"
+      },
+      "TaskEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "claim_fence": {
+            "minimum": 1.0,
+            "title": "Claim Fence",
+            "type": "integer"
+          },
+          "claim_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Claim Incarnation",
+            "type": "string"
+          },
+          "claim_owner": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Claim Owner",
+            "type": "string"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "criterion": {
+            "$ref": "#/components/schemas/TaskCriterion"
+          },
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "execution": {
+            "$ref": "#/components/schemas/ExecutionView"
+          },
+          "execution_operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Execution Operation Id",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/RunManifest"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "process_id": {
+            "exclusiveMinimum": 1.0,
+            "title": "Process Id",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "string"
+          },
+          "step_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Step Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "job_id",
+          "attempt_id",
+          "manifest",
+          "step_id",
+          "criterion",
+          "claim_fence",
+          "claim_owner",
+          "claim_incarnation",
+          "execution",
+          "execution_operation_id",
+          "process_id",
+          "passed",
+          "published_at",
+          "content_digest"
+        ],
+        "title": "TaskEvidence",
+        "type": "object"
+      },
       "TaskPolicyBinding": {
         "additionalProperties": false,
         "properties": {
@@ -7998,17 +8247,51 @@
             {
               "capability": "project.instruction.read",
               "owner_configuration_authority": false,
-              "resource": "current target scope",
-              "when": "always"
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
             }
           ],
           "owner_only": false,
-          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+          "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
         },
         "x-journeon-command": "event.replay.v1",
         "x-journeon-owner": "jobs",
         "x-journeon-permissions": [
-          "project.instruction.read"
+          "project.instruction.read",
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.verification.read"
         ]
       }
     },
@@ -8429,16 +8712,50 @@
             {
               "capability": "project.instruction.read",
               "owner_configuration_authority": false,
-              "resource": "current target scope",
-              "when": "always"
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
             }
           ],
           "owner_only": false,
-          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+          "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
         },
         "x-journeon-owner": "jobs",
         "x-journeon-permissions": [
-          "project.instruction.read"
+          "project.instruction.read",
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.verification.read"
         ],
         "x-journeon-query": "job.read.v1"
       }
@@ -8535,16 +8852,50 @@
             {
               "capability": "project.instruction.read",
               "owner_configuration_authority": false,
-              "resource": "current target scope",
-              "when": "always"
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
             }
           ],
           "owner_only": false,
-          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+          "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
         },
         "x-journeon-owner": "jobs",
         "x-journeon-permissions": [
-          "project.instruction.read"
+          "project.instruction.read",
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.verification.read"
         ],
         "x-journeon-query": "job.attention.read.v1"
       }
@@ -8651,6 +9002,150 @@
             {
               "capability": "project.instruction.accept",
               "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.cancel",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
+        },
+        "x-journeon-command": "job.cancel.v1",
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.accept",
+          "job.cancel",
+          "task.read"
+        ]
+      }
+    },
+    "/api/v1/jobs/{identity}/evidence": {
+      "get": {
+        "operationId": "readTaskEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskEvidence"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Task Evidence",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
               "resource": "current target scope",
               "when": "always"
             }
@@ -8658,11 +9153,15 @@
           "owner_only": false,
           "semantics": "Current service-owned target authorization precedes disclosure and effects"
         },
-        "x-journeon-command": "job.cancel.v1",
         "x-journeon-owner": "jobs",
         "x-journeon-permissions": [
-          "project.instruction.accept"
-        ]
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.instruction.read",
+          "project.verification.read"
+        ],
+        "x-journeon-query": "task.evidence.read.v1"
       }
     },
     "/api/v1/legacy-memory/preview": {
@@ -13359,6 +13858,230 @@
           "task.cancel",
           "task.read",
           "task.receipt.read"
+        ]
+      }
+    },
+    "/api/v1/tasks/dispatch": {
+      "post": {
+        "operationId": "dispatchTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskDispatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Dispatch Task",
+        "x-journeon-authorization": {
+          "grant_checks": [
+            {
+              "capability": "task.dispatch",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "job.cancel",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "job.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.prepare",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.admit",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.start",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.stop",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.drain",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.complete",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "execution.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "current target scope",
+              "when": "always"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        },
+        "x-journeon-command": "task.dispatch.v1",
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.dispatch",
+          "task.read",
+          "job.read",
+          "job.cancel",
+          "job.receipt.read",
+          "attempt.prepare",
+          "attempt.read",
+          "attempt.receipt.read",
+          "execution.admit",
+          "execution.start",
+          "execution.read",
+          "execution.stop",
+          "execution.drain",
+          "execution.complete",
+          "execution.receipt.read",
+          "project.read",
+          "project.verification.read",
+          "project.instruction.read"
         ]
       }
     },

@@ -1922,6 +1922,207 @@
       "authorization": {
         "grant_checks": [
           {
+            "capability": "task.dispatch",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "job.cancel",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "job.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.prepare",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.start",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.stop",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.drain",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.complete",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": "task.dispatch.v1",
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.dispatch_task",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "dispatchTask",
+      "owner": "work",
+      "path": "/api/v1/tasks/dispatch",
+      "permissions": [
+        "task.dispatch",
+        "task.read",
+        "job.read",
+        "job.cancel",
+        "job.receipt.read",
+        "attempt.prepare",
+        "attempt.read",
+        "attempt.receipt.read",
+        "execution.admit",
+        "execution.start",
+        "execution.read",
+        "execution.stop",
+        "execution.drain",
+        "execution.complete",
+        "execution.receipt.read",
+        "project.read",
+        "project.verification.read",
+        "project.instruction.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+      },
+      "command": null,
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.task_evidence",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "readTaskEvidence",
+      "owner": "jobs",
+      "path": "/api/v1/jobs/{identity}/evidence",
+      "permissions": [
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.instruction.read",
+        "project.verification.read"
+      ],
+      "query": "task.evidence.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [
+          {
             "capability": "lifecycle.restore",
             "owner_configuration_authority": false,
             "resource": "current target scope",
@@ -1965,12 +2166,42 @@
           {
             "capability": "project.instruction.read",
             "owner_configuration_authority": false,
-            "resource": "current target scope",
-            "when": "always"
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
           }
         ],
         "owner_only": false,
-        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
       },
       "command": null,
       "endpoint": "journeon.job_api.bind_job_api.<locals>.read",
@@ -1981,7 +2212,11 @@
       "owner": "jobs",
       "path": "/api/v1/jobs/{identity}",
       "permissions": [
-        "project.instruction.read"
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read"
       ],
       "query": "job.read.v1"
     },
@@ -1992,12 +2227,24 @@
           {
             "capability": "project.instruction.accept",
             "owner_configuration_authority": false,
-            "resource": "current target scope",
-            "when": "always"
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.cancel",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
           }
         ],
         "owner_only": false,
-        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
       },
       "command": "job.cancel.v1",
       "endpoint": "journeon.job_api.bind_job_api.<locals>.cancel",
@@ -2008,7 +2255,9 @@
       "owner": "jobs",
       "path": "/api/v1/jobs/{identity}/cancel",
       "permissions": [
-        "project.instruction.accept"
+        "project.instruction.accept",
+        "job.cancel",
+        "task.read"
       ],
       "query": null
     },
@@ -2019,12 +2268,42 @@
           {
             "capability": "project.instruction.read",
             "owner_configuration_authority": false,
-            "resource": "current target scope",
-            "when": "always"
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
           }
         ],
         "owner_only": false,
-        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
       },
       "command": "event.replay.v1",
       "endpoint": "journeon.job_api.bind_job_api.<locals>.events",
@@ -2035,7 +2314,11 @@
       "owner": "jobs",
       "path": "/api/v1/events/replay",
       "permissions": [
-        "project.instruction.read"
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read"
       ],
       "query": null
     },
@@ -2046,12 +2329,42 @@
           {
             "capability": "project.instruction.read",
             "owner_configuration_authority": false,
-            "resource": "current target scope",
-            "when": "always"
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
           }
         ],
         "owner_only": false,
-        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
       },
       "command": null,
       "endpoint": "journeon.job_api.bind_job_api.<locals>.attention",
@@ -2062,7 +2375,11 @@
       "owner": "jobs",
       "path": "/api/v1/jobs/{identity}/attention",
       "permissions": [
-        "project.instruction.read"
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read"
       ],
       "query": "job.attention.read.v1"
     }
@@ -3331,7 +3648,109 @@
       "authorization": {
         "grant_checks": [
           {
-            "capability": "project.instruction.accept",
+            "capability": "task.dispatch",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "job.cancel",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "job.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.prepare",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.admit",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.start",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.stop",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.drain",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.complete",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "execution.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
             "owner_configuration_authority": false,
             "resource": "current target scope",
             "when": "always"
@@ -3343,11 +3762,70 @@
       "dry_run": false,
       "external_effects": [],
       "idempotent": true,
+      "input_model": "TaskDispatch",
+      "name": "task.dispatch.v1",
+      "owner": "work",
+      "permissions": [
+        "task.dispatch",
+        "task.read",
+        "job.read",
+        "job.cancel",
+        "job.receipt.read",
+        "attempt.prepare",
+        "attempt.read",
+        "attempt.receipt.read",
+        "execution.admit",
+        "execution.start",
+        "execution.read",
+        "execution.stop",
+        "execution.drain",
+        "execution.complete",
+        "execution.receipt.read",
+        "project.read",
+        "project.verification.read",
+        "project.instruction.read"
+      ],
+      "result_model": "JobView",
+      "reversibility": "Prior canonical evidence is retained",
+      "risk": "LOCAL_CANONICAL_CONTROL",
+      "stability": "INTERNAL",
+      "verification": "Current scope, revision and durable owning records"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.cancel",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
       "input_model": "JobCancel",
       "name": "job.cancel.v1",
       "owner": "jobs",
       "permissions": [
-        "project.instruction.accept"
+        "project.instruction.accept",
+        "job.cancel",
+        "task.read"
       ],
       "result_model": "JobView",
       "reversibility": "Prior canonical evidence is retained",
@@ -3361,12 +3839,42 @@
           {
             "capability": "project.instruction.read",
             "owner_configuration_authority": false,
-            "resource": "current target scope",
-            "when": "always"
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
           }
         ],
         "owner_only": false,
-        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
       },
       "dry_run": true,
       "external_effects": [],
@@ -3375,7 +3883,11 @@
       "name": "event.replay.v1",
       "owner": "jobs",
       "permissions": [
-        "project.instruction.read"
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read"
       ],
       "result_model": "ReplayPage",
       "reversibility": "Prior canonical evidence is retained",
@@ -3936,22 +4448,45 @@
         "attention.resolved"
       ],
       "health": "schema_and_database",
-      "migration": "0010_work_execution",
+      "migration": "0013_task_dispatch",
       "module_id": "jobs",
       "permission_namespaces": [
+        "attempt",
+        "execution",
+        "job",
         "lifecycle",
-        "project"
+        "project",
+        "task"
       ],
       "permissions": [
         "project.instruction.read",
         "project.instruction.accept",
         "project.instruction.restore",
-        "lifecycle.restore"
+        "lifecycle.restore",
+        "task.dispatch",
+        "task.read",
+        "job.read",
+        "job.cancel",
+        "job.receipt.read",
+        "attempt.prepare",
+        "attempt.read",
+        "attempt.receipt.read",
+        "execution.admit",
+        "execution.start",
+        "execution.read",
+        "execution.stop",
+        "execution.drain",
+        "execution.complete",
+        "execution.receipt.read",
+        "project.read",
+        "project.verification.read"
       ],
       "settings": [],
       "tables": [
         "jobs",
-        "attention"
+        "attention",
+        "task_verification_jobs",
+        "task_verification_evidence"
       ],
       "version": "0.0.0.dev1"
     },
@@ -4160,12 +4695,13 @@
         "task.admission.checked"
       ],
       "health": "schema_and_database",
-      "migration": "0012_attempt_execution",
+      "migration": "0013_task_dispatch",
       "module_id": "work",
       "permission_namespaces": [
         "attempt",
         "bot",
         "execution",
+        "job",
         "profile",
         "project",
         "task"
@@ -4177,20 +4713,26 @@
         "task.pause",
         "task.resume",
         "task.cancel",
+        "task.dispatch",
+        "job.read",
+        "job.cancel",
+        "job.receipt.read",
         "attempt.prepare",
         "attempt.read",
         "attempt.receipt.read",
+        "execution.admit",
         "execution.start",
         "execution.read",
         "execution.stop",
         "execution.drain",
         "execution.complete",
         "execution.receipt.read",
+        "project.read",
+        "project.verification.read",
+        "project.instruction.read",
         "task.revise",
         "task.assign",
         "task.admit",
-        "execution.admit",
-        "project.verification.read",
         "bot.read",
         "bot.use",
         "profile.read",
@@ -4457,7 +4999,31 @@
       "authorization": {
         "grant_checks": [
           {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
             "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "current target scope",
+            "when": "always"
+          },
+          {
+            "capability": "project.verification.read",
             "owner_configuration_authority": false,
             "resource": "current target scope",
             "when": "always"
@@ -4466,10 +5032,68 @@
         "owner_only": false,
         "semantics": "Current service-owned target authorization precedes disclosure and effects"
       },
+      "name": "task.evidence.read.v1",
+      "owner": "jobs",
+      "permissions": [
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.instruction.read",
+        "project.verification.read"
+      ],
+      "result_model": "TaskEvidence"
+    },
+    {
+      "authorization": {
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
+      },
       "name": "job.read.v1",
       "owner": "jobs",
       "permissions": [
-        "project.instruction.read"
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read"
       ],
       "result_model": "JobView"
     },
@@ -4479,17 +5103,51 @@
           {
             "capability": "project.instruction.read",
             "owner_configuration_authority": false,
-            "resource": "current target scope",
-            "when": "always"
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
           }
         ],
         "owner_only": false,
-        "semantics": "Current service-owned target authorization precedes disclosure and effects"
+        "semantics": "Authorize each typed target before decoding; instruction Jobs use instruction grants and Task Jobs use Task, Attempt and verification grants"
       },
       "name": "job.attention.read.v1",
       "owner": "jobs",
       "permissions": [
-        "project.instruction.read"
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read"
       ],
       "result_model": "AttentionList"
     },

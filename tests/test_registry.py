@@ -124,6 +124,8 @@ def test_generation_includes_actual_registry():
         "readInstructionHistory",
         "inspectInstructionRecovery",
         "readInstructionDocument",
+        "dispatchTask",
+        "readTaskEvidence",
         "readJob",
         "cancelJob",
         "replayEvents",

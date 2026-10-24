@@ -943,7 +943,10 @@ class ExecutionCompletion(Contract):
 
 class ExecutionView(Contract):
     execution_id: Identifier
-    origin: Literal["DIRECT_VERIFICATION"] = "DIRECT_VERIFICATION"
+    origin: Literal["DIRECT_VERIFICATION", "TASK_VERIFICATION"] = "DIRECT_VERIFICATION"
+    job_id: Identifier | None = None
+    attempt_id: Identifier | None = None
+    attempt_manifest_id: Identifier | None = None
     project_id: Identifier
     root_key: Identifier
     root_revision: PositiveRevision
@@ -971,6 +974,15 @@ class ExecutionView(Contract):
     stop_requested: bool = False
     verification_passed: bool = False
     drained: bool = False
+
+    @model_validator(mode="after")
+    def exact_origin(self) -> "ExecutionView":
+        values = (self.job_id, self.attempt_id, self.attempt_manifest_id)
+        if (self.origin == "TASK_VERIFICATION" and any(value is None for value in values)) or (
+            self.origin == "DIRECT_VERIFICATION" and any(value is not None for value in values)
+        ):
+            raise ValueError("Execution requires its exact typed origin")
+        return self
 
 
 class ExecutionReceipt(Contract):

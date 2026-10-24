@@ -791,6 +791,17 @@ class IndexEntry(Contract):
     content_hash: str | None
 
 
+class GitHistory(Contract):
+    shallow: bool
+    boundaries: list[Annotated[str, StringConstraints(pattern=r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")]]
+
+    @model_validator(mode="after")
+    def consistent_boundary(self) -> "GitHistory":
+        if not self.shallow and self.boundaries:
+            raise ValueError("Git history without a shallow file cannot declare boundaries")
+        return self
+
+
 class ChangeSetSnapshot(Contract):
     kind: Literal["GIT", "DIRECTORY"]
     base_commit: str | None
@@ -805,6 +816,7 @@ class ChangeSetSnapshot(Contract):
     submodules: dict[str, str]
     byte_count: int
     snapshot_hash: str
+    git_history: GitHistory | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class TaskAttemptOrigin(Contract):

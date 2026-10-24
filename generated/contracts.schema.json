@@ -373,6 +373,17 @@
             "title": "Deleted",
             "type": "array"
           },
+          "git_history": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GitHistory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "head": {
             "anyOf": [
               {
@@ -548,6 +559,29 @@
           "byte_count"
         ],
         "title": "DeterministicInstructionBundle",
+        "type": "object"
+      },
+      "GitHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "boundaries": {
+            "items": {
+              "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+              "type": "string"
+            },
+            "title": "Boundaries",
+            "type": "array"
+          },
+          "shallow": {
+            "title": "Shallow",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "shallow",
+          "boundaries"
+        ],
+        "title": "GitHistory",
         "type": "object"
       },
       "IndexEntry": {
@@ -1730,6 +1764,17 @@
             "title": "Deleted",
             "type": "array"
           },
+          "git_history": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GitHistory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "head": {
             "anyOf": [
               {
@@ -1905,6 +1950,29 @@
           "byte_count"
         ],
         "title": "DeterministicInstructionBundle",
+        "type": "object"
+      },
+      "GitHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "boundaries": {
+            "items": {
+              "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+              "type": "string"
+            },
+            "title": "Boundaries",
+            "type": "array"
+          },
+          "shallow": {
+            "title": "Shallow",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "shallow",
+          "boundaries"
+        ],
+        "title": "GitHistory",
         "type": "object"
       },
       "IndexEntry": {
@@ -10871,6 +10939,17 @@
             "title": "Deleted",
             "type": "array"
           },
+          "git_history": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GitHistory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "head": {
             "anyOf": [
               {
@@ -11414,6 +11493,29 @@
           "unit"
         ],
         "title": "ExecutionView",
+        "type": "object"
+      },
+      "GitHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "boundaries": {
+            "items": {
+              "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+              "type": "string"
+            },
+            "title": "Boundaries",
+            "type": "array"
+          },
+          "shallow": {
+            "title": "Shallow",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "shallow",
+          "boundaries"
+        ],
+        "title": "GitHistory",
         "type": "object"
       },
       "IndexEntry": {

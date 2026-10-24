@@ -147,6 +147,20 @@ def project_git_view(
             max_output_bytes=max_bytes,
         )
         metadata = destination / ".git"
+        if snapshot_bound and snapshot.snapshot.git_history is None:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE",
+                "Git history boundary was not captured; prepare a new Attempt",
+            )
+        if snapshot.snapshot.git_history is not None and snapshot.snapshot.git_history.shallow:
+            shallow_data = "".join(
+                value + "\n" for value in snapshot.snapshot.git_history.boundaries
+            ).encode()
+            if len(shallow_data) > max_bytes:
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Git shallow metadata exceeds projection limits"
+                )
+            (metadata / "shallow").write_bytes(shallow_data)
         (metadata / "objects" / "info" / "alternates").write_text(
             (str(mounts[index]) if snapshot_bound else f"/git-objects/{index}") + "\n"
         )

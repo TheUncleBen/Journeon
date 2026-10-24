@@ -157,3 +157,52 @@ def test_attempt_prepare_replay_checks_original_project_before_json(
     rejected = browser.post("/api/v1/attempts/prepare", headers=csrf, json=payload)
     assert rejected.status_code == 403
     assert rejected.json()["code"] == "PERMISSION_DENIED"
+
+
+def test_legacy_snapshot_receipts_keep_hashes_without_inventing_history(dispatch_environment):  # noqa: F811
+    from journeon.contracts import AttemptPrepare, ChangeSetSnapshot
+    from journeon.instructions import digest
+    from journeon.models import Attempt, AttemptManifest, Job, Receipt
+
+    engine, client, headers, _, command, _, _ = dispatch_environment
+    prepare = {key: value for key, value in command.items() if key in AttemptPrepare.model_fields}
+    response = client.post("/api/v1/attempts/prepare", headers=headers, json=prepare)
+    assert response.status_code == 200
+    legacy = response.json()
+    manifest = legacy["attempt"]["manifest"]
+    source = manifest["snapshot"]
+    assert source.pop("git_history") == {"shallow": False, "boundaries": []}
+    source["snapshot_hash"] = digest(
+        {key: value for key, value in source.items() if key != "snapshot_hash"}
+    )
+    manifest["content_digest"] = digest(
+        {key: value for key, value in manifest.items() if key != "content_digest"}
+    )
+    decoded = ChangeSetSnapshot.model_validate(source)
+    assert decoded.git_history is None
+    assert decoded.model_dump(mode="json") == source
+    with transaction(engine) as db:
+        db.get(Attempt, legacy["attempt"]["attempt_id"]).snapshot = legacy["attempt"]
+        retained = db.get(AttemptManifest, manifest["manifest_id"])
+        retained.snapshot = manifest
+        retained.content_hash = manifest["content_digest"]
+        db.get(Receipt, legacy["operation_id"]).result = legacy
+    read = client.get("/api/v1/attempts/" + legacy["attempt"]["attempt_id"])
+    assert read.status_code == 200 and read.json() == legacy["attempt"]
+    replay = client.post("/api/v1/attempts/prepare", headers=headers, json=prepare)
+    assert replay.status_code == 200 and replay.json() == legacy
+    receipt = client.get("/api/v1/operations/" + legacy["operation_id"])
+    assert receipt.status_code == 200 and receipt.json() == legacy
+    dispatch = client.post(
+        "/api/v1/tasks/dispatch",
+        headers=headers,
+        json=command
+        | {
+            "attempt_id": legacy["attempt"]["attempt_id"],
+            "idempotency_key": "legacy-history-dispatch",
+        },
+    )
+    assert dispatch.status_code == 503
+    assert dispatch.json()["code"] == "DEPENDENCY_UNAVAILABLE"
+    with transaction(engine) as db:
+        assert db.scalar(select(Job)) is None

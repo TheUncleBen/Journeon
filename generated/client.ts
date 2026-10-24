@@ -209,6 +209,7 @@ export type ChangeSetSnapshot = {
   "binary_diff_hash": string | null;
   "byte_count": number;
   "deleted": Array<string>;
+  "git_history"?: GitHistory | null;
   "head": string | null;
   "index": Array<IndexEntry>;
   "index_hash": string;
@@ -379,6 +380,11 @@ export type ExecutionView = {
   "stop_requested"?: boolean;
   "unit": string;
   "verification_passed"?: boolean;
+};
+
+export type GitHistory = {
+  "boundaries": Array<string>;
+  "shallow": boolean;
 };
 
 export type HistoryRead = {

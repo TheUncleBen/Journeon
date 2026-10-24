@@ -3,7 +3,11 @@ import pytest
 from test_attempt_snapshots import git
 from test_execution_route import CurrentAuthority, route
 
-from journeon.attempt_snapshots import capture_snapshot, materialize_projection
+from journeon.attempt_snapshots import (
+    capture_snapshot,
+    materialize_projection,
+    materialize_worktree,
+)
 from journeon.contracts import DomainError
 from journeon.execution_git import project_git_view
 from journeon.execution_process import run_local
@@ -127,3 +131,94 @@ def test_unstable_git_object_capture_is_rejected(tmp_path, monkeypatch):
             source, target, captured, admitted_roots=[source], max_bytes=1048576, max_files=100
         )
     assert error.value.code == "REVISION_CONFLICT"
+
+
+@pytest.mark.parametrize("alter_original_boundary", [False, True])
+@pytest.mark.parametrize("empty_boundary", [False, True])
+def test_shallow_attempt_retains_admitted_history_boundary(
+    tmp_path, alter_original_boundary, empty_boundary
+):
+    seed = tmp_path / "seed"
+    repository(seed)
+    (seed / "file.txt").write_text("second")
+    git(seed, "commit", "-qam", "Second fixture revision")
+    source = tmp_path / "source"
+    git(
+        tmp_path,
+        "clone",
+        "--no-hardlinks",
+        *([] if empty_boundary else ["--depth=1"]),
+        seed.as_uri(),
+        str(source),
+    )
+    if empty_boundary:
+        (source / ".git" / "shallow").write_bytes(b"")
+    expected_count = "2" if empty_boundary else "1"
+    (source / "verify.py").write_text(
+        "import subprocess as s\n"
+        "assert s.check_output(['git','rev-parse','--is-shallow-repository']).strip()==b'true'\n"
+        f"assert s.check_output(['git','rev-list','--count','HEAD']).strip()==b'{expected_count}'\n"
+        "assert s.check_output(['git','show','HEAD:file.txt'])==b'second'\n"
+    )
+    admitted = capture_snapshot(source, max_bytes=1048576, max_files=100)
+    workspace = tmp_path / "attempt"
+    materialize_worktree(source, workspace, "attempt/shallow", admitted)
+    assert (
+        capture_snapshot(workspace, max_bytes=1048576, max_files=100).snapshot == admitted.snapshot
+    )
+    destination = tmp_path / "input"
+    materialize_projection(destination, admitted)
+    if alter_original_boundary:
+        (source / ".git" / "shallow").unlink()
+    projected = project_git_view(
+        workspace,
+        destination,
+        admitted,
+        admitted_roots=[source],
+        max_bytes=1048576,
+        max_files=100,
+        snapshot_bound=True,
+    )
+    configured = route().model_copy(
+        update={
+            "argv": ["/usr/bin/python3", "-I", "-S", "verify.py"],
+            "artifacts": [],
+        }
+    )
+    observed = run_local(
+        configured, destination, CurrentAuthority(), object_mounts=projected.mounts
+    )
+    assert observed["completion"]["exit_code"] == 0
+
+
+def test_missing_parent_is_not_treated_as_a_shallow_boundary(tmp_path):
+    source = tmp_path / "source"
+    repository(source)
+    parent = git(source, "rev-parse", "HEAD").strip()
+    (source / "file.txt").write_text("later")
+    git(source, "commit", "-qam", "Later fixture revision")
+    captured = capture_snapshot(source, max_bytes=1048576, max_files=100)
+    assert captured.snapshot.git_history is not None
+    assert not captured.snapshot.git_history.shallow
+    assert captured.snapshot.git_history.boundaries == []
+    (source / ".git" / "objects" / parent[:2] / parent[2:]).unlink()
+    destination = tmp_path / "input"
+    materialize_projection(destination, captured)
+    with pytest.raises(DomainError):
+        project_git_view(
+            source,
+            destination,
+            captured,
+            admitted_roots=[source],
+            max_bytes=1048576,
+            max_files=100,
+            snapshot_bound=True,
+        )
+
+
+def test_malformed_shallow_metadata_is_rejected(tmp_path):
+    source = tmp_path / "source"
+    repository(source)
+    (source / ".git" / "shallow").write_text("invalid boundary\n")
+    with pytest.raises(DomainError):
+        capture_snapshot(source, max_bytes=1048576, max_files=100)

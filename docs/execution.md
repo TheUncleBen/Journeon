@@ -70,6 +70,12 @@ Alternate stores still require admission; future and unreachable objects are not
 exposed to the command. The copied stores and sealed object closure share the
 configured snapshot byte and file budgets.
 
+The manifest records whether Git marks the repository shallow and the declared
+shallow boundary, including an empty shallow file. Legacy Git snapshots without
+this observation remain readable with their original hashes and receipts, but
+require a newly prepared Attempt before Task execution. The service does not infer
+missing history metadata or fetch objects to fill it in.
+
 A verification prerequisite needs passing service-produced evidence from the same
 Attempt manifest. WORK, CONDITION, REVIEW and APPROVAL steps have no execution
 producer here. Loop execution is also unavailable. These steps block dependent
@@ -79,8 +85,9 @@ remain unavailable. Successful verification does not mark a Task DONE.
 
 Evidence binds the exact criterion text and Task, criteria, workflow, assignment,
 policy, Attempt, Job claim, Execution, invocation, drained completion and output.
-A zero exit satisfies only that exact configured check; a nonzero exit retains
-failed verification. Cancellation or lost current authority stops new effects and
+Only an authenticated `EXITED` completion with the configured `expected_exit_code`
+can pass verification, after the process has drained and current authority permits
+publication. A different exit code retains failed verification. Cancellation or lost current authority stops new effects and
 publication while retaining actual observations. Unknown launch or completion
 requires canonical Attention and never causes an automatic process rerun. A known
 completed and drained execution can reconcile publication under its original

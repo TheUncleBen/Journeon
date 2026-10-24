@@ -15,7 +15,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Literal
 
-from journeon.contracts import ChangeSetSnapshot, DomainError, IndexEntry, SourceEntry
+from journeon.contracts import ChangeSetSnapshot, DomainError, GitHistory, IndexEntry, SourceEntry
 
 
 def content_hash(data: bytes) -> str:
@@ -106,6 +106,58 @@ def _same(left: os.stat_result, right: os.stat_result) -> bool:
         getattr(left, key) == getattr(right, key)
         for key in ("st_dev", "st_ino", "st_mode", "st_size", "st_mtime_ns", "st_ctime_ns")
     )
+
+
+def shallow_boundary(root: Path, *, max_bytes: int, max_files: int) -> tuple[GitHistory, int]:
+    from journeon.instruction_config import open_directory
+
+    location = Path(
+        git(
+            root,
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            "shallow",
+            max_output_bytes=max_bytes,
+        )
+        .decode()
+        .strip()
+    )
+    directory = open_directory(location.parent)
+    try:
+        try:
+            descriptor = os.open(
+                location.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory
+            )
+        except FileNotFoundError:
+            return GitHistory(shallow=False, boundaries=[]), 0
+        with os.fdopen(descriptor, "rb") as stream:
+            before = os.fstat(stream.fileno())
+            if not stat.S_ISREG(before.st_mode) or before.st_size > max_bytes:
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Git shallow metadata exceeds snapshot limits"
+                )
+            raw = stream.read(max_bytes + 1)
+            if (
+                len(raw) > max_bytes
+                or not _same(before, os.fstat(stream.fileno()))
+                or not _same(
+                    before, os.stat(location.name, dir_fd=directory, follow_symlinks=False)
+                )
+            ):
+                raise DomainError(
+                    "REVISION_CONFLICT", "Git shallow metadata changed during capture"
+                )
+    finally:
+        os.close(directory)
+    lines = raw.decode("ascii").splitlines()
+    if len(lines) > max_files or any(
+        not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", line) for line in lines
+    ):
+        raise DomainError(
+            "DEPENDENCY_UNAVAILABLE", "Git shallow boundary is malformed or exceeds snapshot limits"
+        )
+    return GitHistory(shallow=True, boundaries=sorted(set(lines))), len(raw)
 
 
 def capture_snapshot(root: Path, *, max_bytes: int, max_files: int) -> CapturedSnapshot:
@@ -202,7 +254,15 @@ def capture_snapshot(root: Path, *, max_bytes: int, max_files: int) -> CapturedS
     submodules: dict[str, CapturedSnapshot] = {}
     head = None
     binary = None
+    shallow = None
+    shallow_bytes = 0
     if (root / ".git").exists():
+        shallow, shallow_bytes = shallow_boundary(root, max_bytes=max_bytes, max_files=max_files)
+        total += shallow_bytes
+        if total > max_bytes:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Snapshot byte limit reached")
+        if shallow.shallow and len(entries) >= max_files:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Snapshot file limit reached")
         head = bounded_git(root, "rev-parse", "--verify", "HEAD").decode().strip()
         encoded_index = bounded_git(root, "ls-files", "--stage", "-z")
         for line in encoded_index.split(b"\0"):
@@ -241,7 +301,9 @@ def capture_snapshot(root: Path, *, max_bytes: int, max_files: int) -> CapturedS
             )
         )
         if (
-            bounded_git(root, "ls-files", "--stage", "-z") != encoded_index
+            shallow_boundary(root, max_bytes=max_bytes, max_files=max_files)
+            != (shallow, shallow_bytes)
+            or bounded_git(root, "ls-files", "--stage", "-z") != encoded_index
             or bounded_git(root, "rev-parse", "--verify", "HEAD").decode().strip() != head
         ):
             raise DomainError("REVISION_CONFLICT", "Git state changed during snapshot")
@@ -250,6 +312,7 @@ def capture_snapshot(root: Path, *, max_bytes: int, max_files: int) -> CapturedS
     value = dict(
         kind="GIT" if head else "DIRECTORY",
         base_commit=head,
+        git_history=shallow,
         head=head,
         index=index,
         working=entries,

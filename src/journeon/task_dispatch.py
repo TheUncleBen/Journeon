@@ -55,6 +55,13 @@ def execution_command(command: TaskDispatch, manifest: RunManifest, job_id: str)
     )
 
 
+def require_recorded_history(manifest: RunManifest) -> None:
+    if manifest.snapshot.kind == "GIT" and manifest.snapshot.git_history is None:
+        raise DomainError(
+            "DEPENDENCY_UNAVAILABLE", "Git history boundary was not captured; prepare a new Attempt"
+        )
+
+
 def check_step(db: Session, command: TaskDispatch, manifest: RunManifest) -> TaskCriterion:
     workflow = manifest.task.workflow
     if workflow is None:
@@ -192,6 +199,8 @@ class TaskDispatchService:
             != (row.principal_id, row.session_id, row.principal_epoch)
         ):
             raise DomainError("REVISION_CONFLICT", "Task Job inputs are no longer current")
+        if execution:
+            require_recorded_history(manifest)
         check_step(db, command, manifest)
         service = ExecutionService(self.engine, self.configuration)
         route = service.route(command.route_key, command.route_revision)
@@ -295,6 +304,7 @@ class TaskDispatchService:
                 raise DomainError(
                     "REVISION_CONFLICT", "Prepared Attempt does not bind the current Task"
                 )
+            require_recorded_history(manifest)
             check_step(db, command, manifest)
             identity = str(uuid4())
             _, _, route = ExecutionService(self.engine, self.configuration).inputs(

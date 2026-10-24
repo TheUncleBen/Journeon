@@ -200,6 +200,7 @@ app.state.engine.dispose()
     )
     assert data["revisions"] == [
         "0014_review_completion",
+        "0013_task_dispatch",
         "0012_attempt_execution",
         "0011_task_admission",
         "0010_work_execution",

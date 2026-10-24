@@ -626,3 +626,139 @@ def test_execution_storage_reserves_snapshot_metadata_before_writes(
     else:
         assert actual == 0
     assert service.start(actor, command) == receipt
+
+
+def test_execution_retry_does_not_create_unowned_lock_files(direct_execution):
+    service, actor, command, _ = direct_execution
+    receipt = service.start(actor, command)
+    deadline = time.monotonic() + 20
+    while service.read(actor, receipt.execution.execution_id).state in ("STARTING", "RUNNING"):
+        assert time.monotonic() < deadline
+        time.sleep(0.05)
+    from pathlib import Path
+
+    storage = Path(service.configuration.executions.storage_path)
+    before = {p.name for p in storage.glob("execution-*.lock")}
+    for _ in range(3):
+        assert service.start(actor, command) == receipt
+    after = {p.name for p in storage.glob("execution-*.lock")}
+    from sqlalchemy import func
+
+    from journeon.models import Execution
+
+    with transaction(service.engine) as db:
+        count = db.scalar(select(func.count()).select_from(Execution))
+    assert count == 1
+    assert after == before, {
+        "before": sorted(before),
+        "after": sorted(after),
+        "execution_rows": count,
+    }
+
+
+def test_shutdown_cannot_be_followed_by_new_execution_admission(direct_execution, monkeypatch):
+    import threading
+
+    from journeon import executions
+    from journeon.contracts import DomainError
+
+    service, actor, command, _ = direct_execution
+    entered = threading.Event()
+    released = threading.Event()
+    original = executions.resource_observation
+    results = []
+
+    def blocked_observation(path):
+        entered.set()
+        assert released.wait(5)
+        return original(path)
+
+    monkeypatch.setattr(executions, "resource_observation", blocked_observation)
+
+    def start():
+        try:
+            results.append(service.start(actor, command))
+        except Exception as error:
+            results.append(error)
+
+    thread = threading.Thread(target=start)
+    thread.start()
+    try:
+        assert entered.wait(5)
+        service.shutdown()
+    finally:
+        released.set()
+        thread.join(10)
+        service.shutdown()
+    assert not thread.is_alive()
+    from sqlalchemy import func
+
+    from journeon.models import Execution
+
+    with transaction(service.engine) as db:
+        count = db.scalar(select(func.count()).select_from(Execution))
+    assert len(results) == 1
+    assert isinstance(results[0], DomainError), {
+        "admission_after_shutdown": type(results[0]).__name__,
+        "execution_rows": count,
+    }
+    assert count == 0
+
+
+@pytest.mark.parametrize("failure", ["capacity", "receipt"])
+def test_failed_admission_does_not_retain_unowned_lock(direct_execution, monkeypatch, failure):
+    from pathlib import Path
+
+    from sqlalchemy import func
+
+    from journeon.models import Execution
+
+    service, actor, command, _ = direct_execution
+    if failure == "capacity":
+        service.configuration = service.configuration.model_copy(
+            update={
+                "executions": service.configuration.executions.model_copy(
+                    update={"memory_bytes": 1}
+                )
+            }
+        )
+        expected = DomainError
+    else:
+
+        def reject_receipt(*args, **kwargs):
+            raise ValueError("fixture admission rollback")
+
+        monkeypatch.setattr(service, "receipt", reject_receipt)
+        expected = ValueError
+    for _ in range(3):
+        with pytest.raises(expected):
+            service.start(actor, command)
+    with transaction(service.engine) as db:
+        assert db.scalar(select(func.count()).select_from(Execution)) == 0
+    assert not list(Path(service.configuration.executions.storage_path).glob("execution-*.lock"))
+
+
+def test_failed_submission_keeps_committed_lock_for_reconciliation(direct_execution, monkeypatch):
+    from pathlib import Path
+
+    from journeon import executions
+    from journeon.models import Execution
+
+    service, actor, command, _ = direct_execution
+
+    def reject_submission(*args, **kwargs):
+        raise RuntimeError("fixture submission failure")
+
+    monkeypatch.setattr(executions.ThreadPoolExecutor, "submit", reject_submission)
+    with pytest.raises(RuntimeError, match="fixture submission failure"):
+        service.start(actor, command)
+    with transaction(service.engine) as db:
+        row = db.scalar(select(Execution))
+        identity = row.id
+        assert row.state == "STARTING"
+    storage = Path(service.configuration.executions.storage_path)
+    assert (storage / ("execution-" + identity + ".lock")).is_file()
+    service.reconcile()
+    assert service.read(actor, identity).state == "UNKNOWN"
+    assert service.read(actor, identity).drained
+    assert (storage / ("execution-" + identity + ".lock")).is_file()

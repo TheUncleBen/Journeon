@@ -412,141 +412,147 @@ class ExecutionService:
             raise DomainError(
                 "DEPENDENCY_UNAVAILABLE", "Execution admission would consume the core reserve"
             )
-        identity = str(uuid4())
-        directory = open_directory(Path(config.storage_path))
-        lock = None
-        try:
-            lock = os.open(
-                "execution-" + identity + ".lock",
-                os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
-                0o600,
-                dir_fd=directory,
-            )
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            host = hashlib.sha256(
-                Path("/etc/machine-id").read_bytes() + str(os.getuid()).encode()
-            ).hexdigest()
-            with work_transaction(self.engine, actor) as db:
-                prior = db.scalar(
-                    select(Receipt)
-                    .options(defer(Receipt.result))
-                    .where(
-                        Receipt.principal_id == actor.principal_id,
-                        Receipt.command == "execution.start.v1",
-                        Receipt.idempotency_key == command.idempotency_key,
+        with self.pool_lock:
+            if self.stopping.is_set():
+                raise DomainError("DEPENDENCY_UNAVAILABLE", "Execution service is draining")
+            identity = str(uuid4())
+            directory = open_directory(Path(config.storage_path))
+            lock = None
+            committed = False
+            try:
+                host = hashlib.sha256(
+                    Path("/etc/machine-id").read_bytes() + str(os.getuid()).encode()
+                ).hexdigest()
+                with work_transaction(self.engine, actor) as db:
+                    prior = db.scalar(
+                        select(Receipt)
+                        .options(defer(Receipt.result))
+                        .where(
+                            Receipt.principal_id == actor.principal_id,
+                            Receipt.command == "execution.start.v1",
+                            Receipt.idempotency_key == command.idempotency_key,
+                        )
                     )
-                )
-                if prior is not None:
-                    row = authorized_execution(db, actor, prior.target_id, "start")
-                    self.check_configuration(db, actor, row)
-                    result = execution_receipt(db, actor, prior)
-                    if prior.payload_hash != digest(
-                        command.model_dump(mode="json", exclude={"idempotency_key"})
+                    if prior is not None:
+                        row = authorized_execution(db, actor, prior.target_id, "start")
+                        self.check_configuration(db, actor, row)
+                        result = execution_receipt(db, actor, prior)
+                        if prior.payload_hash != digest(
+                            command.model_dump(mode="json", exclude={"idempotency_key"})
+                        ):
+                            raise DomainError(
+                                "IDEMPOTENCY_CONFLICT", "Execution identity has different input"
+                            )
+                        return result
+                    root, policy, route = self.inputs(db, actor, command)
+                    retained = list(db.scalars(select(Execution)))
+                    active = [row for row in retained if not row.drained]
+                    storage_bytes = (
+                        route.output_bytes
+                        + route.artifact_bytes
+                        + config.snapshot_bytes * 4
+                        + route.workspace_bytes
+                    )
+                    memory_claim = sum(row.memory_bytes for row in active) + route.memory_bytes
+                    storage_claim = sum(row.storage_bytes for row in retained) + storage_bytes
+                    cpu_claim = (
+                        sum(
+                            LocalRoute.model_validate(row.inputs["route"]).cpu_percent
+                            for row in active
+                        )
+                        + route.cpu_percent
+                    )
+                    if (
+                        len(active) >= config.concurrent_executions
+                        or memory_claim > config.memory_bytes
+                        or storage_claim > config.storage_bytes
+                        or cpu_claim > config.cpu_percent
+                        or memory_claim
+                        + max(item.core_memory_reserve_bytes for item in config.routes)
+                        > resources["memory_available"]
+                        or storage_claim + max(item.disk_reserve_bytes for item in config.routes)
+                        > resources["storage_available"]
                     ):
                         raise DomainError(
-                            "IDEMPOTENCY_CONFLICT", "Execution identity has different input"
+                            "DEPENDENCY_UNAVAILABLE", "Execution resource admission is full"
                         )
-                    return result
-                root, policy, route = self.inputs(db, actor, command)
-                retained = list(db.scalars(select(Execution)))
-                active = [row for row in retained if not row.drained]
-                storage_bytes = (
-                    route.output_bytes
-                    + route.artifact_bytes
-                    + config.snapshot_bytes * 4
-                    + route.workspace_bytes
-                )
-                memory_claim = sum(row.memory_bytes for row in active) + route.memory_bytes
-                storage_claim = sum(row.storage_bytes for row in retained) + storage_bytes
-                cpu_claim = (
-                    sum(
-                        LocalRoute.model_validate(row.inputs["route"]).cpu_percent for row in active
+                    lock = os.open(
+                        "execution-" + identity + ".lock",
+                        os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                        0o600,
+                        dir_fd=directory,
                     )
-                    + route.cpu_percent
-                )
-                if (
-                    len(active) >= config.concurrent_executions
-                    or memory_claim > config.memory_bytes
-                    or storage_claim > config.storage_bytes
-                    or cpu_claim > config.cpu_percent
-                    or memory_claim + max(item.core_memory_reserve_bytes for item in config.routes)
-                    > resources["memory_available"]
-                    or storage_claim + max(item.disk_reserve_bytes for item in config.routes)
-                    > resources["storage_available"]
-                ):
-                    raise DomainError(
-                        "DEPENDENCY_UNAVAILABLE", "Execution resource admission is full"
-                    )
-                inputs = {
-                    "command": command.model_dump(mode="json"),
-                    "policy": policy.model_dump(mode="json"),
-                    "route": route.model_dump(mode="json"),
-                    "root": self.root_configuration(root).model_dump(mode="json"),
-                    "root_identity": [root.device, root.inode, root.git_identity],
-                    "configuration_revision": config.revision,
-                    "origin": {
-                        "kind": "DIRECT_VERIFICATION",
-                        "execution_id": identity,
-                        "principal_id": actor.principal_id,
-                        "authentication_ref": actor.authentication_ref,
-                        "principal_epoch": actor.principal_epoch,
-                    },
-                    "host_fingerprint": host,
-                    "resource_admission": resources,
-                }
-                view = ExecutionView(
-                    execution_id=identity,
-                    project_id=command.project_id,
-                    root_key=command.root_key,
-                    root_revision=command.root_revision,
-                    policy_revision=policy.revision,
-                    revision=1,
-                    state="STARTING",
-                    manifest_digest=digest(inputs),
-                    route_key=route.key,
-                    route_revision=route.revision,
-                    route_digest=digest(route.model_dump(mode="json")),
-                    check_id=command.check_id,
-                    initiating_principal_id=actor.principal_id,
-                    authentication_ref=actor.authentication_ref,
-                    principal_epoch=actor.principal_epoch,
-                    host_fingerprint=host,
-                    created_at=datetime.now(UTC).isoformat(),
-                    unit="journeon-execution-" + identity + ".service",
-                )
-                db.add(
-                    Execution(
-                        id=identity,
-                        root_id=root.id,
-                        root_revision=root.revision,
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    inputs = {
+                        "command": command.model_dump(mode="json"),
+                        "policy": policy.model_dump(mode="json"),
+                        "route": route.model_dump(mode="json"),
+                        "root": self.root_configuration(root).model_dump(mode="json"),
+                        "root_identity": [root.device, root.inode, root.git_identity],
+                        "configuration_revision": config.revision,
+                        "origin": {
+                            "kind": "DIRECT_VERIFICATION",
+                            "execution_id": identity,
+                            "principal_id": actor.principal_id,
+                            "authentication_ref": actor.authentication_ref,
+                            "principal_epoch": actor.principal_epoch,
+                        },
+                        "host_fingerprint": host,
+                        "resource_admission": resources,
+                    }
+                    view = ExecutionView(
+                        execution_id=identity,
                         project_id=command.project_id,
-                        principal_id=actor.principal_id,
-                        authentication_ref=actor.authentication_ref,
-                        principal_epoch=actor.principal_epoch,
-                        idempotency_key=command.idempotency_key,
-                        payload_hash=digest(
-                            command.model_dump(mode="json", exclude={"idempotency_key"})
-                        ),
+                        root_key=command.root_key,
+                        root_revision=command.root_revision,
+                        policy_revision=policy.revision,
                         revision=1,
                         state="STARTING",
-                        drained=False,
-                        memory_bytes=route.memory_bytes,
-                        storage_bytes=storage_bytes,
-                        snapshot=view.model_dump(mode="json"),
-                        inputs=inputs,
+                        manifest_digest=digest(inputs),
+                        route_key=route.key,
+                        route_revision=route.revision,
+                        route_digest=digest(route.model_dump(mode="json")),
+                        check_id=command.check_id,
+                        initiating_principal_id=actor.principal_id,
+                        authentication_ref=actor.authentication_ref,
+                        principal_epoch=actor.principal_epoch,
+                        host_fingerprint=host,
+                        created_at=datetime.now(UTC).isoformat(),
+                        unit="journeon-execution-" + identity + ".service",
                     )
-                )
-                result = self.receipt(db, actor, command, "execution.start.v1", view)
-                db.add(
-                    ExecutionEffect(
-                        id=str(uuid4()),
-                        execution_id=identity,
-                        revision=1,
-                        kind="INTENT",
-                        observation=view.model_dump(mode="json"),
+                    db.add(
+                        Execution(
+                            id=identity,
+                            root_id=root.id,
+                            root_revision=root.revision,
+                            project_id=command.project_id,
+                            principal_id=actor.principal_id,
+                            authentication_ref=actor.authentication_ref,
+                            principal_epoch=actor.principal_epoch,
+                            idempotency_key=command.idempotency_key,
+                            payload_hash=digest(
+                                command.model_dump(mode="json", exclude={"idempotency_key"})
+                            ),
+                            revision=1,
+                            state="STARTING",
+                            drained=False,
+                            memory_bytes=route.memory_bytes,
+                            storage_bytes=storage_bytes,
+                            snapshot=view.model_dump(mode="json"),
+                            inputs=inputs,
+                        )
                     )
-                )
-            with self.pool_lock:
+                    result = self.receipt(db, actor, command, "execution.start.v1", view)
+                    db.add(
+                        ExecutionEffect(
+                            id=str(uuid4()),
+                            execution_id=identity,
+                            revision=1,
+                            kind="INTENT",
+                            observation=view.model_dump(mode="json"),
+                        )
+                    )
+                committed = True
                 if self.pool is None:
                     self.pool = ThreadPoolExecutor(
                         max_workers=config.concurrent_executions,
@@ -554,11 +560,13 @@ class ExecutionService:
                     )
                 self.pool.submit(self.execute, actor, identity, lock)
                 lock = None
-            return result
-        finally:
-            os.close(directory)
-            if lock is not None:
-                os.close(lock)
+                return result
+            finally:
+                if lock is not None:
+                    if not committed:
+                        os.unlink("execution-" + identity + ".lock", dir_fd=directory)
+                    os.close(lock)
+                os.close(directory)
 
     def execute(self, actor: AuthenticatedContext, identity: str, lock: int) -> None:
         try:
@@ -906,6 +914,8 @@ class ExecutionService:
             os.close(directory)
 
     def shutdown(self) -> None:
-        self.stopping.set()
-        if self.pool is not None:
-            self.pool.shutdown(wait=True)
+        with self.pool_lock:
+            self.stopping.set()
+            pool = self.pool
+        if pool is not None:
+            pool.shutdown(wait=True)

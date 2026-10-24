@@ -346,3 +346,55 @@ def test_resource_admission_observes_ancestor_cgroup_capacity(tmp_path, monkeypa
     result = resource_observation(tmp_path)
     assert result["memory_available"] == 1024
     assert result["cpu_percent"] == 50
+
+
+def test_small_streamed_output_within_route_budget_completes(tmp_path):
+    import base64
+
+    from journeon.execution_process import run_local
+
+    configured = route().model_copy(
+        update={
+            "argv": [
+                "/usr/bin/python3",
+                "-I",
+                "-S",
+                "-c",
+                'import os,time\nfor _ in range(2100):\n os.write(1,b"x"); time.sleep(.002)',
+            ],
+            "artifacts": [],
+        }
+    )
+    result = run_local(configured, tmp_path, CurrentAuthority())
+    output = b"".join(base64.b64decode(frame["data"]) for frame in result["output"])
+    assert len(output) == 2100 < configured.output_bytes
+    assert result["completion"]["reason"] == "EXITED"
+    assert result["completion"]["exit_code"] == 0
+    assert result["completion"]["drained"]
+
+
+def test_empty_artifact_metadata_within_declared_routes_completes(tmp_path):
+    from journeon.execution_process import run_local
+
+    names = [str(index) + "x" * 100 for index in range(400)]
+    configured = route().model_copy(
+        update={
+            "argv": [
+                "/usr/bin/python3",
+                "-I",
+                "-S",
+                "-c",
+                "from pathlib import Path\nfor i in range(400): Path(str(i) + 'x'*100).touch()",
+            ],
+            "artifacts": names,
+            "artifact_files": len(names),
+            "output_bytes": 1,
+            "artifact_bytes": 1,
+        }
+    )
+    result = run_local(configured, tmp_path, CurrentAuthority())
+    assert result["completion"]["reason"] == "EXITED"
+    assert result["completion"]["exit_code"] == 0
+    assert result["completion"]["drained"]
+    assert [item["path"] for item in result["completion"]["artifacts"]] == names
+    assert all(item["byte_count"] == 0 for item in result["completion"]["artifacts"])

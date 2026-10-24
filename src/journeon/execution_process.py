@@ -388,7 +388,25 @@ def run_local(
     command_started = False
     start_requested = False
     cancelled = False
-    protocol_bound = 4 * (route.output_bytes + route.artifact_bytes) + 65536
+    # Each nonempty OUTPUT may contain one raw byte and four base64 bytes.
+    output_frame_bytes = len(b'{"kind":"OUTPUT","stream":"stdout","data":""}\n')
+    artifact_metadata_bytes = sum(
+        len(
+            json.dumps(
+                {"path": name, "byte_count": route.artifact_bytes, "sha256": "0" * 64, "data": ""},
+                separators=(",", ":"),
+            ).encode()
+        )
+        + 1
+        for name in route.artifacts
+    )
+    protocol_bound = (
+        (output_frame_bytes + 4) * route.output_bytes
+        + 4 * route.artifact_bytes
+        + artifact_metadata_bytes
+        + 2 * len(json.dumps(mount_identities).encode())
+        + 65536
+    )
     received = 0
     diagnostic_bytes = 0
     try:

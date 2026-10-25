@@ -5,7 +5,16 @@ from typing import Annotated, Any, Literal, cast
 
 from pydantic import Field, RootModel, StringConstraints, TypeAdapter, model_validator
 
-from journeon.contracts import Contract, Identifier, Name
+from journeon.contracts import (
+    Contract,
+    DeploymentPolicyReceipt,
+    GrantReceipt,
+    GrantRevoke,
+    GrantSet,
+    Identifier,
+    Name,
+    PolicyInitialize,
+)
 from journeon.contracts import InstructionReceipt as InstructionReceipt
 from journeon.restore_contracts import RestoreAuthorization, RestorePlan
 
@@ -128,7 +137,10 @@ ProtectedEffect = Annotated[
     | ReleaseInstall
     | InstructionChangeConsent
     | PublicationRecovery
-    | RestorePlan,
+    | RestorePlan
+    | GrantSet
+    | GrantRevoke
+    | PolicyInitialize,
     Field(discriminator="kind"),
 ]
 EFFECT_ADAPTER: TypeAdapter[ProtectedEffect] = TypeAdapter(cast(Any, ProtectedEffect))
@@ -329,5 +341,7 @@ class HistoryView(Contract):
     required_fragments: list[str]
 
 
-class ProtectedEffectResult(RootModel[InstructionReceipt | RestoreAuthorization]):
+class ProtectedEffectResult(
+    RootModel[InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt]
+):
     pass

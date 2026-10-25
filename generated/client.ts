@@ -239,6 +239,24 @@ export type ConfigurationReceipt = {
   "target_kind": "profile" | "bot" | "team" | "instruction_bundle";
 };
 
+export type DeploymentPolicyReceipt = {
+  "command"?: "egress.policy.initialize.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "policy": DeploymentPolicyView;
+  "schema_version"?: 1;
+};
+
+export type DeploymentPolicyView = {
+  "approval_id": string | null;
+  "approved_by": string | null;
+  "approved_providers": Array<string>;
+  "revision": number;
+  "status": "CONFIGURED" | "UNCONFIGURED";
+  "verification_policy_ref": string | null;
+};
+
 export type DeterministicInstructionBundle = {
   "bundle_id": string;
   "byte_count": number;
@@ -385,6 +403,93 @@ export type ExecutionView = {
 export type GitHistory = {
   "boundaries": Array<string>;
   "shallow": boolean;
+};
+
+export type GrantCapability = {
+  "capability": string;
+  "resource_kinds": Array<string>;
+};
+
+export type GrantCatalog = {
+  "capabilities": Array<GrantCapability>;
+  "unavailable_new_resource_kinds": Array<string>;
+};
+
+export type GrantPage = {
+  "has_more": boolean;
+  "items": Array<GrantView>;
+  "next_cursor": string | null;
+  "observed_at": string;
+  "store_incarnation": string;
+};
+
+export type GrantReceipt = {
+  "command": "permission.grant.set.v1" | "permission.grant.revoke.v1";
+  "committed_at": string;
+  "grant": GrantView;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "schema_version"?: 1;
+};
+
+export type GrantRevoke = {
+  "expected_revision": number;
+  "grant_id": string;
+  "idempotency_key": string;
+  "kind"?: "permission.grant.revoke.v1";
+  "schema_version": 1;
+};
+
+export type GrantRevokeConfirmed = {
+  "expected_revision": number;
+  "grant_id": string;
+  "idempotency_key": string;
+  "kind"?: "permission.grant.revoke.v1";
+  "nonce": string;
+  "request_hash": string;
+  "request_id": string;
+  "schema_version": 1;
+};
+
+export type GrantSet = {
+  "capability": string;
+  "enabled": boolean;
+  "expected_revision": number;
+  "expires_at": string | null;
+  "idempotency_key": string;
+  "kind"?: "permission.grant.set.v1";
+  "principal_id": string;
+  "resource_id": string;
+  "resource_kind": "deployment" | "project" | "profile" | "bot" | "team" | "instruction_bundle" | "legacy_collection";
+  "schema_version": 1;
+};
+
+export type GrantSetConfirmed = {
+  "capability": string;
+  "enabled": boolean;
+  "expected_revision": number;
+  "expires_at": string | null;
+  "idempotency_key": string;
+  "kind"?: "permission.grant.set.v1";
+  "nonce": string;
+  "principal_id": string;
+  "request_hash": string;
+  "request_id": string;
+  "resource_id": string;
+  "resource_kind": "deployment" | "project" | "profile" | "bot" | "team" | "instruction_bundle" | "legacy_collection";
+  "schema_version": 1;
+};
+
+export type GrantView = {
+  "capability": string;
+  "enabled": boolean;
+  "expires_at": string | null;
+  "grant_id": string;
+  "principal_id": string;
+  "provenance": string;
+  "resource_id": string;
+  "resource_kind": string;
+  "revision": number;
 };
 
 export type HistoryRead = {
@@ -583,7 +688,7 @@ export type LegacyPreview = {
 
 export type OfficialPreview = {
   "deadline": number;
-  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan;
+  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan | GrantSet | GrantRevoke | PolicyInitialize;
   "nonce": string;
   "provenance"?: "OFFICIAL_EXACT_EFFECT";
   "request_hash": string;
@@ -654,6 +759,25 @@ export type PolicyConfigure = {
   "kind"?: "project.instructions.policy.configure.v1";
   "policy": InstructionPolicy;
   "project_id": string;
+};
+
+export type PolicyInitialize = {
+  "expected_revision": number;
+  "idempotency_key": string;
+  "kind"?: "egress.policy.initialize.v1";
+  "provider_mode": "LOCAL_ONLY";
+  "schema_version": 1;
+};
+
+export type PolicyInitializeConfirmed = {
+  "expected_revision": number;
+  "idempotency_key": string;
+  "kind"?: "egress.policy.initialize.v1";
+  "nonce": string;
+  "provider_mode": "LOCAL_ONLY";
+  "request_hash": string;
+  "request_id": string;
+  "schema_version": 1;
 };
 
 export type Preferences = {
@@ -783,14 +907,14 @@ export type ProjectionView = {
   "status": "MATCH" | "DRIFT" | "UNMANAGED" | "ABSENT";
 };
 
-export type ProtectedEffectResult = InstructionReceipt | RestoreAuthorization;
+export type ProtectedEffectResult = InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt;
 
 export type ProtectedIdentity = {
   "request_id": string;
 };
 
 export type ProtectedPrepare = {
-  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan;
+  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan | GrantSet | GrantRevoke | PolicyInitialize;
 };
 
 export type ProtectedState = {
@@ -1327,7 +1451,7 @@ export type WorkflowTemplates = {
   "templates": Array<WorkflowTemplate>;
 };
 
-export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | ReviewPolicyReceipt | ReviewTargetReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt;
+export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | ReviewPolicyReceipt | ReviewTargetReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt | GrantReceipt | DeploymentPolicyReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -1413,6 +1537,16 @@ export class JourneonClient {
   replayEvents(command: ReplayQuery, csrfToken: string): Promise<ReplayPage> { return this.request(`/api/v1/events/replay`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
   readJobAttention(identity: string): Promise<Array<AttentionView>> { return this.request(`/api/v1/jobs/${encodeURIComponent(identity)}/attention`, {method: 'GET'}); }
   previewRestore(command: RestorePreview, csrfToken: string): Promise<RestorePlan> { return this.request(`/api/v1/lifecycle/restore-preview`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
+  getGrantCatalog(): Promise<GrantCatalog> { return this.request(`/api/v1/permissions/catalog`, {method: 'GET'}); }
+  listGrants(limit: number, cursor?: string): Promise<GrantPage> {
+    const query = new URLSearchParams({limit: String(limit)});
+    if (cursor !== undefined) query.set('cursor', cursor);
+    return this.request(`/api/v1/permissions/grants?${query}`, {method: 'GET'});
+  }
+  getDeploymentPolicy(): Promise<DeploymentPolicyView> { return this.request(`/api/v1/egress/policy`, {method: 'GET'}); }
+  setGrant(command: GrantSetConfirmed, csrfToken: string): Promise<GrantReceipt> { return this.request(`/api/v1/permissions/grants/set`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
+  revokeGrant(command: GrantRevokeConfirmed, csrfToken: string): Promise<GrantReceipt> { return this.request(`/api/v1/permissions/grants/revoke`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
+  initializeDeploymentPolicy(command: PolicyInitializeConfirmed, csrfToken: string): Promise<DeploymentPolicyReceipt> { return this.request(`/api/v1/egress/policy/initialize`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
 
   createProfile(command: ProfileCreate, csrfToken: string): Promise<ConfigurationReceipt> {
     return this.request("/api/v1/profiles", {

@@ -693,4 +693,7 @@ def create_app(
     from journeon.job_api import bind_job_api
 
     bind_job_api(app, engine, instructions)
+    from journeon.administration_api import bind_administration_api
+
+    bind_administration_api(app, engine, instructions)
     return app

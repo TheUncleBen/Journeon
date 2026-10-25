@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, Response
 from sqlalchemy import Engine
 
 from journeon.api import authenticated_context
-from journeon.contracts import DomainError, ErrorEnvelope
+from journeon.contracts import DeploymentPolicyReceipt, DomainError, ErrorEnvelope, GrantReceipt
 from journeon.instruction_admin import InstructionAdministration
 from journeon.instruction_config import InstructionConfiguration, RootObservation
 from journeon.instruction_contracts import (
@@ -94,7 +94,7 @@ def bind_instruction_api(
     def confirm(
         command: ExactConfirmation,
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
-    ) -> InstructionReceipt | RestoreAuthorization:
+    ) -> InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt:
         return InstructionConfirmation(engine, configured()).confirm(actor, command)
 
     @app.post(

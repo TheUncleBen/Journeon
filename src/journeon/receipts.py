@@ -27,6 +27,10 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     )
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
+    if row.owner in {"permissions", "egress"}:
+        from journeon.administration import authorized_receipt as administration_receipt
+
+        return administration_receipt(db, actor, row)
     if row.owner == "lifecycle":
         from journeon.contracts import RestoreReceipt
         from journeon.models import ProtectedRequest, RestoreRequestScope, StoreIdentity

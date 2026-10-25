@@ -226,10 +226,55 @@ def migrate_database(path: Path, snapshot: Path) -> dict[str, str]:
     return {"status": "PASS", "schema": SCHEMA_REVISION}
 
 
+def prepare_enrollment(path: Path, *, origin: str, rp_id: str, secret_fd: int) -> dict[str, str]:
+    import fcntl
+    import os
+    import stat
+
+    from journeon.passkeys import STANDARD_PASSKEY_POLICY, PasskeyService
+
+    _regular(path)
+    sink = os.fstat(secret_fd)
+    if secret_fd < 3 or not stat.S_ISFIFO(sink.st_mode):
+        raise ValueError("Enrollment requires an explicit anonymous pipe sink")
+    if not os.readlink(f"/proc/self/fd/{secret_fd}").startswith("pipe:["):
+        raise ValueError("Enrollment requires an explicit anonymous pipe sink")
+    for standard in (0, 1, 2):
+        try:
+            ordinary = os.fstat(standard)
+        except OSError:
+            continue
+        if (sink.st_dev, sink.st_ino) == (ordinary.st_dev, ordinary.st_ino):
+            raise ValueError("Enrollment sink must be separate from ordinary input and output")
+    flags = fcntl.fcntl(secret_fd, fcntl.F_GETFL)
+    if flags & os.O_ACCMODE not in {os.O_WRONLY, os.O_RDWR}:
+        raise ValueError("Enrollment sink is not writable")
+    engine = create_database(path)
+    try:
+        service = PasskeyService(engine, rp_id=rp_id, origin=origin, policy=STANDARD_PASSKEY_POLICY)
+        enrollment = service.prepare_bootstrap()
+        try:
+            material = (enrollment.secret + "\n").encode()
+            if len(material) > os.fpathconf(secret_fd, "PC_PIPE_BUF"):
+                raise ValueError("Enrollment sink cannot accept an atomic delivery")
+            os.set_blocking(secret_fd, False)
+            if os.write(secret_fd, material) != len(material):
+                raise OSError("Enrollment delivery was incomplete")
+        except (OSError, ValueError):
+            service.discard_bootstrap(enrollment)
+            raise
+        finally:
+            fcntl.fcntl(secret_fd, fcntl.F_SETFL, flags)
+        return {"status": "PASS", "detail": "Enrollment delivered to the explicit protected sink"}
+    finally:
+        engine.dispose()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "operation", choices=("doctor", "snapshot", "validate", "migrate", "restore")
+        "operation",
+        choices=("doctor", "snapshot", "validate", "migrate", "restore", "prepare-enrollment"),
     )
     parser.add_argument("path", type=Path)
     parser.add_argument("destination", type=Path, nargs="?")
@@ -237,10 +282,19 @@ def main() -> int:
     parser.add_argument("--authorization")
     parser.add_argument("--plan", type=Path)
     parser.add_argument("--instruction-config", type=Path)
+    parser.add_argument("--origin")
+    parser.add_argument("--rp-id")
+    parser.add_argument("--secret-fd", type=int)
     args = parser.parse_args()
     try:
         result: dict[str, Any]
-        if args.operation == "restore":
+        if args.operation == "prepare-enrollment":
+            if args.origin is None or args.rp_id is None or args.secret_fd is None:
+                raise ValueError("Explicit origin, relying party and protected sink are required")
+            result = prepare_enrollment(
+                args.path, origin=args.origin, rp_id=args.rp_id, secret_fd=args.secret_fd
+            )
+        elif args.operation == "restore":
             if not args.authorization or args.plan is None or args.instruction_config is None:
                 raise ValueError("Exact restore plan, authorization and configuration are required")
             from journeon.instruction_config import InstructionConfiguration

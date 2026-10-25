@@ -2745,6 +2745,114 @@
         "project.verification.read"
       ],
       "query": "job.attention.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "command": null,
+      "endpoint": "journeon.administration_api.bind_administration_api.<locals>.capabilities",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getGrantCatalog",
+      "owner": "permissions",
+      "path": "/api/v1/permissions/catalog",
+      "permissions": [],
+      "query": "permission.catalog.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "command": null,
+      "endpoint": "journeon.administration_api.bind_administration_api.<locals>.grants",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listGrants",
+      "owner": "permissions",
+      "path": "/api/v1/permissions/grants",
+      "permissions": [],
+      "query": "permission.grants.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "command": null,
+      "endpoint": "journeon.administration_api.bind_administration_api.<locals>.policy",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getDeploymentPolicy",
+      "owner": "egress",
+      "path": "/api/v1/egress/policy",
+      "permissions": [],
+      "query": "egress.policy.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "command": "permission.grant.set.v1",
+      "endpoint": "journeon.administration_api.bind_administration_api.<locals>.set_grant",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "setGrant",
+      "owner": "permissions",
+      "path": "/api/v1/permissions/grants/set",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "command": "permission.grant.revoke.v1",
+      "endpoint": "journeon.administration_api.bind_administration_api.<locals>.revoke_grant",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "revokeGrant",
+      "owner": "permissions",
+      "path": "/api/v1/permissions/grants/revoke",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "command": "egress.policy.initialize.v1",
+      "endpoint": "journeon.administration_api.bind_administration_api.<locals>.initialize",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "initializeDeploymentPolicy",
+      "owner": "egress",
+      "path": "/api/v1/egress/policy/initialize",
+      "permissions": [],
+      "query": null
     }
   ],
   "authentication": [
@@ -4896,6 +5004,63 @@
       "risk": "LOCAL_CANONICAL_MUTATION",
       "stability": "INTERNAL",
       "verification": "Current exact candidate, policy and service-produced evidence bindings"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "GrantSetConfirmed",
+      "name": "permission.grant.set.v1",
+      "owner": "permissions",
+      "permissions": [],
+      "result_model": "GrantReceipt",
+      "reversibility": "A separate authorized command retains the accepted history",
+      "risk": "SECURITY_ADMINISTRATION",
+      "stability": "INTERNAL",
+      "verification": "Current official exact-effect consent and atomic state, receipt and outbox"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "GrantRevokeConfirmed",
+      "name": "permission.grant.revoke.v1",
+      "owner": "permissions",
+      "permissions": [],
+      "result_model": "GrantReceipt",
+      "reversibility": "A separate authorized command retains the accepted history",
+      "risk": "SECURITY_ADMINISTRATION",
+      "stability": "INTERNAL",
+      "verification": "Current official exact-effect consent and atomic state, receipt and outbox"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "PolicyInitializeConfirmed",
+      "name": "egress.policy.initialize.v1",
+      "owner": "egress",
+      "permissions": [],
+      "result_model": "DeploymentPolicyReceipt",
+      "reversibility": "A separate authorized command retains the accepted history",
+      "risk": "SECURITY_ADMINISTRATION",
+      "stability": "INTERNAL",
+      "verification": "Current official exact-effect consent and atomic state, receipt and outbox"
     }
   ],
   "internal_services": [
@@ -4984,15 +5149,19 @@
       "version": "0.0.0.dev1"
     },
     {
-      "api_prefixes": [],
+      "api_prefixes": [
+        "/api/v1/egress"
+      ],
       "backup_class": "R0",
       "core": true,
       "dashboards": [],
       "environment_migrations": [],
       "events_consumed": [],
-      "events_published": [],
+      "events_published": [
+        "egress.policy.initialized"
+      ],
       "health": "schema_and_database",
-      "migration": "0001_foundation",
+      "migration": "0015_workspace_read_models",
       "module_id": "egress",
       "permission_namespaces": [],
       "permissions": [],
@@ -5015,7 +5184,7 @@
         "passkey.labelled"
       ],
       "health": "schema_and_database",
-      "migration": "0010_work_execution",
+      "migration": "0015_workspace_read_models",
       "module_id": "identity",
       "permission_namespaces": [
         "passkey"
@@ -5177,7 +5346,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0010_work_execution",
+      "migration": "0015_workspace_read_models",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -5201,9 +5370,12 @@
       "dashboards": [],
       "environment_migrations": [],
       "events_consumed": [],
-      "events_published": [],
+      "events_published": [
+        "permission.grant.set",
+        "permission.grant.revoked"
+      ],
       "health": "schema_and_database",
-      "migration": "0007_identity_instructions",
+      "migration": "0015_workspace_read_models",
       "module_id": "permissions",
       "permission_namespaces": [
         "bot",
@@ -5928,6 +6100,39 @@
         "task.read"
       ],
       "result_model": "WorkflowTemplates"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "name": "permission.catalog.read.v1",
+      "owner": "permissions",
+      "permissions": [],
+      "result_model": "GrantCatalog"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "name": "permission.grants.read.v1",
+      "owner": "permissions",
+      "permissions": [],
+      "result_model": "GrantPage"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": true,
+        "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+      },
+      "name": "egress.policy.read.v1",
+      "owner": "egress",
+      "permissions": [],
+      "result_model": "DeploymentPolicyView"
     }
   ],
   "surfaces": [

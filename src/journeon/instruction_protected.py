@@ -1,13 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """Production confirmation for the closed instruction administration command set."""
 
+import json
 import secrets
 from uuid import uuid4
 
+from pydantic import ValidationError
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session, defer
 
-from journeon.contracts import DomainError
+from journeon.administration import ADMINISTRATION_COMMANDS, administration_transaction
+from journeon.contracts import (
+    DeploymentPolicyReceipt,
+    DomainError,
+    GrantReceipt,
+    GrantRevoke,
+    GrantSet,
+    PolicyInitialize,
+)
 from journeon.database import require_compatible_schema, transaction
 from journeon.instruction_config import InstructionConfiguration
 from journeon.instruction_contracts import (
@@ -38,9 +48,17 @@ class InstructionConfirmation:
         self.engine = engine
         self.configuration = configuration
 
-    def _policy(self, db: Session, actor: AuthenticatedContext) -> str:
+    def _policy(self, db: Session, actor: AuthenticatedContext, command: str = "") -> str:
         record = official_session(db, actor)
-        return content_digest([policy_hash(db, record), self.configuration.model_dump(mode="json")])
+        material: list[object] = [
+            policy_hash(db, record),
+            self.configuration.model_dump(mode="json"),
+        ]
+        if command in ADMINISTRATION_COMMANDS:
+            from journeon.administration import incarnation
+
+            material.append(incarnation(db))
+        return content_digest(material)
 
     def prepare(self, actor: AuthenticatedContext, effect: ProtectedEffect) -> str:
         with transaction(self.engine) as db:
@@ -100,6 +118,10 @@ class InstructionConfirmation:
                         "IDEMPOTENCY_CONFLICT", "Protected operation identity has different input"
                     )
                 return previous.id
+            if isinstance(effect, (GrantSet, GrantRevoke, PolicyInitialize)):
+                from journeon.administration import validate_effect
+
+                validate_effect(db, actor, effect)
             now = utc_seconds()
             row = ProtectedRequest(
                 id=str(uuid4()),
@@ -112,7 +134,7 @@ class InstructionConfirmation:
                 payload=payload,
                 payload_hash=content_digest(payload),
                 credential_revision=principal.credential_revision,
-                policy_hash=self._policy(db, actor),
+                policy_hash=self._policy(db, actor, effect.kind),
                 issued_at=now,
                 deadline=min(
                     now + self.configuration.protected_request_seconds, session.absolute_deadline
@@ -215,7 +237,12 @@ class InstructionConfirmation:
         return row
 
     def _bound(
-        self, db: Session, actor: AuthenticatedContext, row: ProtectedRequest
+        self,
+        db: Session,
+        actor: AuthenticatedContext,
+        row: ProtectedRequest,
+        *,
+        check_target: bool = True,
     ) -> ProtectedEffect:
         principal = current_owner(db, actor)
         session = official_session(db, actor)
@@ -229,18 +256,27 @@ class InstructionConfirmation:
             or row.session_id != session.id
             or row.principal_epoch != actor.principal_epoch
             or row.credential_revision != principal.credential_revision
-            or row.policy_hash != self._policy(db, actor)
+            or row.policy_hash != self._policy(db, actor, row.command)
             or row.strong_authenticated_at != session.strong_authenticated_at
             or not row.issued_at <= now < row.deadline
         ):
             raise DomainError("PERMISSION_DENIED", "Protected request is no longer executable")
-        effect = EFFECT_ADAPTER.validate_python(row.payload)
+        try:
+            effect = EFFECT_ADAPTER.validate_python(row.payload)
+        except (ValidationError, json.JSONDecodeError):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Protected request requires repair"
+            ) from None
         if (
             content_digest(effect.model_dump(mode="json")) != row.payload_hash
             or effect.kind != row.command
             or effect.idempotency_key != row.idempotency_key
         ):
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Protected request requires repair")
+        if check_target and isinstance(effect, (GrantSet, GrantRevoke, PolicyInitialize)):
+            from journeon.administration import validate_effect
+
+            validate_effect(db, actor, effect)
         return effect
 
     def preview(self, actor: AuthenticatedContext, identity: str) -> OfficialPreview:
@@ -269,7 +305,7 @@ class InstructionConfirmation:
 
     def confirm(
         self, actor: AuthenticatedContext, command: ExactConfirmation
-    ) -> InstructionReceipt | RestoreAuthorization:
+    ) -> InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt:
         # External observations happen before the serialized effect transaction.
         from journeon.instruction_admin import InstructionAdministration
 
@@ -310,6 +346,10 @@ class InstructionConfirmation:
                     result = decode(receipt)
                     settle_recovery_in_transaction(db, operation)
                     return result
+                if row.command in ADMINISTRATION_COMMANDS:
+                    from journeon.administration import authorized_receipt
+
+                    return authorized_receipt(db, actor, receipt)
                 return authorized(db, actor, receipt)
             effect = self._bound(db, actor, row)
         if isinstance(effect, RestorePlan):
@@ -380,6 +420,33 @@ class InstructionConfirmation:
             return ProjectInstructionService(self.engine, self.configuration).accept(
                 actor, accepted
             )
+        if isinstance(effect, (GrantSet, GrantRevoke, PolicyInitialize)):
+            from journeon.administration import apply
+
+            with administration_transaction(self.engine) as db:
+                row = self._request(db, actor, command.request_id)
+                bound = self._bound(db, actor, row)
+                if not isinstance(bound, (GrantSet, GrantRevoke, PolicyInitialize)):
+                    raise DomainError("PERMISSION_DENIED", "Administration effect is unavailable")
+                now = utc_seconds()
+                if (
+                    command.request_hash != row.payload_hash
+                    or row.nonce_hash is None
+                    or row.nonce_deadline is None
+                    or now >= row.nonce_deadline
+                    or not secrets.compare_digest(row.nonce_hash, digest(command.nonce))
+                ):
+                    raise DomainError(
+                        "PERMISSION_DENIED", "Current exact preview consent is required"
+                    )
+                administration_result = apply(db, actor, bound, row.operation_id)
+                self._bound(db, actor, row, check_target=False)
+                row.state = "COMMITTED"
+                row.approved_at = now
+                row.approval_deadline = None
+                row.nonce_hash = None
+                row.nonce_deadline = None
+                return administration_result
         observation = admin.observe(actor, effect)
         with transaction(self.engine) as db:
             require_compatible_schema(db)

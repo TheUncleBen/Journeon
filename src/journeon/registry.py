@@ -20,13 +20,21 @@ from journeon.contracts import (
     BundleView,
     CanonicalReceipt,
     ConfigurationReceipt,
+    DeploymentPolicyReceipt,
+    DeploymentPolicyView,
     EffectivePermission,
     EffectiveSettings,
+    GrantCatalog,
+    GrantPage,
+    GrantReceipt,
+    GrantRevokeConfirmed,
+    GrantSetConfirmed,
     LegacyPlan,
     LegacyPreview,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
+    PolicyInitializeConfirmed,
     ProfileCreate,
     ProfileImpact,
     ProfileRevise,
@@ -1426,6 +1434,68 @@ for action in ("revise", "assign", "admit"):
     MODULES["work"]["permissions"] = tuple(
         dict.fromkeys((*MODULES["work"]["permissions"], *COMMANDS[name].permissions))
     )
+
+
+ADMINISTRATION_ROUTES: dict[str, tuple[str, str, type[BaseModel] | None, type[BaseModel]]] = {
+    "getGrantCatalog": ("permission.catalog.read.v1", "permissions", None, GrantCatalog),
+    "listGrants": ("permission.grants.read.v1", "permissions", None, GrantPage),
+    "getDeploymentPolicy": ("egress.policy.read.v1", "egress", None, DeploymentPolicyView),
+    "setGrant": ("permission.grant.set.v1", "permissions", GrantSetConfirmed, GrantReceipt),
+    "revokeGrant": (
+        "permission.grant.revoke.v1",
+        "permissions",
+        GrantRevokeConfirmed,
+        GrantReceipt,
+    ),
+    "initializeDeploymentPolicy": (
+        "egress.policy.initialize.v1",
+        "egress",
+        PolicyInitializeConfirmed,
+        DeploymentPolicyReceipt,
+    ),
+}
+for (
+    administration_name,
+    administration_owner,
+    administration_input,
+    administration_result,
+) in ADMINISTRATION_ROUTES.values():
+    CONFIGURATION_AUTHORIZATION[administration_name] = {
+        "owner_only": True,
+        "grant_checks": [],
+        "semantics": (
+            "Current Owner administration; mutations require official strong "
+            "exact-effect confirmation; no ordinary-resource grant bypass"
+        ),
+    }
+    if administration_input is None:
+        QUERIES[administration_name] = {
+            "owner": administration_owner,
+            "permissions": (),
+            "result_model": administration_result,
+        }
+    else:
+        COMMANDS[administration_name] = CommandDefinition(
+            name=administration_name,
+            owner=administration_owner,
+            input_model=administration_input,
+            result_model=administration_result,
+            permissions=(),
+            risk="SECURITY_ADMINISTRATION",
+            external_effects=(),
+            reversibility="A separate authorized command retains the accepted history",
+            dry_run=False,
+            idempotent=True,
+            verification=(
+                "Current official exact-effect consent and atomic state, receipt and outbox"
+            ),
+        )
+MODULES["permissions"]["api_prefixes"] = ("/api/v1/permissions",)
+MODULES["permissions"]["events_published"] = ("permission.grant.set", "permission.grant.revoked")
+MODULES["egress"]["api_prefixes"] = ("/api/v1/egress",)
+MODULES["egress"]["events_published"] = ("egress.policy.initialized",)
+for owner in ("permissions", "egress", "identity", "operations"):
+    MODULES[owner]["migration"] = "0015_workspace_read_models"
 
 
 @dataclass(frozen=True)

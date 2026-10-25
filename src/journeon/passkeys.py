@@ -185,6 +185,19 @@ class PasskeyService:
         assert secret is not None
         return Enrollment(secret)
 
+    def discard_bootstrap(self, enrollment: Enrollment) -> None:
+        with transaction(self.engine) as db:
+            require_compatible_schema(db)
+            state = db.get(IdentityState, 1)
+            if (
+                state is not None
+                and state.owner_id is None
+                and state.enrollment_hash == digest(enrollment.secret)
+            ):
+                state.enrollment_hash = None
+                state.enrollment_deadline = None
+                state.pending_principal_id = None
+
     def _rate_policy(self, db: Session) -> bool:
         state = db.get(IdentityState, 1)
         assert state is not None

@@ -1122,6 +1122,112 @@ class ExecutionReceipt(Contract):
     execution: ExecutionView
 
 
+class GrantSet(Contract):
+    kind: Literal["permission.grant.set.v1"] = "permission.grant.set.v1"
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    expected_revision: Annotated[int, Field(ge=0)]
+    principal_id: Identifier
+    capability: Annotated[str, StringConstraints(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._:-]*$")]
+    resource_kind: Literal[
+        "deployment", "project", "profile", "bot", "team", "instruction_bundle", "legacy_collection"
+    ]
+    resource_id: Identifier
+    enabled: bool
+    expires_at: str | None
+
+
+class GrantRevoke(Contract):
+    kind: Literal["permission.grant.revoke.v1"] = "permission.grant.revoke.v1"
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    grant_id: Identifier
+    expected_revision: PositiveRevision
+
+
+class PolicyInitialize(Contract):
+    kind: Literal["egress.policy.initialize.v1"] = "egress.policy.initialize.v1"
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    expected_revision: Annotated[int, Field(ge=0, le=0)]
+    provider_mode: Literal["LOCAL_ONLY"]
+
+
+class AdministrationConfirmation(Contract):
+    request_id: Identifier
+    request_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    nonce: Annotated[str, StringConstraints(min_length=43, max_length=43)]
+
+
+class GrantSetConfirmed(GrantSet, AdministrationConfirmation):
+    pass
+
+
+class GrantRevokeConfirmed(GrantRevoke, AdministrationConfirmation):
+    pass
+
+
+class PolicyInitializeConfirmed(PolicyInitialize, AdministrationConfirmation):
+    pass
+
+
+class GrantView(Contract):
+    grant_id: Identifier
+    principal_id: Identifier
+    capability: Annotated[str, StringConstraints(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._:-]*$")]
+    resource_kind: str
+    resource_id: Identifier
+    enabled: bool
+    revision: PositiveRevision
+    expires_at: str | None
+    provenance: str
+
+
+class DeploymentPolicyView(Contract):
+    status: Literal["CONFIGURED", "UNCONFIGURED"]
+    revision: Annotated[int, Field(ge=0)]
+    approval_id: Identifier | None
+    approved_by: Identifier | None
+    approved_providers: list[Identifier]
+    verification_policy_ref: Identifier | None
+
+
+class GrantReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    command: Literal["permission.grant.set.v1", "permission.grant.revoke.v1"]
+    operation_id: Identifier
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    grant: GrantView
+
+
+class DeploymentPolicyReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    command: Literal["egress.policy.initialize.v1"] = "egress.policy.initialize.v1"
+    operation_id: Identifier
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    committed_at: str
+    policy: DeploymentPolicyView
+
+
+class GrantCapability(Contract):
+    capability: Annotated[str, StringConstraints(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._:-]*$")]
+    resource_kinds: list[str]
+
+
+class GrantCatalog(Contract):
+    capabilities: list[GrantCapability]
+    unavailable_new_resource_kinds: list[str]
+
+
+class GrantPage(Contract):
+    items: list[GrantView]
+    next_cursor: str | None
+    has_more: bool
+    observed_at: str
+    store_incarnation: Identifier
+
+
 CanonicalReceipt = (
     ExecutionReceipt
     | AttemptReceipt
@@ -1135,4 +1241,6 @@ CanonicalReceipt = (
     | TaskReceipt
     | ConfigurationReceipt
     | InstructionReceipt
+    | GrantReceipt
+    | DeploymentPolicyReceipt
 )

@@ -205,6 +205,15 @@ def artifacts() -> dict[str, str]:
         "previewRestore": ("POST", "/api/v1/lifecycle/restore-preview"),
     }
     expected_operations.update(job_paths)
+    administration_paths = {
+        "getGrantCatalog": ("GET", "/api/v1/permissions/catalog"),
+        "listGrants": ("GET", "/api/v1/permissions/grants"),
+        "getDeploymentPolicy": ("GET", "/api/v1/egress/policy"),
+        "setGrant": ("POST", "/api/v1/permissions/grants/set"),
+        "revokeGrant": ("POST", "/api/v1/permissions/grants/revoke"),
+        "initializeDeploymentPolicy": ("POST", "/api/v1/egress/policy/initialize"),
+    }
+    expected_operations.update(administration_paths)
     if operations != expected_operations:
         raise ValueError("Update client generation for changed operation bindings")
     instruction_methods = []
@@ -251,6 +260,34 @@ def artifacts() -> dict[str, str]:
         )
         instruction_methods.append(
             f"  {operation}({', '.join(parameters)}): Promise<{result_name}> {{ "
+            f"return this.request(`{path}`, {options}); }}"
+        )
+    from journeon.registry import ADMINISTRATION_ROUTES
+
+    for operation, (method, path) in administration_paths.items():
+        _, _, administration_input, administration_result = ADMINISTRATION_ROUTES[operation]
+        if operation == "listGrants":
+            instruction_methods.append(
+                "  listGrants(limit: number, cursor?: string): Promise<GrantPage> {\n"
+                "    const query = new URLSearchParams({limit: String(limit)});\n"
+                "    if (cursor !== undefined) query.set('cursor', cursor);\n"
+                "    return this.request(`/api/v1/permissions/grants?${query}`, "
+                "{method: 'GET'});\n  }"
+            )
+            continue
+        parameters = []
+        if administration_input is not None:
+            parameters = ["command: " + administration_input.__name__, "csrfToken: string"]
+        options = (
+            "{method: 'GET'}"
+            if method == "GET"
+            else (
+                "{method: 'POST', headers: {'X-CSRF-Token': csrfToken}, "
+                "body: JSON.stringify(command)}"
+            )
+        )
+        instruction_methods.append(
+            f"  {operation}({', '.join(parameters)}): Promise<{administration_result.__name__}> {{ "
             f"return this.request(`{path}`, {options}); }}"
         )
     client = (
@@ -543,6 +580,10 @@ export class JourneonClient {
         for job_model in (job_input, job_result):
             if job_model is not None:
                 schemas[job_model.__name__] = job_model.model_json_schema()
+    for _, _, administration_input, administration_result in ADMINISTRATION_ROUTES.values():
+        for administration_model in (administration_input, administration_result):
+            if administration_model is not None:
+                schemas[administration_model.__name__] = administration_model.model_json_schema()
     return {
         "registry.json": json.dumps(registry, indent=2, sort_keys=True) + "\n",
         "openapi.json": json.dumps(openapi, indent=2, sort_keys=True) + "\n",

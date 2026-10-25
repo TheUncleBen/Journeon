@@ -1428,6 +1428,120 @@
         "title": "ConfigurationReceipt",
         "type": "object"
       },
+      "DeploymentPolicyReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "egress.policy.initialize.v1",
+            "default": "egress.policy.initialize.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/DeploymentPolicyView"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "policy"
+        ],
+        "title": "DeploymentPolicyReceipt",
+        "type": "object"
+      },
+      "DeploymentPolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "approved_providers": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Approved Providers",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "CONFIGURED",
+              "UNCONFIGURED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "verification_policy_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Policy Ref"
+          }
+        },
+        "required": [
+          "status",
+          "revision",
+          "approval_id",
+          "approved_by",
+          "approved_providers",
+          "verification_policy_ref"
+        ],
+        "title": "DeploymentPolicyView",
+        "type": "object"
+      },
       "DeterministicInstructionBundle": {
         "additionalProperties": false,
         "properties": {
@@ -2280,6 +2394,490 @@
           "boundaries"
         ],
         "title": "GitHistory",
+        "type": "object"
+      },
+      "GrantCapability": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$",
+            "title": "Capability",
+            "type": "string"
+          },
+          "resource_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Resource Kinds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "capability",
+          "resource_kinds"
+        ],
+        "title": "GrantCapability",
+        "type": "object"
+      },
+      "GrantCatalog": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/GrantCapability"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "unavailable_new_resource_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable New Resource Kinds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "capabilities",
+          "unavailable_new_resource_kinds"
+        ],
+        "title": "GrantCatalog",
+        "type": "object"
+      },
+      "GrantPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GrantView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation"
+        ],
+        "title": "GrantPage",
+        "type": "object"
+      },
+      "GrantReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "permission.grant.set.v1",
+              "permission.grant.revoke.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "grant": {
+            "$ref": "#/components/schemas/GrantView"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "command",
+          "operation_id",
+          "committed_at",
+          "grant"
+        ],
+        "title": "GrantReceipt",
+        "type": "object"
+      },
+      "GrantRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "grant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Grant Id",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "permission.grant.revoke.v1",
+            "default": "permission.grant.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "grant_id",
+          "expected_revision"
+        ],
+        "title": "GrantRevoke",
+        "type": "object"
+      },
+      "GrantRevokeConfirmed": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "grant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Grant Id",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "permission.grant.revoke.v1",
+            "default": "permission.grant.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "nonce": {
+            "maxLength": 43,
+            "minLength": 43,
+            "title": "Nonce",
+            "type": "string"
+          },
+          "request_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Request Hash",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "request_hash",
+          "nonce",
+          "schema_version",
+          "idempotency_key",
+          "grant_id",
+          "expected_revision"
+        ],
+        "title": "GrantRevokeConfirmed",
+        "type": "object"
+      },
+      "GrantSet": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$",
+            "title": "Capability",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "permission.grant.set.v1",
+            "default": "permission.grant.set.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "resource_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_kind": {
+            "enum": [
+              "deployment",
+              "project",
+              "profile",
+              "bot",
+              "team",
+              "instruction_bundle",
+              "legacy_collection"
+            ],
+            "title": "Resource Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "expected_revision",
+          "principal_id",
+          "capability",
+          "resource_kind",
+          "resource_id",
+          "enabled",
+          "expires_at"
+        ],
+        "title": "GrantSet",
+        "type": "object"
+      },
+      "GrantSetConfirmed": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$",
+            "title": "Capability",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "permission.grant.set.v1",
+            "default": "permission.grant.set.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "nonce": {
+            "maxLength": 43,
+            "minLength": 43,
+            "title": "Nonce",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "request_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Request Hash",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "resource_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_kind": {
+            "enum": [
+              "deployment",
+              "project",
+              "profile",
+              "bot",
+              "team",
+              "instruction_bundle",
+              "legacy_collection"
+            ],
+            "title": "Resource Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "request_hash",
+          "nonce",
+          "schema_version",
+          "idempotency_key",
+          "expected_revision",
+          "principal_id",
+          "capability",
+          "resource_kind",
+          "resource_id",
+          "enabled",
+          "expires_at"
+        ],
+        "title": "GrantSetConfirmed",
+        "type": "object"
+      },
+      "GrantView": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$",
+            "title": "Capability",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "grant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Grant Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "provenance": {
+            "title": "Provenance",
+            "type": "string"
+          },
+          "resource_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_kind": {
+            "title": "Resource Kind",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "grant_id",
+          "principal_id",
+          "capability",
+          "resource_kind",
+          "resource_id",
+          "enabled",
+          "revision",
+          "expires_at",
+          "provenance"
+        ],
+        "title": "GrantView",
         "type": "object"
       },
       "HistoryRead": {
@@ -3448,9 +4046,12 @@
           "effect": {
             "discriminator": {
               "mapping": {
+                "egress.policy.initialize.v1": "#/components/schemas/PolicyInitialize",
                 "instruction.candidate.register.v1": "#/components/schemas/CandidateRegister",
                 "instruction.release.install.v1": "#/components/schemas/ReleaseInstall",
                 "lifecycle.restore.authorize.v1": "#/components/schemas/RestorePlan",
+                "permission.grant.revoke.v1": "#/components/schemas/GrantRevoke",
+                "permission.grant.set.v1": "#/components/schemas/GrantSet",
                 "project.instructions.accept.v1": "#/components/schemas/InstructionChangeConsent",
                 "project.instructions.policy.configure.v1": "#/components/schemas/PolicyConfigure",
                 "project.instructions.recover.v1": "#/components/schemas/PublicationRecovery",
@@ -3483,6 +4084,15 @@
               },
               {
                 "$ref": "#/components/schemas/RestorePlan"
+              },
+              {
+                "$ref": "#/components/schemas/GrantSet"
+              },
+              {
+                "$ref": "#/components/schemas/GrantRevoke"
+              },
+              {
+                "$ref": "#/components/schemas/PolicyInitialize"
               }
             ],
             "title": "Effect"
@@ -3826,6 +4436,105 @@
           "policy"
         ],
         "title": "PolicyConfigure",
+        "type": "object"
+      },
+      "PolicyInitialize": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "maximum": 0.0,
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "egress.policy.initialize.v1",
+            "default": "egress.policy.initialize.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "provider_mode": {
+            "const": "LOCAL_ONLY",
+            "title": "Provider Mode",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "expected_revision",
+          "provider_mode"
+        ],
+        "title": "PolicyInitialize",
+        "type": "object"
+      },
+      "PolicyInitializeConfirmed": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "maximum": 0.0,
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "egress.policy.initialize.v1",
+            "default": "egress.policy.initialize.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "nonce": {
+            "maxLength": 43,
+            "minLength": 43,
+            "title": "Nonce",
+            "type": "string"
+          },
+          "provider_mode": {
+            "const": "LOCAL_ONLY",
+            "title": "Provider Mode",
+            "type": "string"
+          },
+          "request_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Request Hash",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "request_hash",
+          "nonce",
+          "schema_version",
+          "idempotency_key",
+          "expected_revision",
+          "provider_mode"
+        ],
+        "title": "PolicyInitializeConfirmed",
         "type": "object"
       },
       "Preferences": {
@@ -4599,6 +5308,12 @@
           },
           {
             "$ref": "#/components/schemas/RestoreAuthorization"
+          },
+          {
+            "$ref": "#/components/schemas/GrantReceipt"
+          },
+          {
+            "$ref": "#/components/schemas/DeploymentPolicyReceipt"
           }
         ],
         "title": "ProtectedEffectResult"
@@ -4624,9 +5339,12 @@
           "effect": {
             "discriminator": {
               "mapping": {
+                "egress.policy.initialize.v1": "#/components/schemas/PolicyInitialize",
                 "instruction.candidate.register.v1": "#/components/schemas/CandidateRegister",
                 "instruction.release.install.v1": "#/components/schemas/ReleaseInstall",
                 "lifecycle.restore.authorize.v1": "#/components/schemas/RestorePlan",
+                "permission.grant.revoke.v1": "#/components/schemas/GrantRevoke",
+                "permission.grant.set.v1": "#/components/schemas/GrantSet",
                 "project.instructions.accept.v1": "#/components/schemas/InstructionChangeConsent",
                 "project.instructions.policy.configure.v1": "#/components/schemas/PolicyConfigure",
                 "project.instructions.recover.v1": "#/components/schemas/PublicationRecovery",
@@ -4659,6 +5377,15 @@
               },
               {
                 "$ref": "#/components/schemas/RestorePlan"
+              },
+              {
+                "$ref": "#/components/schemas/GrantSet"
+              },
+              {
+                "$ref": "#/components/schemas/GrantRevoke"
+              },
+              {
+                "$ref": "#/components/schemas/PolicyInitialize"
               }
             ],
             "title": "Effect"
@@ -8743,6 +9470,188 @@
         "x-journeon-query": "bot.settings.read.v1"
       }
     },
+    "/api/v1/egress/policy": {
+      "get": {
+        "operationId": "getDeploymentPolicy",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentPolicyView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Policy",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+        },
+        "x-journeon-owner": "egress",
+        "x-journeon-permissions": [],
+        "x-journeon-query": "egress.policy.read.v1"
+      }
+    },
+    "/api/v1/egress/policy/initialize": {
+      "post": {
+        "operationId": "initializeDeploymentPolicy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyInitializeConfirmed"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentPolicyReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Initialize",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+        },
+        "x-journeon-command": "egress.policy.initialize.v1",
+        "x-journeon-owner": "egress",
+        "x-journeon-permissions": []
+      }
+    },
     "/api/v1/events/replay": {
       "post": {
         "operationId": "replayEvents",
@@ -10069,6 +10978,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/InstructionReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GrantReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DeploymentPolicyReceipt"
                     }
                   ],
                   "title": "Response Getoperationreceipt"
@@ -10154,6 +11069,92 @@
           "operation.receipt.read"
         ],
         "x-journeon-query": "operation.receipt.read.v1"
+      }
+    },
+    "/api/v1/permissions/catalog": {
+      "get": {
+        "operationId": "getGrantCatalog",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantCatalog"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Capabilities",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+        },
+        "x-journeon-owner": "permissions",
+        "x-journeon-permissions": [],
+        "x-journeon-query": "permission.catalog.read.v1"
       }
     },
     "/api/v1/permissions/effective": {
@@ -10337,6 +11338,314 @@
           "task.read"
         ],
         "x-journeon-query": "permission.effective.v1"
+      }
+    },
+    "/api/v1/permissions/grants": {
+      "get": {
+        "operationId": "listGrants",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Grants",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+        },
+        "x-journeon-owner": "permissions",
+        "x-journeon-permissions": [],
+        "x-journeon-query": "permission.grants.read.v1"
+      }
+    },
+    "/api/v1/permissions/grants/revoke": {
+      "post": {
+        "operationId": "revokeGrant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantRevokeConfirmed"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Revoke Grant",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+        },
+        "x-journeon-command": "permission.grant.revoke.v1",
+        "x-journeon-owner": "permissions",
+        "x-journeon-permissions": []
+      }
+    },
+    "/api/v1/permissions/grants/set": {
+      "post": {
+        "operationId": "setGrant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantSetConfirmed"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Set Grant",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": true,
+          "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
+        },
+        "x-journeon-command": "permission.grant.set.v1",
+        "x-journeon-owner": "permissions",
+        "x-journeon-permissions": []
       }
     },
     "/api/v1/profiles": {

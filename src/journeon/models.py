@@ -118,22 +118,19 @@ class Receipt(Base):
     result: Mapped[dict[str, Any]] = mapped_column(JSON)
     __table_args__ = (
         CheckConstraint(
-            "(owner = 'projects' AND target_kind = 'project' AND project_id IS"
-            " NOT NULL "
-            "AND target_id = project_id) OR (owner = 'identity' AND target_kin"
-            "d = 'passkey' "
-            "AND project_id IS NULL) OR (owner = 'work' AND target_k"
-            "ind IN ('task','attempt','execution') "
-            "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
-            "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
-            "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
-            "AND project_id IS NOT NULL) OR (owner = 'project_instructions' AND "
-            "((target_kind = 'project_instructions' AND project_id IS NOT NULL "
-            "AND project_id = target_id) OR "
-            "(target_kind IN ('instruction_root','instruction_install') AND pr"
-            "oject_id IS NULL))) OR (owner = 'jobs' AND target_kind = 'job' "
-            "AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND target_ki"
-            "nd = 'store' AND project_id IS NULL)",
+            "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL AND"
+            " target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' AN"
+            "D project_id IS NULL) OR (owner = 'work' AND target_kind IN ('task','attempt',"
+            "'execution') AND project_id IS NOT NULL) OR (owner = 'agents' AND target_kind "
+            "IN ('profile', 'bot', 'team') AND project_id IS NULL) OR (owner = 'instruction"
+            "s' AND target_kind = 'instruction_bundle' AND project_id IS NOT NULL) OR (owne"
+            "r = 'project_instructions' AND ((target_kind = 'project_instructions' AND proj"
+            "ect_id IS NOT NULL AND project_id = target_id) OR (target_kind IN ('instructio"
+            "n_root','instruction_install') AND project_id IS NULL))) OR (owner = 'jobs' AN"
+            "D target_kind = 'job' AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND "
+            "target_kind = 'store' AND project_id IS NULL) OR (owner = 'permissions' AND ta"
+            "rget_kind = 'grant' AND project_id IS NULL) OR (owner = 'egress' AND target_ki"
+            "nd = 'deployment_policy' AND target_id = 'deployment' AND project_id IS NULL)",
             name="receipt_target",
         ),
         Index(
@@ -167,22 +164,19 @@ class OutboxEvent(Base):
             name="event_target_revision",
         ),
         CheckConstraint(
-            "(owner = 'projects' AND target_kind = 'project' AND project_id IS"
-            " NOT NULL "
-            "AND target_id = project_id) OR (owner = 'identity' AND target_kin"
-            "d = 'passkey' "
-            "AND project_id IS NULL) OR (owner = 'work' AND target_k"
-            "ind IN ('task','attempt','execution') "
-            "AND project_id IS NOT NULL) OR (owner = 'agents' AND "
-            "target_kind IN ('profile', 'bot', 'team') AND project_id IS NULL) OR "
-            "(owner = 'instructions' AND target_kind = 'instruction_bundle' "
-            "AND project_id IS NOT NULL) OR (owner = 'project_instructions' AND "
-            "((target_kind = 'project_instructions' AND project_id IS NOT NULL "
-            "AND project_id = target_id) OR "
-            "(target_kind IN ('instruction_root','instruction_install') AND pr"
-            "oject_id IS NULL))) OR (owner = 'jobs' AND target_kind = 'job' "
-            "AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND target_ki"
-            "nd = 'store' AND project_id IS NULL)",
+            "(owner = 'projects' AND target_kind = 'project' AND project_id IS NOT NULL AND"
+            " target_id = project_id) OR (owner = 'identity' AND target_kind = 'passkey' AN"
+            "D project_id IS NULL) OR (owner = 'work' AND target_kind IN ('task','attempt',"
+            "'execution') AND project_id IS NOT NULL) OR (owner = 'agents' AND target_kind "
+            "IN ('profile', 'bot', 'team') AND project_id IS NULL) OR (owner = 'instruction"
+            "s' AND target_kind = 'instruction_bundle' AND project_id IS NOT NULL) OR (owne"
+            "r = 'project_instructions' AND ((target_kind = 'project_instructions' AND proj"
+            "ect_id IS NOT NULL AND project_id = target_id) OR (target_kind IN ('instructio"
+            "n_root','instruction_install') AND project_id IS NULL))) OR (owner = 'jobs' AN"
+            "D target_kind = 'job' AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND "
+            "target_kind = 'store' AND project_id IS NULL) OR (owner = 'permissions' AND ta"
+            "rget_kind = 'grant' AND project_id IS NULL) OR (owner = 'egress' AND target_ki"
+            "nd = 'deployment_policy' AND target_id = 'deployment' AND project_id IS NULL)",
             name="event_target",
         ),
         {"sqlite_autoincrement": True},
@@ -351,11 +345,11 @@ class ProtectedRequest(Base):
         ),
         CheckConstraint("deadline > issued_at AND issued_at >= 0", name="protected_deadline"),
         CheckConstraint(
-            "command IN ('passkey.label.v1','project.root.admit.v1','project.r"
-            "oot.revoke.v1','project.instructions.policy.configure.v1','instru"
-            "ction.candidate.register.v1','instruction.release.install.v1','pr"
-            "oject.instructions.accept.v1', 'project.instructions.recover.v1',"
-            " 'lifecycle.restore.authorize.v1')",
+            "command IN ('passkey.label.v1','project.root.admit.v1','project.root.revoke.v1"
+            "','project.instructions.policy.configure.v1','instruction.candidate.register.v"
+            "1','instruction.release.install.v1','project.instructions.accept.v1', 'project"
+            ".instructions.recover.v1', 'lifecycle.restore.authorize.v1','permission.grant."
+            "set.v1','permission.grant.revoke.v1','egress.policy.initialize.v1')",
             name="protected_command",
         ),
     )

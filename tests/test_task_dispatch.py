@@ -197,18 +197,50 @@ def test_task_execution_claim_requires_a_positive_integer_fence():
 
 
 def dispatch_worker(engine, config):
+    import threading
+
     from journeon.executions import ExecutionService
     from journeon.jobs import JobService
+    from journeon.models import Job
 
     executions = ExecutionService(engine, config)
     worker = JobService(engine, config, executions=executions)
-    claim = worker.claim()
-    assert claim is not None
+    stop = threading.Event()
+    expired = threading.Event()
+    claims = []
+    original_claim = worker.claim
+
+    def claim_once():
+        if claims:
+            with transaction(engine) as db:
+                if db.get(Job, claims[0].job_id).state in ("SUCCEEDED", "FAILED", "CANCELLED"):
+                    stop.set()
+            return None
+        claim = original_claim()
+        assert claim is not None
+        claims.append(claim)
+        return claim
+
+    def watchdog_expired():
+        expired.set()
+        stop.set()
+
+    worker.claim = claim_once
+    watchdog = threading.Timer(45, watchdog_expired)
+    watchdog.start()
     try:
-        worker.execute(claim)
+        worker.run(stop)
+        assert not expired.is_set(), "Task fixture did not reach a terminal Job"
+        assert len(claims) == 1
+        with transaction(engine) as db:
+            assert db.get(Job, claims[0].job_id).state in ("SUCCEEDED", "FAILED", "CANCELLED")
     finally:
+        stop.set()
+        watchdog.cancel()
+        watchdog.join()
         executions.shutdown()
-    return worker, claim
+        worker.claim = original_claim
+    return worker, claims[0]
 
 
 def test_task_dispatch_runs_real_verification_and_publishes_exact_evidence(dispatch_environment):

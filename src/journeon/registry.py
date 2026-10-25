@@ -15,11 +15,15 @@ from journeon.contracts import (
     BotCreate,
     BotRevise,
     BotView,
+    BrowserSessionPage,
     BundleResolve,
     BundleResult,
     BundleView,
     CanonicalReceipt,
     ConfigurationReceipt,
+    ContextBootstrap,
+    ContextBootstrapped,
+    CurrentHumanContext,
     DeploymentPolicyReceipt,
     DeploymentPolicyView,
     EffectivePermission,
@@ -31,6 +35,8 @@ from journeon.contracts import (
     GrantSetConfirmed,
     LegacyPlan,
     LegacyPreview,
+    OperationIdentityResolution,
+    OperationIdentityResolve,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
@@ -48,6 +54,9 @@ from journeon.contracts import (
     ReviewTarget,
     ReviewTargetReceipt,
     ReviewTargetSelect,
+    SessionLogout,
+    SessionMutationReceipt,
+    SessionRevokeRequest,
     TaskAdmission,
     TaskAssign,
     TaskComplete,
@@ -1436,6 +1445,74 @@ for action in ("revise", "assign", "admit"):
     )
 
 
+QUERIES["operation.identity.resolve.v1"] = {
+    "owner": "operations",
+    "permissions": (),
+    "result_model": OperationIdentityResolution,
+    "input_model": OperationIdentityResolve,
+    "method": "POST",
+}
+CONFIGURATION_AUTHORIZATION["operation.identity.resolve.v1"] = {
+    "owner_only": False,
+    "current_resource_owner": True,
+    "grant_checks": [],
+    "semantics": "Current original scope authorization before identity lookup; read-only; no retry",
+}
+QUERIES["identity.context.read.v1"] = {
+    "owner": "identity",
+    "permissions": (),
+    "result_model": CurrentHumanContext,
+}
+CONFIGURATION_AUTHORIZATION["identity.context.read.v1"] = {
+    "owner_only": False,
+    "self_identity": True,
+    "grant_checks": [],
+    "semantics": "Current authenticated human and own browser session; no resource authority",
+}
+MODULES["identity"]["api_prefixes"] = ("/api/v1/auth",)
+QUERIES["identity.sessions.read.v1"] = {
+    "owner": "identity",
+    "permissions": (),
+    "result_model": BrowserSessionPage,
+}
+for identity_command, identity_input in (
+    ("identity.session.revoke.v1", SessionRevokeRequest),
+    ("identity.session.logout.v1", SessionLogout),
+):
+    COMMANDS[identity_command] = CommandDefinition(
+        name=identity_command,
+        owner="identity",
+        input_model=identity_input,
+        result_model=SessionMutationReceipt,
+        permissions=(),
+        risk="SECURITY_ADMINISTRATION",
+        external_effects=(),
+        reversibility="A new authenticated session is required",
+        dry_run=False,
+        idempotent=True,
+        verification="Current authority, exact target security version and atomic receipt/event",
+    )
+for identity_name in (
+    "identity.sessions.read.v1",
+    "identity.session.revoke.v1",
+    "identity.session.logout.v1",
+):
+    CONFIGURATION_AUTHORIZATION[identity_name] = {
+        "owner_only": False,
+        "self_identity": True,
+        "grant_checks": [],
+        "semantics": (
+            "Current human; Owner-all/Shared-self inventory; own session control; "
+            "another human's session requires current Owner and official exact consent"
+        ),
+    }
+MODULES["identity"]["events_published"] = (
+    *MODULES["identity"]["events_published"],
+    "identity.session.revoke",
+    "identity.session.logout",
+)
+
+
 ADMINISTRATION_ROUTES: dict[str, tuple[str, str, type[BaseModel] | None, type[BaseModel]]] = {
     "getGrantCatalog": ("permission.catalog.read.v1", "permissions", None, GrantCatalog),
     "listGrants": ("permission.grants.read.v1", "permissions", None, GrantPage),
@@ -1496,6 +1573,8 @@ MODULES["egress"]["api_prefixes"] = ("/api/v1/egress",)
 MODULES["egress"]["events_published"] = ("egress.policy.initialized",)
 for owner in ("permissions", "egress", "identity", "operations"):
     MODULES[owner]["migration"] = "0015_workspace_read_models"
+for identity_owner in ("identity", "operations"):
+    MODULES[identity_owner]["migration"] = "0016_identity_sessions"
 
 
 @dataclass(frozen=True)
@@ -1509,6 +1588,7 @@ class AuthenticationDefinition:
 AUTHENTICATION = {
     name: AuthenticationDefinition(name, "identity", input_model, result_model)
     for name, input_model, result_model in (
+        ("identity.context.bootstrap.v1", ContextBootstrap, ContextBootstrapped),
         ("passkey.begin.v1", PasskeyBegin, PasskeyChallenge),
         ("passkey.finish.v1", PasskeyFinish, PasskeyAuthenticated),
     )
@@ -1666,7 +1746,17 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
         if metadata.get("x-journeon-authorization") != authorization:
             raise ValueError("API authorization description differs from its service contract")
         if not authentication_name and (
-            (not permissions and not (authorization and authorization.get("owner_only")))
+            (
+                not permissions
+                and not (
+                    authorization
+                    and (
+                        authorization.get("owner_only")
+                        or authorization.get("self_identity")
+                        or authorization.get("current_resource_owner")
+                    )
+                )
+            )
             or not set(permissions) <= set(module["permissions"])
         ):
             raise ValueError("API operation permissions are missing or outside its owner")
@@ -1692,7 +1782,18 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 or query["owner"] != owner
                 or query["permissions"] != permissions
                 or route.response_model is not query["result_model"]
-                or not route.methods <= {"GET", "HEAD"}
+                or (
+                    route.methods != {"POST"}
+                    if query.get("method") == "POST"
+                    else not route.methods <= {"GET", "HEAD"}
+                )
+                or (
+                    query.get("input_model") is not None
+                    and (
+                        route.body_field is None
+                        or route.body_field.field_info.annotation is not query["input_model"]
+                    )
+                )
                 or query_name in bound_queries
             ):
                 raise ValueError("Query registration differs from its actual API binding")
@@ -1773,6 +1874,9 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                     else {}
                 ),
                 "result_model": getattr(query["result_model"], "__name__", "CanonicalReceipt"),
+                **(
+                    {"input_model": query["input_model"].__name__} if "input_model" in query else {}
+                ),
             }
             for name, query in QUERIES.items()
         ],

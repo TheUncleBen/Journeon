@@ -199,6 +199,8 @@ app.state.engine.dispose()
         == tomllib.loads((release / "pyproject.toml").read_text())["project"]["version"]
     )
     assert data["revisions"] == [
+        "0016_identity_sessions",
+        "0015_workspace_read_models",
         "0014_review_completion",
         "0013_task_dispatch",
         "0012_attempt_execution",

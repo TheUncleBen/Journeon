@@ -5,7 +5,7 @@ import tomllib
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
@@ -27,6 +27,7 @@ from journeon.contracts import (
     CanonicalReceipt,
     ConfigurationKind,
     ConfigurationReceipt,
+    CurrentHumanContext,
     DomainError,
     EffectivePermission,
     EffectiveSettings,
@@ -34,6 +35,8 @@ from journeon.contracts import (
     Identifier,
     LegacyPlan,
     LegacyPreview,
+    OperationIdentityResolution,
+    OperationIdentityResolve,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
@@ -109,10 +112,19 @@ def create_app(
     async def domain_error(_request: Request, exc: DomainError) -> JSONResponse:
         if isinstance(exc, RejectedPasskeyInput):
             _request.scope["journeon.rejected_passkey_input"] = True
-        return JSONResponse(
+        response = JSONResponse(
             status_code=ERROR_HTTP_STATUS[exc.code],
             content=ErrorEnvelope(code=exc.code, reason=exc.reason).model_dump(),
         )
+        if _request.url.path.startswith("/api/v1/auth/"):
+            response.headers["Cache-Control"] = "no-store"
+        if (
+            _request.url.path == "/api/v1/auth/logout"
+            and exc.code == "AUTHENTICATION_REQUIRED"
+            and browser_auth is not None
+        ):
+            browser_auth.clear_cookie(response)
+        return response
 
     @app.exception_handler(SQLAlchemyError)
     async def unavailable_store(_request: Request, _exc: SQLAlchemyError) -> JSONResponse:
@@ -149,6 +161,24 @@ def create_app(
         status: {"model": ErrorEnvelope} for status in (401, 403, 404, 409, 413, 422, 503)
     }
 
+    @app.get(
+        "/api/v1/auth/context",
+        response_model=CurrentHumanContext,
+        operation_id="getCurrentContext",
+        responses=errors,
+        openapi_extra=configuration_metadata("identity.context.read.v1"),
+    )
+    def current_context(
+        response: Response,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> CurrentHumanContext:
+        from journeon.identity import IdentityService
+
+        response.headers["Cache-Control"] = "no-store"
+        return IdentityService(engine, instructions_configured=instructions is not None).context(
+            actor
+        )
+
     @app.post(
         "/api/v1/projects",
         response_model=OperationReceipt,
@@ -182,6 +212,21 @@ def create_app(
         actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
     ) -> ProjectView:
         return service.read(actor, project_id)
+
+    @app.post(
+        "/api/v1/operations/resolve",
+        response_model=OperationIdentityResolution,
+        operation_id="resolveOperationIdentity",
+        responses=errors,
+        openapi_extra=configuration_metadata("operation.identity.resolve.v1"),
+    )
+    def resolve_operation_identity(
+        query: OperationIdentityResolve,
+        response: Response,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+    ) -> OperationIdentityResolution:
+        response.headers["Cache-Control"] = "no-store"
+        return OperationService(engine, instructions).resolve(actor, query)
 
     @app.get(
         "/api/v1/operations/{operation_id}",
@@ -696,4 +741,7 @@ def create_app(
     from journeon.administration_api import bind_administration_api
 
     bind_administration_api(app, engine, instructions)
+    from journeon.identity_api import bind_identity_api
+
+    bind_identity_api(app, engine, browser_auth, instructions)
     return app

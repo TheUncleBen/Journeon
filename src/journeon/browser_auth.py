@@ -52,7 +52,8 @@ class BrowserAuth:
                     csrf_token=request.headers.get("x-csrf-token"),
                     mutation=mutation,
                     activity=mutation
-                    and getattr(request.scope.get("route"), "operation_id", None) != "replayEvents",
+                    and getattr(request.scope.get("route"), "operation_id", None)
+                    not in {"replayEvents", "resolveOperationIdentity"},
                 )
                 return AuthenticatedContext(record.principal_id, record.principal_epoch, record.id)
         except SQLAlchemyError:

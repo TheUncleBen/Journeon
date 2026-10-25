@@ -23,6 +23,7 @@ class EnrolledOwner:
     client: TestClient
     headers: dict[str, str] = field(repr=False)
     principal_id: str
+    authenticator: Authenticator = field(repr=False)
 
     def grant(self, capability, *, project_id=None, identity=None):
         return {
@@ -115,7 +116,7 @@ def enrolled_owner(tmp_path):
             assert db.scalar(select(func.count()).select_from(Principal)) == 1
             assert db.scalar(select(func.count()).select_from(AccessGrant)) == 0
             assert db.get(DeploymentPolicy, 1) is None
-        yield EnrolledOwner(engine, client, headers, principal_id)
+        yield EnrolledOwner(engine, client, headers, principal_id, authenticator)
     finally:
         client.close()
         engine.dispose()

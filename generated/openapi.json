@@ -801,6 +801,206 @@
         "title": "BotView",
         "type": "object"
       },
+      "BrowserSessionContext": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_deadline": {
+            "title": "Absolute Deadline",
+            "type": "integer"
+          },
+          "audience": {
+            "enum": [
+              "unknown",
+              "official_browser"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "authentication_method": {
+            "title": "Authentication Method",
+            "type": "string"
+          },
+          "inactivity_seconds": {
+            "title": "Inactivity Seconds",
+            "type": "integer"
+          },
+          "issued_at": {
+            "title": "Issued At",
+            "type": "integer"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "strong_authenticated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strong Authenticated At"
+          },
+          "strong_freshness_seconds": {
+            "title": "Strong Freshness Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "authentication_method",
+          "audience",
+          "issued_at",
+          "absolute_deadline",
+          "inactivity_seconds",
+          "strong_authenticated_at",
+          "strong_freshness_seconds",
+          "security_version"
+        ],
+        "title": "BrowserSessionContext",
+        "type": "object"
+      },
+      "BrowserSessionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_deadline": {
+            "title": "Absolute Deadline",
+            "type": "integer"
+          },
+          "audience": {
+            "enum": [
+              "unknown",
+              "official_browser"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "authentication_method": {
+            "title": "Authentication Method",
+            "type": "string"
+          },
+          "client_label": {
+            "title": "Client Label",
+            "type": "string"
+          },
+          "inactivity_seconds": {
+            "title": "Inactivity Seconds",
+            "type": "integer"
+          },
+          "issued_at": {
+            "title": "Issued At",
+            "type": "integer"
+          },
+          "last_activity": {
+            "title": "Last Activity",
+            "type": "integer"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "strong_authenticated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strong Authenticated At"
+          },
+          "strong_freshness_seconds": {
+            "title": "Strong Freshness Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "authentication_method",
+          "audience",
+          "issued_at",
+          "absolute_deadline",
+          "inactivity_seconds",
+          "strong_authenticated_at",
+          "strong_freshness_seconds",
+          "security_version",
+          "principal_id",
+          "client_label",
+          "last_activity",
+          "revoked"
+        ],
+        "title": "BrowserSessionItem",
+        "type": "object"
+      },
+      "BrowserSessionPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserSessionItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation"
+        ],
+        "title": "BrowserSessionPage",
+        "type": "object"
+      },
       "BundleOrigin": {
         "additionalProperties": false,
         "properties": {
@@ -1426,6 +1626,141 @@
           "revision"
         ],
         "title": "ConfigurationReceipt",
+        "type": "object"
+      },
+      "ContextBootstrap": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "ContextBootstrap",
+        "type": "object"
+      },
+      "ContextBootstrapped": {
+        "additionalProperties": false,
+        "properties": {
+          "csrf_token": {
+            "maxLength": 43,
+            "minLength": 43,
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "dependencies": {
+            "$ref": "#/components/schemas/ContextDependencies"
+          },
+          "preference_revision": {
+            "const": 0,
+            "title": "Preference Revision",
+            "type": "integer"
+          },
+          "preferences": {
+            "title": "Preferences",
+            "type": "null"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "SHARED_USER"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/BrowserSessionContext"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "principal_id",
+          "role",
+          "session",
+          "store_incarnation",
+          "preference_revision",
+          "preferences",
+          "dependencies",
+          "csrf_token"
+        ],
+        "title": "ContextBootstrapped",
+        "type": "object"
+      },
+      "ContextDependencies": {
+        "additionalProperties": false,
+        "properties": {
+          "display_preferences": {
+            "const": "UNAVAILABLE",
+            "title": "Display Preferences",
+            "type": "string"
+          },
+          "instruction_runtime": {
+            "enum": [
+              "CONFIGURED",
+              "UNCONFIGURED"
+            ],
+            "title": "Instruction Runtime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instruction_runtime",
+          "display_preferences"
+        ],
+        "title": "ContextDependencies",
+        "type": "object"
+      },
+      "CurrentHumanContext": {
+        "additionalProperties": false,
+        "properties": {
+          "dependencies": {
+            "$ref": "#/components/schemas/ContextDependencies"
+          },
+          "preference_revision": {
+            "const": 0,
+            "title": "Preference Revision",
+            "type": "integer"
+          },
+          "preferences": {
+            "title": "Preferences",
+            "type": "null"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "SHARED_USER"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/BrowserSessionContext"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "principal_id",
+          "role",
+          "session",
+          "store_incarnation",
+          "preference_revision",
+          "preferences",
+          "dependencies"
+        ],
+        "title": "CurrentHumanContext",
         "type": "object"
       },
       "DeploymentPolicyReceipt": {
@@ -4036,6 +4371,188 @@
         "title": "LegacyPreview",
         "type": "object"
       },
+      "ObservedOperationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "receipt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/AttemptReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/VerificationPolicyReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewPolicyReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewTargetReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/RestoreReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/JobReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/OperationReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/PasskeyMutationReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/TaskReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/ConfigurationReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/InstructionReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/GrantReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/DeploymentPolicyReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/SessionMutationReceipt"
+              }
+            ],
+            "title": "Receipt"
+          },
+          "status": {
+            "const": "OBSERVED_RECEIPT",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status",
+          "receipt"
+        ],
+        "title": "ObservedOperationReceipt",
+        "type": "object"
+      },
+      "ObservedPendingOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "evidence_kind": {
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "observed_state": {
+            "title": "Observed State",
+            "type": "string"
+          },
+          "status": {
+            "const": "OBSERVED_PENDING",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status",
+          "evidence_kind",
+          "evidence_id",
+          "observed_state"
+        ],
+        "title": "ObservedPendingOperation",
+        "type": "object"
+      },
+      "ObservedUnknownOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "evidence_kind": {
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "observed_state": {
+            "title": "Observed State",
+            "type": "string"
+          },
+          "status": {
+            "const": "OBSERVED_UNKNOWN",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status",
+          "evidence_kind",
+          "evidence_id",
+          "observed_state"
+        ],
+        "title": "ObservedUnknownOperation",
+        "type": "object"
+      },
       "OfficialPreview": {
         "additionalProperties": false,
         "properties": {
@@ -4047,6 +4564,7 @@
             "discriminator": {
               "mapping": {
                 "egress.policy.initialize.v1": "#/components/schemas/PolicyInitialize",
+                "identity.session.revoke.v1": "#/components/schemas/SessionRevoke",
                 "instruction.candidate.register.v1": "#/components/schemas/CandidateRegister",
                 "instruction.release.install.v1": "#/components/schemas/ReleaseInstall",
                 "lifecycle.restore.authorize.v1": "#/components/schemas/RestorePlan",
@@ -4089,6 +4607,9 @@
                 "$ref": "#/components/schemas/GrantSet"
               },
               {
+                "$ref": "#/components/schemas/SessionRevoke"
+              },
+              {
                 "$ref": "#/components/schemas/GrantRevoke"
               },
               {
@@ -4126,6 +4647,98 @@
           "nonce"
         ],
         "title": "OfficialPreview",
+        "type": "object"
+      },
+      "OperationIdentityResolution": {
+        "discriminator": {
+          "mapping": {
+            "NOT_OBSERVED": "#/components/schemas/UnobservedOperation",
+            "OBSERVED_PENDING": "#/components/schemas/ObservedPendingOperation",
+            "OBSERVED_RECEIPT": "#/components/schemas/ObservedOperationReceipt",
+            "OBSERVED_UNKNOWN": "#/components/schemas/ObservedUnknownOperation",
+            "RECONCILIATION_REQUIRED": "#/components/schemas/ReconciliationRequired"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ObservedOperationReceipt"
+          },
+          {
+            "$ref": "#/components/schemas/ObservedPendingOperation"
+          },
+          {
+            "$ref": "#/components/schemas/ObservedUnknownOperation"
+          },
+          {
+            "$ref": "#/components/schemas/UnobservedOperation"
+          },
+          {
+            "$ref": "#/components/schemas/ReconciliationRequired"
+          }
+        ],
+        "title": "OperationIdentityResolution"
+      },
+      "OperationIdentityResolve": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "payload_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Payload Digest",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "scope": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                    "type": "string"
+                  },
+                  "maxItems": 128,
+                  "type": "array"
+                }
+              ]
+            },
+            "maxProperties": 16,
+            "title": "Scope",
+            "type": "object"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "command",
+          "idempotency_key",
+          "payload_digest",
+          "scope",
+          "store_incarnation"
+        ],
+        "title": "OperationIdentityResolve",
         "type": "object"
       },
       "OperationReceipt": {
@@ -5314,6 +5927,9 @@
           },
           {
             "$ref": "#/components/schemas/DeploymentPolicyReceipt"
+          },
+          {
+            "$ref": "#/components/schemas/SessionMutationReceipt"
           }
         ],
         "title": "ProtectedEffectResult"
@@ -5340,6 +5956,7 @@
             "discriminator": {
               "mapping": {
                 "egress.policy.initialize.v1": "#/components/schemas/PolicyInitialize",
+                "identity.session.revoke.v1": "#/components/schemas/SessionRevoke",
                 "instruction.candidate.register.v1": "#/components/schemas/CandidateRegister",
                 "instruction.release.install.v1": "#/components/schemas/ReleaseInstall",
                 "lifecycle.restore.authorize.v1": "#/components/schemas/RestorePlan",
@@ -5380,6 +5997,9 @@
               },
               {
                 "$ref": "#/components/schemas/GrantSet"
+              },
+              {
+                "$ref": "#/components/schemas/SessionRevoke"
               },
               {
                 "$ref": "#/components/schemas/GrantRevoke"
@@ -5553,6 +6173,39 @@
           "idempotency_key"
         ],
         "title": "PublicationRecovery",
+        "type": "object"
+      },
+      "ReconciliationRequired": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "status": {
+            "const": "RECONCILIATION_REQUIRED",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status"
+        ],
+        "title": "ReconciliationRequired",
         "type": "object"
       },
       "RecoveryInspect": {
@@ -6791,6 +7444,231 @@
         "title": "RunManifest",
         "type": "object"
       },
+      "SessionLogout": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.logout.v1",
+            "default": "identity.session.logout.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "expected_security_version"
+        ],
+        "title": "SessionLogout",
+        "type": "object"
+      },
+      "SessionMutationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "identity.session.revoke.v1",
+              "identity.session.logout.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionRevoke"
+              },
+              {
+                "$ref": "#/components/schemas/SessionLogout"
+              }
+            ],
+            "title": "Request"
+          },
+          "revoked": {
+            "const": true,
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "operation_id",
+          "committed_at",
+          "session_id",
+          "principal_id",
+          "revoked",
+          "security_version",
+          "request"
+        ],
+        "title": "SessionMutationReceipt",
+        "type": "object"
+      },
+      "SessionRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevoke",
+        "type": "object"
+      },
+      "SessionRevokeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "maxLength": 43,
+                "minLength": 43,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nonce"
+          },
+          "request_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Hash"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevokeRequest",
+        "type": "object"
+      },
       "SourceEntry": {
         "additionalProperties": false,
         "properties": {
@@ -8006,6 +8884,39 @@
         "title": "TeamView",
         "type": "object"
       },
+      "UnobservedOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "status": {
+            "const": "NOT_OBSERVED",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status"
+        ],
+        "title": "UnobservedOperation",
+        "type": "object"
+      },
       "VariableBinding": {
         "additionalProperties": false,
         "properties": {
@@ -8717,6 +9628,290 @@
         "x-journeon-query": "attempt.read.v1"
       }
     },
+    "/api/v1/auth/context": {
+      "get": {
+        "operationId": "getCurrentContext",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentHumanContext"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Current Context",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": false,
+          "self_identity": true,
+          "semantics": "Current authenticated human and own browser session; no resource authority"
+        },
+        "x-journeon-owner": "identity",
+        "x-journeon-permissions": [],
+        "x-journeon-query": "identity.context.read.v1"
+      }
+    },
+    "/api/v1/auth/context/bootstrap": {
+      "post": {
+        "operationId": "bootstrapCurrentContext",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContextBootstrap"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContextBootstrapped"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Bootstrap",
+        "x-journeon-authentication": "identity.context.bootstrap.v1",
+        "x-journeon-owner": "identity"
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logoutBrowserSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionLogout"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionMutationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Logout",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": false,
+          "self_identity": true,
+          "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+        },
+        "x-journeon-command": "identity.session.logout.v1",
+        "x-journeon-owner": "identity",
+        "x-journeon-permissions": []
+      }
+    },
     "/api/v1/auth/passkeys/begin": {
       "post": {
         "operationId": "beginPasskey",
@@ -8958,6 +10153,220 @@
         "x-journeon-permissions": [
           "passkey.self.manage"
         ]
+      }
+    },
+    "/api/v1/auth/sessions": {
+      "get": {
+        "operationId": "listBrowserSessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserSessionPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Inventory",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": false,
+          "self_identity": true,
+          "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+        },
+        "x-journeon-owner": "identity",
+        "x-journeon-permissions": [],
+        "x-journeon-query": "identity.sessions.read.v1"
+      }
+    },
+    "/api/v1/auth/sessions/revoke": {
+      "post": {
+        "operationId": "revokeBrowserSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionMutationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Revoke",
+        "x-journeon-authorization": {
+          "grant_checks": [],
+          "owner_only": false,
+          "self_identity": true,
+          "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+        },
+        "x-journeon-command": "identity.session.revoke.v1",
+        "x-journeon-owner": "identity",
+        "x-journeon-permissions": []
       }
     },
     "/api/v1/bots": {
@@ -10922,6 +12331,113 @@
         ]
       }
     },
+    "/api/v1/operations/resolve": {
+      "post": {
+        "operationId": "resolveOperationIdentity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationIdentityResolve"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationIdentityResolution"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Resolve Operation Identity",
+        "x-journeon-authorization": {
+          "current_resource_owner": true,
+          "grant_checks": [],
+          "owner_only": false,
+          "semantics": "Current original scope authorization before identity lookup; read-only; no retry"
+        },
+        "x-journeon-owner": "operations",
+        "x-journeon-permissions": [],
+        "x-journeon-query": "operation.identity.resolve.v1"
+      }
+    },
     "/api/v1/operations/{operation_id}": {
       "get": {
         "operationId": "getOperationReceipt",
@@ -10984,6 +12500,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/DeploymentPolicyReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SessionMutationReceipt"
                     }
                   ],
                   "title": "Response Getoperationreceipt"

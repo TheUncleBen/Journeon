@@ -2,6 +2,25 @@
   "api_operations": [
     {
       "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current authenticated human and own browser session; no resource authority"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.current_context",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "getCurrentContext",
+      "owner": "identity",
+      "path": "/api/v1/auth/context",
+      "permissions": [],
+      "query": "identity.context.read.v1"
+    },
+    {
+      "authentication": null,
       "command": "project.create.v1",
       "endpoint": "journeon.api.create_app.<locals>.create_project",
       "methods": [
@@ -30,6 +49,25 @@
         "project.read"
       ],
       "query": "project.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "current_resource_owner": true,
+        "grant_checks": [],
+        "owner_only": false,
+        "semantics": "Current original scope authorization before identity lookup; read-only; no retry"
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.resolve_operation_identity",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "resolveOperationIdentity",
+      "owner": "operations",
+      "path": "/api/v1/operations/resolve",
+      "permissions": [],
+      "query": "operation.identity.resolve.v1"
     },
     {
       "authentication": null,
@@ -2853,9 +2891,85 @@
       "path": "/api/v1/egress/policy/initialize",
       "permissions": [],
       "query": null
+    },
+    {
+      "authentication": "identity.context.bootstrap.v1",
+      "command": null,
+      "endpoint": "journeon.identity_api.bind_identity_api.<locals>.bootstrap",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "bootstrapCurrentContext",
+      "owner": "identity",
+      "path": "/api/v1/auth/context/bootstrap",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+      },
+      "command": null,
+      "endpoint": "journeon.identity_api.bind_identity_api.<locals>.inventory",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listBrowserSessions",
+      "owner": "identity",
+      "path": "/api/v1/auth/sessions",
+      "permissions": [],
+      "query": "identity.sessions.read.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+      },
+      "command": "identity.session.revoke.v1",
+      "endpoint": "journeon.identity_api.bind_identity_api.<locals>.revoke",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "revokeBrowserSession",
+      "owner": "identity",
+      "path": "/api/v1/auth/sessions/revoke",
+      "permissions": [],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+      },
+      "command": "identity.session.logout.v1",
+      "endpoint": "journeon.identity_api.bind_identity_api.<locals>.logout",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "logoutBrowserSession",
+      "owner": "identity",
+      "path": "/api/v1/auth/logout",
+      "permissions": [],
+      "query": null
     }
   ],
   "authentication": [
+    {
+      "input_model": "ContextBootstrap",
+      "name": "identity.context.bootstrap.v1",
+      "owner": "identity",
+      "result_model": "ContextBootstrapped"
+    },
     {
       "input_model": "PasskeyBegin",
       "name": "passkey.begin.v1",
@@ -5008,6 +5122,46 @@
     {
       "authorization": {
         "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "SessionRevokeRequest",
+      "name": "identity.session.revoke.v1",
+      "owner": "identity",
+      "permissions": [],
+      "result_model": "SessionMutationReceipt",
+      "reversibility": "A new authenticated session is required",
+      "risk": "SECURITY_ADMINISTRATION",
+      "stability": "INTERNAL",
+      "verification": "Current authority, exact target security version and atomic receipt/event"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "SessionLogout",
+      "name": "identity.session.logout.v1",
+      "owner": "identity",
+      "permissions": [],
+      "result_model": "SessionMutationReceipt",
+      "reversibility": "A new authenticated session is required",
+      "risk": "SECURITY_ADMINISTRATION",
+      "stability": "INTERNAL",
+      "verification": "Current authority, exact target security version and atomic receipt/event"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
         "owner_only": true,
         "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
       },
@@ -5173,7 +5327,7 @@
     },
     {
       "api_prefixes": [
-        "/api/v1/auth/passkeys"
+        "/api/v1/auth"
       ],
       "backup_class": "R0",
       "core": true,
@@ -5181,10 +5335,12 @@
       "environment_migrations": [],
       "events_consumed": [],
       "events_published": [
-        "passkey.labelled"
+        "passkey.labelled",
+        "identity.session.revoke",
+        "identity.session.logout"
       ],
       "health": "schema_and_database",
-      "migration": "0015_workspace_read_models",
+      "migration": "0016_identity_sessions",
       "module_id": "identity",
       "permission_namespaces": [
         "passkey"
@@ -5346,7 +5502,7 @@
       "events_consumed": [],
       "events_published": [],
       "health": "schema_and_database",
-      "migration": "0015_workspace_read_models",
+      "migration": "0016_identity_sessions",
       "module_id": "operations",
       "permission_namespaces": [
         "operation"
@@ -6100,6 +6256,44 @@
         "task.read"
       ],
       "result_model": "WorkflowTemplates"
+    },
+    {
+      "authorization": {
+        "current_resource_owner": true,
+        "grant_checks": [],
+        "owner_only": false,
+        "semantics": "Current original scope authorization before identity lookup; read-only; no retry"
+      },
+      "input_model": "OperationIdentityResolve",
+      "method": "POST",
+      "name": "operation.identity.resolve.v1",
+      "owner": "operations",
+      "permissions": [],
+      "result_model": "OperationIdentityResolution"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current authenticated human and own browser session; no resource authority"
+      },
+      "name": "identity.context.read.v1",
+      "owner": "identity",
+      "permissions": [],
+      "result_model": "CurrentHumanContext"
+    },
+    {
+      "authorization": {
+        "grant_checks": [],
+        "owner_only": false,
+        "self_identity": true,
+        "semantics": "Current human; Owner-all/Shared-self inventory; own session control; another human's session requires current Owner and official exact consent"
+      },
+      "name": "identity.sessions.read.v1",
+      "owner": "identity",
+      "permissions": [],
+      "result_model": "BrowserSessionPage"
     },
     {
       "authorization": {

@@ -265,6 +265,7 @@ class JobService:
             authorize(db, actor, row, action)
         from journeon.instruction_contracts import InstructionPolicy
         from journeon.models import ProjectInstructionBinding, ProjectInstructionPolicy
+        from journeon.project_instructions import candidate_view
 
         binding = db.get(ProjectInstructionBinding, row.project_id)
         if (
@@ -284,9 +285,9 @@ class JobService:
             or proposed.principal_id != row.principal_id
         ):
             raise DomainError("PERMISSION_DENIED", "Job candidate authority differs")
-        candidate_view = CandidateView.model_validate(proposed.snapshot["view"])
+        proposed_view = candidate_view(db, proposed)
         policy = db.get(ProjectInstructionPolicy, (row.project_id, row.policy_revision))
-        if policy is None or not candidate_view.automatic or candidate_view.job_id != row.id:
+        if policy is None or not proposed_view.automatic or proposed_view.job_id != row.id:
             raise DomainError("PERMISSION_DENIED", "Job requires an eligible automatic candidate")
         current_policy = InstructionPolicy.model_validate(policy.snapshot)
         if (
@@ -383,7 +384,7 @@ class JobService:
         return row, actor
 
     def execute(self, identity: ExecutionIdentity) -> None:
-        from journeon.project_instructions import ProjectInstructionService
+        from journeon.project_instructions import ProjectInstructionService, candidate_view
 
         with transaction(self.engine) as db:
             row = db.get(Job, identity.job_id)
@@ -400,7 +401,7 @@ class JobService:
                 row, actor = self.check(db, identity)
                 candidate = db.get(InstructionCandidate, row.candidate_id)
                 assert candidate is not None
-                reference = CandidateView.model_validate(candidate.snapshot["view"])
+                reference = candidate_view(db, candidate)
                 evidence = row.evidence_id
             if evidence is None:
                 evidence = service.evaluate(actor, reference)

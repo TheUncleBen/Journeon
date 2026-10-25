@@ -130,7 +130,8 @@ class Receipt(Base):
             "D target_kind = 'job' AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND "
             "target_kind = 'store' AND project_id IS NULL) OR (owner = 'permissions' AND ta"
             "rget_kind = 'grant' AND project_id IS NULL) OR (owner = 'egress' AND target_ki"
-            "nd = 'deployment_policy' AND target_id = 'deployment' AND project_id IS NULL)",
+            "nd = 'deployment_policy' AND target_id = 'deployment' AND project_id IS NULL) OR "
+            "(owner = 'identity' AND target_kind = 'browser_session' AND project_id IS NULL)",
             name="receipt_target",
         ),
         Index(
@@ -176,7 +177,8 @@ class OutboxEvent(Base):
             "D target_kind = 'job' AND project_id IS NOT NULL) OR (owner = 'lifecycle' AND "
             "target_kind = 'store' AND project_id IS NULL) OR (owner = 'permissions' AND ta"
             "rget_kind = 'grant' AND project_id IS NULL) OR (owner = 'egress' AND target_ki"
-            "nd = 'deployment_policy' AND target_id = 'deployment' AND project_id IS NULL)",
+            "nd = 'deployment_policy' AND target_id = 'deployment' AND project_id IS NULL) OR "
+            "(owner = 'identity' AND target_kind = 'browser_session' AND project_id IS NULL)",
             name="event_target",
         ),
         {"sqlite_autoincrement": True},
@@ -349,7 +351,8 @@ class ProtectedRequest(Base):
             "','project.instructions.policy.configure.v1','instruction.candidate.register.v"
             "1','instruction.release.install.v1','project.instructions.accept.v1', 'project"
             ".instructions.recover.v1', 'lifecycle.restore.authorize.v1','permission.grant."
-            "set.v1','permission.grant.revoke.v1','egress.policy.initialize.v1')",
+            "set.v1','permission.grant.revoke.v1','egress.policy.initialize.v1',"
+            "'identity.session.revoke.v1')",
             name="protected_command",
         ),
     )

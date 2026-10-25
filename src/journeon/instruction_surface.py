@@ -130,6 +130,15 @@ def bind_surface(app: FastAPI, engine: Engine, config: InstructionConfiguration 
                 '<a href="/instructions/authenticate">Authenticate and prepare a new request</a>',
             )
         descriptions = {
+            "permission.grant.set.v1": (
+                "Set this exact permission grant, including its enabled state and expiry."
+            ),
+            "permission.grant.revoke.v1": "Disable this exact permission grant.",
+            "egress.policy.initialize.v1": (
+                "Initialize the deployment policy for local-only operation "
+                "with no approved providers."
+            ),
+            "identity.session.revoke.v1": "Revoke the selected human browser session.",
             "lifecycle.restore.authorize.v1": (
                 "Authorize the exact offline recovery of missing instruction history below. "
                 "The stopped-store command stages a new database and preserves current security "

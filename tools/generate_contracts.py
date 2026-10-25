@@ -3,9 +3,11 @@
 
 import argparse
 import json
+import types
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
+from pydantic import BaseModel, TypeAdapter
 from sqlalchemy import create_engine
 
 from journeon.api import create_app
@@ -16,10 +18,14 @@ from journeon.contracts import (
     BotCreate,
     BotRevise,
     BotView,
+    BrowserSessionPage,
     BundleResolve,
     BundleResult,
     BundleView,
     ConfigurationReceipt,
+    ContextBootstrap,
+    ContextBootstrapped,
+    CurrentHumanContext,
     EffectivePermission,
     EffectiveSettings,
     ErrorEnvelope,
@@ -29,6 +35,8 @@ from journeon.contracts import (
     ExecutionView,
     LegacyPlan,
     LegacyPreview,
+    OperationIdentityResolution,
+    OperationIdentityResolve,
     OperationReceipt,
     PasskeyLabelCommand,
     PasskeyMutationReceipt,
@@ -45,6 +53,10 @@ from journeon.contracts import (
     ReviewTarget,
     ReviewTargetReceipt,
     ReviewTargetSelect,
+    SessionLogout,
+    SessionMutationReceipt,
+    SessionRevoke,
+    SessionRevokeRequest,
     TaskAdmission,
     TaskAssign,
     TaskComplete,
@@ -59,8 +71,9 @@ from journeon.contracts import (
     VerificationPolicyConfigure,
     VerificationPolicyReceipt,
 )
+from journeon.instruction_contracts import ProtectedEffect
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
-from journeon.registry import registry_manifest
+from journeon.registry import COMMANDS, registry_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -86,6 +99,8 @@ def ts_type(schema: dict[str, Any]) -> str:
         if not properties and isinstance(additional, dict) and additional:
             return f"Record<string, {ts_type(additional)}>"
         if not properties:
+            if additional is False:
+                return "Record<string, never>"
             raise ValueError("Unbounded object schema needs an explicit client binding")
         lines = ["{"]
         for name, definition in sorted(properties.items()):
@@ -113,7 +128,12 @@ def artifacts() -> dict[str, str]:
         openapi = app.openapi()
     finally:
         engine.dispose()
-    definitions = openapi["components"]["schemas"]
+    definitions = dict(openapi["components"]["schemas"])
+    for model, _, _ in bindings().values():
+        definition = model.model_json_schema()
+        for name, nested in definition.pop("$defs", {}).items():
+            definitions.setdefault(name, nested)
+        definitions.setdefault(model.__name__, definition)
     receipt_schema = openapi["paths"]["/api/v1/operations/{operation_id}"]["get"]["responses"][
         "200"
     ]["content"]["application/json"]["schema"]
@@ -214,9 +234,43 @@ def artifacts() -> dict[str, str]:
         "initializeDeploymentPolicy": ("POST", "/api/v1/egress/policy/initialize"),
     }
     expected_operations.update(administration_paths)
+    expected_operations["getCurrentContext"] = ("GET", "/api/v1/auth/context")
+    identity_paths = {
+        "bootstrapCurrentContext": ("POST", "/api/v1/auth/context/bootstrap"),
+        "listBrowserSessions": ("GET", "/api/v1/auth/sessions"),
+        "revokeBrowserSession": ("POST", "/api/v1/auth/sessions/revoke"),
+        "logoutBrowserSession": ("POST", "/api/v1/auth/logout"),
+        "resolveOperationIdentity": ("POST", "/api/v1/operations/resolve"),
+    }
+    expected_operations.update(identity_paths)
     if operations != expected_operations:
         raise ValueError("Update client generation for changed operation bindings")
-    instruction_methods = []
+    instruction_methods = [
+        "  getCurrentContext(): Promise<CurrentHumanContext> { "
+        "return this.request('/api/v1/auth/context', {method: 'GET'}); }"
+    ]
+    instruction_methods.extend(
+        [
+            "  bootstrapCurrentContext(): Promise<ContextBootstrapped> { "
+            "return this.request('/api/v1/auth/context/bootstrap', "
+            "{method: 'POST', body: '{}'}); }",
+            "  listBrowserSessions(limit: number, cursor?: string): Promise<BrowserSessionPage> { "
+            "const query = new URLSearchParams({limit: String(limit)}); "
+            "if (cursor !== undefined) query.set('cursor', cursor); "
+            "return this.request(`/api/v1/auth/sessions?${query}`, {method: 'GET'}); }",
+        ]
+    )
+    for operation, request_name, result_name in (
+        ("revokeBrowserSession", "SessionRevokeRequest", "SessionMutationReceipt"),
+        ("logoutBrowserSession", "SessionLogout", "SessionMutationReceipt"),
+        ("resolveOperationIdentity", "OperationIdentityResolve", "OperationIdentityResolution"),
+    ):
+        _, path = identity_paths[operation]
+        instruction_methods.append(
+            f"  {operation}(command: {request_name}, csrfToken: string): Promise<{result_name}> {{ "
+            f"return this.request('{path}', {{method: 'POST', "
+            "headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }"
+        )
     for operation, path in instruction_paths.items():
         _, input_model, result_model, _ = INSTRUCTION_ROUTES[operation]
         parameters = []
@@ -538,6 +592,15 @@ export class JourneonClient {
             BundleView,
             BundleResult,
             ProjectCreate,
+            CurrentHumanContext,
+            BrowserSessionPage,
+            ContextBootstrap,
+            ContextBootstrapped,
+            SessionRevokeRequest,
+            SessionLogout,
+            SessionMutationReceipt,
+            OperationIdentityResolve,
+            OperationIdentityResolution,
             AttemptPrepare,
             AttemptReceipt,
             AttemptView,
@@ -588,8 +651,250 @@ export class JourneonClient {
         "registry.json": json.dumps(registry, indent=2, sort_keys=True) + "\n",
         "openapi.json": json.dumps(openapi, indent=2, sort_keys=True) + "\n",
         "contracts.schema.json": json.dumps(schemas, indent=2, sort_keys=True) + "\n",
-        "client.ts": client,
+        "client.ts": client + generate_digest_helpers(),
     }
+
+
+EXCLUDE_KEY_COMMANDS = {
+    "project.create.v1",
+    "passkey.label.v1",
+    "profile.create.v1",
+    "profile.revise.v1",
+    "bot.create.v1",
+    "bot.revise.v1",
+    "team.create.v1",
+    "instruction.bundle.resolve.v1",
+    "project.review.configure.v1",
+    "project.verification.configure.v1",
+    "task.create.v1",
+    "task.pause.v1",
+    "task.resume.v1",
+    "task.cancel.v1",
+    "task.revise.v1",
+    "task.assign.v1",
+    "task.admit.v1",
+    "task.complete.v1",
+    "task.review.select.v1",
+    "attempt.prepare.v1",
+    "task.dispatch.v1",
+    "execution.start.v1",
+    "execution.stop.v1",
+}
+INSTRUCTION_COMMANDS = {
+    "project.instructions.bind.v1",
+    "project.instructions.accept.v1",
+    "project.instructions.projection.v1",
+    "project.instructions.propose.v1",
+    "project.instructions.restore.v1",
+    "project.instructions.review.v1",
+}
+
+
+def bindings() -> dict[str, tuple[type[BaseModel], type[BaseModel], bool]]:
+    result: dict[str, tuple[type[BaseModel], type[BaseModel], bool]] = {}
+    execution_models: dict[str, type[BaseModel]] = {
+        "execution.start.v1": ExecutionStart,
+        "execution.stop.v1": ExecutionStop,
+    }
+    for name in sorted(EXCLUDE_KEY_COMMANDS | INSTRUCTION_COMMANDS):
+        model = (
+            execution_models[name] if name.startswith("execution.") else COMMANDS[name].input_model
+        )
+        result[model.__name__] = (model, model, name in EXCLUDE_KEY_COMMANDS)
+    for model in get_args(get_args(ProtectedEffect)[0]):
+        result[model.__name__] = (model, model, False)
+        name = model.model_fields["kind"].default
+        if name in COMMANDS and COMMANDS[name].input_model != model:
+            route = COMMANDS[name].input_model
+            if set(route.model_fields) - set(model.model_fields) <= {
+                "request_id",
+                "request_hash",
+                "nonce",
+            }:
+                result[route.__name__] = (route, model, False)
+    for model in (SessionLogout, SessionRevoke):
+        result[model.__name__] = (model, model, False)
+    result["SessionRevokeRequest"] = (SessionRevokeRequest, SessionRevoke, False)
+    return result
+
+
+def generate_digest_helpers() -> str:
+    models: dict[str, Any] = {}
+
+    def schema(annotation: Any, metadata: Any = ()) -> dict[str, Any]:
+        origin, args = get_origin(annotation), get_args(annotation)
+        if origin is Annotated:
+            return schema(args[0], (*metadata, *args[1:]))
+        if origin in (Union, types.UnionType):
+            return {"union": [schema(item) for item in args]}
+        if origin is Literal:
+            return {"literal": list(args)}
+        if origin is list:
+            return {"array": schema(args[0])}
+        if origin is dict and args[0] is str:
+            return {"map": schema(args[1])}
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            name = annotation.__name__
+            if name not in models:
+                models[name] = {}
+                fields = {}
+                for key, field in annotation.model_fields.items():
+                    item = {"schema": schema(field.annotation, field.metadata)}
+                    if not field.is_required():
+                        assert field.annotation is not None
+                        item["default"] = TypeAdapter(field.annotation).dump_python(
+                            field.get_default(call_default_factory=True), mode="json"
+                        )
+                    fields[key] = item
+                models[name] = {"fields": fields}
+            return {"model": name}
+        if annotation in (str, int, float, bool, type(None)):
+            result: dict[str, Any] = {
+                "type": {
+                    str: "string",
+                    int: "integer",
+                    float: "float",
+                    bool: "boolean",
+                    type(None): "null",
+                }[annotation]
+            }
+            if annotation is str and any(
+                getattr(item, "strip_whitespace", False) for item in metadata
+            ):
+                result["trim"] = True
+            return result
+        raise ValueError(f"Unbound command digest input: {annotation!r}")
+
+    functions = []
+    for name, (route, model, exclude_key) in sorted(bindings().items()):
+        schema(model)
+        excluded = sorted(set(route.model_fields) - set(model.model_fields))
+        if exclude_key:
+            excluded.append("idempotency_key")
+        sort = {"ProjectCreate": "selected_providers", "TaskCreate": "dependencies"}.get(name)
+        functions.append(
+            f"export function digest{name}(command: {name}): Promise<string> {{\n"
+            f"  return commandDigest({json.dumps(model.__name__)}, command, "
+            f"{json.dumps(excluded)}, {json.dumps(sort)});\n}}"
+        )
+    return (
+        DIGEST_RUNTIME
+        + "\nconst digestModels: Record<string, DigestSchema> = "
+        + json.dumps(models, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+        + ";\n\n"
+        + "\n\n".join(functions)
+        + "\n"
+    )
+
+
+DIGEST_RUNTIME = r"""
+type DigestSchema = {
+  type?: string; trim?: boolean; model?: string; literal?: unknown[];
+  union?: DigestSchema[]; array?: DigestSchema; map?: DigestSchema;
+  fields?: Record<string, {schema: DigestSchema; default?: unknown}>;
+};
+
+function digestKeyOrder(left: string, right: string): number {
+  const a = Array.from(left, c => c.codePointAt(0)!);
+  const b = Array.from(right, c => c.codePointAt(0)!);
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    if (a[i] !== b[i]) return a[i] - b[i];
+  }
+  return a.length - b.length;
+}
+
+function digestString(value: string): string {
+  for (const character of value) {
+    const point = character.codePointAt(0)!;
+    if (point >= 0xd800 && point <= 0xdfff) {
+      throw new TypeError("Command contains an unpaired surrogate");
+    }
+  }
+  return JSON.stringify(value);
+}
+
+function digestFloat(value: number): string {
+  if (!Number.isFinite(value)) throw new TypeError("Command numbers must be finite");
+  // JSON command transport writes either signed zero as 0 before Python normalization.
+  if (value === 0) return "0.0";
+  const [mantissa, exponent] = value.toExponential().split("e");
+  const power = Number(exponent);
+  if (power >= -4 && power < 16) {
+    const text = value.toString();
+    return text.includes(".") ? text : text + ".0";
+  }
+  return mantissa + "e" + (power < 0 ? "-" : "+") + String(Math.abs(power)).padStart(2, "0");
+}
+
+function digestValue(
+  schema: DigestSchema, value: unknown, excluded: string[] = [], sort: string | null = null,
+): string {
+  if (schema.model) return digestValue(digestModels[schema.model], value, excluded, sort);
+  if (schema.union) {
+    for (const member of schema.union) {
+      try { return digestValue(member, value); }
+      catch (error) { if (!(error instanceof TypeError)) throw error; }
+    }
+    throw new TypeError("Command value does not match its declared variants");
+  }
+  if (schema.literal) {
+    if (!schema.literal.some(item => item === value)) {
+      throw new TypeError("Command literal is invalid");
+    }
+    return JSON.stringify(value);
+  }
+  if (schema.type === "null" && value === null) return "null";
+  if (schema.type === "boolean" && typeof value === "boolean") return JSON.stringify(value);
+  if (schema.type === "string" && typeof value === "string") {
+    if (schema.trim) {
+      const spaces = "[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a"
+        + "\u2028\u2029\u202f\u205f\u3000]";
+      value = value.replace(new RegExp("^" + spaces + "+|" + spaces + "+$", "g"), "");
+    }
+    return digestString(value as string);
+  }
+  if (schema.type === "integer" && typeof value === "number" && Number.isInteger(value)) {
+    const wire = JSON.stringify(value);
+    if (!/[eE]/.test(wire)) return wire;
+    throw new TypeError("Command integer has no exact integer JSON transport token");
+  }
+  if (schema.type === "float" && typeof value === "number") return digestFloat(value);
+  if (schema.array && Array.isArray(value)) {
+    return "[" + Array.from(value, item => digestValue(schema.array!, item)).join(",") + "]";
+  }
+  if ((schema.fields || schema.map) && value !== null
+      && typeof value === "object" && !Array.isArray(value)) {
+    const input = value as Record<string, unknown>;
+    const prototype = Object.getPrototypeOf(input);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new TypeError("Command objects must contain plain JSON data");
+    }
+    if (schema.fields && Object.keys(input).some(key =>
+        !Object.hasOwn(schema.fields!, key) && !excluded.includes(key))) {
+      throw new TypeError("Command contains an unknown field");
+    }
+    const keys = Object.keys(schema.fields ?? input)
+      .filter(key => !excluded.includes(key)).sort(digestKeyOrder);
+    return "{" + keys.map(key => {
+      const field = schema.fields?.[key];
+      let item = Object.hasOwn(input, key) && input[key] !== undefined
+        ? input[key] : field?.default;
+      if (item === undefined) throw new TypeError("Command is missing a required field");
+      if (key === sort && Array.isArray(item)) item = [...item].sort(digestKeyOrder);
+      return digestString(key) + ":" + digestValue(field?.schema ?? schema.map!, item);
+    }).join(",") + "}";
+  }
+  throw new TypeError("Command value cannot be represented by its canonical input type");
+}
+
+async function commandDigest(
+  model: string, command: object, excluded: string[], sort: string | null,
+): Promise<string> {
+  const bytes = new TextEncoder().encode(digestValue({model}, command, excluded, sort));
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+"""
 
 
 def main() -> None:

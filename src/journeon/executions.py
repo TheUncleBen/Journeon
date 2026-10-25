@@ -28,6 +28,7 @@ from journeon.contracts import (
     ExecutionStart,
     ExecutionStop,
     ExecutionView,
+    RuntimeConfigurationUnavailable,
     VerificationPolicy,
 )
 from journeon.database import transaction
@@ -310,14 +311,12 @@ class ExecutionService:
 
     def route(self, key: str, revision: int) -> LocalRoute:
         if self.configuration is None or self.configuration.executions is None:
-            raise DomainError("DEPENDENCY_UNAVAILABLE", "Local execution routes are not configured")
+            raise RuntimeConfigurationUnavailable("Local execution routes are not configured")
         route = next(
             (route for route in self.configuration.executions.routes if route.key == key), None
         )
         if route is None or route.revision != revision:
-            raise DomainError(
-                "DEPENDENCY_UNAVAILABLE", "Exact local execution route is unavailable"
-            )
+            raise RuntimeConfigurationUnavailable("Exact local execution route is unavailable")
         return route
 
     def check_configuration(self, db: Session, actor: AuthenticatedContext, row: Execution) -> None:
@@ -362,7 +361,7 @@ class ExecutionService:
 
     def root_configuration(self, root: InstructionRoot) -> RootConfiguration:
         if self.configuration is None:
-            raise DomainError("DEPENDENCY_UNAVAILABLE", "Execution roots are not configured")
+            raise RuntimeConfigurationUnavailable("Execution roots are not configured")
         config = next(
             (item for item in self.configuration.roots if item.key == root.root_key), None
         )

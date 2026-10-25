@@ -3,6 +3,7 @@
 
 import difflib
 import hashlib
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -10,6 +11,7 @@ if TYPE_CHECKING:
     from journeon.jobs import ExecutionIdentity
 from uuid import uuid4
 
+from pydantic import ValidationError
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session, defer
 
@@ -65,6 +67,75 @@ def stored[Stored: Base](db: Session, model: type[Stored], identity: Any) -> Sto
     if row is None:
         raise DomainError("DEPENDENCY_UNAVAILABLE", "Canonical instruction state requires repair")
     return row
+
+
+def restored_proposal(
+    command: InstructionRestore, documents: dict[str, str], required: list[str]
+) -> InstructionPropose:
+    return InstructionPropose(
+        idempotency_key=command.idempotency_key,
+        project_id=command.project_id,
+        expected_revision=command.expected_revision,
+        expected_tree_hash=command.expected_tree_hash,
+        documents=[Document(path=name, content=value) for name, value in documents.items()],
+        required_fragments=required,
+        reason=command.reason,
+        source_refs=["revision:" + str(command.revision)],
+        category="ORDINARY",
+    )
+
+
+def candidate_restore(
+    db: Session, row: InstructionCandidate, view: CandidateView
+) -> InstructionRestore | None:
+    data = row.snapshot
+    origin = data.get("original_command")
+    if origin is None or origin == "project.instructions.propose.v1":
+        if "original_restore" in data:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Candidate origin requires repair")
+        return None
+    if origin != "project.instructions.restore.v1":
+        raise DomainError("DEPENDENCY_UNAVAILABLE", "Candidate origin requires repair")
+    try:
+        original = InstructionRestore.model_validate(data.get("original_restore"))
+        history = stored(db, ProjectInstructionRevision, (row.project_id, original.revision))
+        base = stored(db, ProjectInstructionRevision, (row.project_id, original.expected_revision))
+        derived = restored_proposal(
+            original, history.snapshot["documents"], history.snapshot["required_fragments"]
+        )
+        if (
+            (original.project_id, original.idempotency_key, original.expected_revision)
+            != (row.project_id, row.idempotency_key, view.expected_binding_revision)
+            or original.expected_tree_hash != base.tree_hash
+            or digest(derived.model_dump(mode="json")) != row.payload_hash
+            or data["documents"] != history.snapshot["documents"]
+            or data["required_fragments"] != derived.required_fragments
+            or data["source_refs"] != derived.source_refs
+            or data["reason"] != derived.reason
+            or tree_hash(data["documents"]) != view.tree_hash
+            or view.candidate_hash != row.payload_hash
+        ):
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Candidate origin requires repair")
+        return original
+    except (ValidationError, json.JSONDecodeError, KeyError, TypeError):
+        raise DomainError("DEPENDENCY_UNAVAILABLE", "Candidate origin requires repair") from None
+
+
+def candidate_view(db: Session, row: InstructionCandidate) -> CandidateView:
+    """Decode retained candidate content after the caller authorizes its scalar scope."""
+    try:
+        data = row.snapshot
+        if not isinstance(data, dict):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Instruction candidate state requires repair"
+            )
+        view = CandidateView.model_validate(data.get("view"))
+        candidate_restore(db, row, view)
+        return view
+    except (ValidationError, json.JSONDecodeError):
+        raise DomainError(
+            "DEPENDENCY_UNAVAILABLE", "Instruction candidate state requires repair"
+        ) from None
 
 
 DEFAULT_NAVIGATION_POLICY = InstructionPolicy(
@@ -467,7 +538,7 @@ class ProjectInstructionService:
             db.flush()
             journal = self.journal(db, operation)
             journal.snapshot = {
-                **journal.snapshot,
+                **self.publication_data(db, actor, journal, None),
                 "destination": {
                     "root_id": command.root_id,
                     "root_revision": command.expected_root_revision,
@@ -476,12 +547,30 @@ class ProjectInstructionService:
             }
         return self.publish(actor, operation)
 
-    def propose(self, actor: AuthenticatedContext, command: InstructionPropose) -> CandidateView:
+    def propose(
+        self,
+        actor: AuthenticatedContext,
+        command: InstructionPropose,
+        *,
+        original_restore: InstructionRestore | None = None,
+    ) -> CandidateView:
         target = snapshot(command.documents)
         validate_tree(target, command.required_fragments)
         payload = command.model_dump(mode="json")
         with transaction(self.engine) as db:
             binding = self.binding(db, actor, command.project_id, "propose")
+            if original_restore is not None:
+                restore_history = stored(
+                    db, ProjectInstructionRevision, (command.project_id, original_restore.revision)
+                )
+                if command != restored_proposal(
+                    original_restore,
+                    restore_history.snapshot["documents"],
+                    restore_history.snapshot["required_fragments"],
+                ):
+                    raise DomainError(
+                        "VALIDATION_FAILED", "Restore origin does not match its proposal"
+                    )
             previous = db.scalar(
                 select(InstructionCandidate)
                 .options(defer(InstructionCandidate.snapshot))
@@ -493,11 +582,25 @@ class ProjectInstructionService:
             )
             if previous:
                 require_project(db, actor, command.project_id, "read")
+                prior_view = candidate_view(db, previous)
+                origin = previous.snapshot.get("original_command")
+                expected_origin = (
+                    "project.instructions.restore.v1"
+                    if original_restore is not None
+                    else "project.instructions.propose.v1"
+                )
+                if origin is not None and (
+                    origin != expected_origin
+                    or candidate_restore(db, previous, prior_view) != original_restore
+                ):
+                    raise DomainError(
+                        "IDEMPOTENCY_CONFLICT", "Candidate identity has different input"
+                    )
                 if previous.payload_hash != digest(payload):
                     raise DomainError(
                         "IDEMPOTENCY_CONFLICT", "Candidate identity has different input"
                     )
-                return CandidateView.model_validate(previous.snapshot["view"])
+                return prior_view
             if binding.active_operation or (binding.revision, binding.tree_hash) != (
                 command.expected_revision,
                 command.expected_tree_hash,
@@ -573,6 +676,16 @@ class ProjectInstructionService:
                     idempotency_key=command.idempotency_key,
                     payload_hash=content_hash,
                     snapshot={
+                        "original_command": (
+                            "project.instructions.restore.v1"
+                            if original_restore is not None
+                            else "project.instructions.propose.v1"
+                        ),
+                        **(
+                            {"original_restore": original_restore.model_dump(mode="json")}
+                            if original_restore is not None
+                            else {}
+                        ),
                         "view": view.model_dump(mode="json"),
                         "documents": target,
                         "required_fragments": command.required_fragments,
@@ -605,7 +718,7 @@ class ProjectInstructionService:
             raise DomainError("NOT_FOUND", "Instruction candidate is unavailable")
         if row.payload_hash != command.candidate_hash:
             raise DomainError("REVISION_CONFLICT", "Candidate changed")
-        view = CandidateView.model_validate(row.snapshot["view"])
+        view = candidate_view(db, row)
         if (view.expected_binding_revision, view.expected_policy_revision) != (
             binding.revision,
             binding.policy_revision,
@@ -897,7 +1010,7 @@ class ProjectInstructionService:
             identity: self.root_identity(db, actor, identity, row.project_id)
             for identity in {binding.root_id, row.target_root_id}
         }
-        if row.snapshot.get("root_identities") != identities:
+        if self.publication_data(db, actor, row, None).get("root_identities") != identities:
             raise DomainError("REVISION_CONFLICT", "Recovery root identity differs from admission")
         return {identity: stored(db, InstructionRoot, identity).revision for identity in identities}
 
@@ -908,7 +1021,19 @@ class ProjectInstructionService:
         row: InstructionPublication,
         recovery: str | None,
     ) -> dict[str, Any]:
-        data = dict(row.snapshot)
+        try:
+            retained = row.snapshot
+        except json.JSONDecodeError:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Publication state requires repair"
+            ) from None
+        if (
+            not isinstance(retained, dict)
+            or not isinstance(retained.get("command"), str)
+            or not isinstance(retained.get("payload"), dict)
+        ):
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Publication state requires repair")
+        data = dict(retained)
         if recovery and data.get("destination"):
             revisions = self.recovery_roots(db, actor, row)
             data["destination"] = {
@@ -939,7 +1064,7 @@ class ProjectInstructionService:
             if row.project_id != project_id:
                 raise DomainError("DEPENDENCY_UNAVAILABLE", "Publication scope requires repair")
             revisions = self.recovery_roots(db, actor, row)
-            data = row.snapshot
+            data = self.publication_data(db, actor, row, None)
             if data["command"] == "project.instructions.projection.v1":
                 require_project(db, actor, project_id, "projection")
             return RecoveryTarget(
@@ -972,7 +1097,10 @@ class ProjectInstructionService:
             binding.root_revision = next(
                 root.revision for root in command.root_revisions if root.root_id == binding.root_id
             )
-            projection = row.snapshot["command"] == "project.instructions.projection.v1"
+            projection = (
+                self.publication_data(db, actor, row, None)["command"]
+                == "project.instructions.projection.v1"
+            )
         return self.publish(actor, command.operation_id, projection=projection, recovery=request_id)
 
     def publication_authority(
@@ -1018,7 +1146,7 @@ class ProjectInstructionService:
             or effect.expected_policy_revision != binding.policy_revision
         ):
             raise DomainError("REVISION_CONFLICT", "Recovery publication operands changed")
-        data = row.snapshot
+        data = self.publication_data(db, actor, row, None)
         if (
             effect.target_hash != tree_hash(data["target"])
             or data["base_revision"] != binding.revision
@@ -1041,18 +1169,19 @@ class ProjectInstructionService:
         commit: bool = False,
     ) -> None:
         self.publication_authority(db, actor, row, recovery)
+        data = self.publication_data(db, actor, row, recovery)
         consent = None
         if recovery:
             from journeon.instruction_protected import verify_recovery_consent
 
             consent, _ = verify_recovery_consent(db, actor, recovery, self.configuration)
-        elif row.snapshot["payload"].get("consent_request_id"):
+        elif data["payload"].get("consent_request_id"):
             from journeon.instruction_protected import verify_instruction_consent
 
             consent = verify_instruction_consent(
                 db,
                 actor,
-                InstructionAccept.model_validate(row.snapshot["payload"]),
+                InstructionAccept.model_validate(data["payload"]),
                 self.configuration,
             )
         if commit and consent:
@@ -1306,8 +1435,9 @@ class ProjectInstructionService:
                         "REVISION_CONFLICT", "Checkpoint publication generation changed"
                     )
                 journal = self.journal(db, operation)
-                if "checkpoint" not in journal.snapshot:
-                    journal.snapshot = {**journal.snapshot, "checkpoint": checkpoint}
+                retained = self.publication_data(db, actor, journal, None)
+                if "checkpoint" not in retained:
+                    journal.snapshot = {**retained, "checkpoint": checkpoint}
             staged = read_tree(stage)
             for name, value in data["target"].items():
                 if name in staged and staged[name] != value:
@@ -1474,17 +1604,8 @@ class ProjectInstructionService:
             required = history.snapshot["required_fragments"]
         return self.propose(
             actor,
-            InstructionPropose(
-                idempotency_key=command.idempotency_key,
-                project_id=command.project_id,
-                expected_revision=command.expected_revision,
-                expected_tree_hash=command.expected_tree_hash,
-                documents=[Document(path=name, content=value) for name, value in documents.items()],
-                required_fragments=required,
-                reason=command.reason,
-                source_refs=["revision:" + str(command.revision)],
-                category="ORDINARY",
-            ),
+            restored_proposal(command, documents, required),
+            original_restore=command,
         )
 
     def projection(

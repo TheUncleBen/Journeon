@@ -2,6 +2,7 @@
 "Durable session primitives for trusted authentication services; no login ceremony."
 
 import hashlib
+import json
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -243,3 +244,27 @@ def invalidate_protected(session: Session, session_id: str) -> None:
         )
         .values(state="INVALIDATED", nonce_hash=None, nonce_deadline=None)
     )
+
+
+def security_version(record: BrowserSession, principal: Principal, incarnation: str) -> str:
+    "Hash security state after authorization; this version conveys no authority."
+    state = {
+        "version": 1,
+        "store_incarnation": incarnation,
+        "session_id": record.id,
+        "principal_id": record.principal_id,
+        "principal_epoch": record.principal_epoch,
+        "principal_enabled": principal.enabled,
+        "principal_role": principal.role,
+        "authorization_epoch": principal.authorization_epoch,
+        "credential_revision": principal.credential_revision,
+        "authentication_method": record.authentication_method,
+        "audience": record.audience,
+        "issued_at": record.issued_at,
+        "absolute_deadline": record.absolute_deadline,
+        "inactivity_seconds": record.inactivity_seconds,
+        "strong_authenticated_at": record.strong_authenticated_at,
+        "strong_freshness_seconds": record.strong_freshness_seconds,
+        "revoked": record.revoked,
+    }
+    return digest(json.dumps(state, sort_keys=True, separators=(",", ":"), ensure_ascii=False))

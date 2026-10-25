@@ -52,9 +52,10 @@ if (confirm) {
     try {
       const result = await post("/api/v1/protected-operations/confirm", {request_id: value("request_id"), request_hash: value("request_hash"), nonce: value("nonce")});
       cancel.disabled = true;
+      const outcome = result.outcome === "CANONICAL_COMMITTED" ? result.outcome : result.status;
       tell(result.status === "AUTHORIZED_OFFLINE_ONLY"
         ? "Offline restore authorized. Authorization: " + result.request_id + ". No database has been restored."
-        : "Operation result: " + result.status + ". Receipt: " + result.operation_id + ".");
+        : "Operation result: " + outcome + ". Receipt: " + result.operation_id + ".");
     } catch (error) { tell(error.message); }
   });
   cancel.addEventListener("click", async () => {

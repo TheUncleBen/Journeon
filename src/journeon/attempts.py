@@ -29,7 +29,12 @@ from journeon.attempt_snapshots import (
     materialize_worktree,
     snapshot_digest,
 )
-from journeon.contracts import DomainError, TaskView, VerificationPolicy
+from journeon.contracts import (
+    DomainError,
+    RuntimeConfigurationUnavailable,
+    TaskView,
+    VerificationPolicy,
+)
 from journeon.database import transaction
 from journeon.instruction_config import InstructionConfiguration, git_identity, open_directory
 from journeon.instructions import InstructionService, digest
@@ -226,7 +231,7 @@ class AttemptService:
 
     def check_configuration(self, db: Session, row: Attempt) -> None:
         if self.configuration is None or self.configuration.attempts is None:
-            raise DomainError("DEPENDENCY_UNAVAILABLE", "Attempt preparation is not configured")
+            raise RuntimeConfigurationUnavailable("Attempt preparation is not configured")
         config = self.configuration.attempts
         root = workspace_root(db, row.project_id, row.root_id, row.root_revision)
         root_config = next(

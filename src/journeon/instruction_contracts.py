@@ -14,6 +14,8 @@ from journeon.contracts import (
     Identifier,
     Name,
     PolicyInitialize,
+    SessionMutationReceipt,
+    SessionRevoke,
 )
 from journeon.contracts import InstructionReceipt as InstructionReceipt
 from journeon.restore_contracts import RestoreAuthorization, RestorePlan
@@ -139,6 +141,7 @@ ProtectedEffect = Annotated[
     | PublicationRecovery
     | RestorePlan
     | GrantSet
+    | SessionRevoke
     | GrantRevoke
     | PolicyInitialize,
     Field(discriminator="kind"),
@@ -342,6 +345,12 @@ class HistoryView(Contract):
 
 
 class ProtectedEffectResult(
-    RootModel[InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt]
+    RootModel[
+        InstructionReceipt
+        | RestoreAuthorization
+        | GrantReceipt
+        | DeploymentPolicyReceipt
+        | SessionMutationReceipt
+    ]
 ):
     pass

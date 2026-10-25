@@ -8,6 +8,7 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    RootModel,
     StringConstraints,
     model_validator,
 )
@@ -40,6 +41,98 @@ ErrorCode = Literal[
 
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+
+class BrowserSessionContext(Contract):
+    session_id: Identifier
+    authentication_method: str
+    audience: Literal["unknown", "official_browser"]
+    issued_at: int
+    absolute_deadline: int
+    inactivity_seconds: int
+    strong_authenticated_at: int | None
+    strong_freshness_seconds: int
+    security_version: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+
+
+class ContextDependencies(Contract):
+    instruction_runtime: Literal["CONFIGURED", "UNCONFIGURED"]
+    display_preferences: Literal["UNAVAILABLE"]
+
+
+class CurrentHumanContext(Contract):
+    principal_id: Identifier
+    role: Literal["OWNER", "SHARED_USER"]
+    session: BrowserSessionContext
+    store_incarnation: Identifier
+    preference_revision: Literal[0]
+    preferences: None
+    dependencies: ContextDependencies
+
+
+class BrowserSessionItem(BrowserSessionContext):
+    principal_id: Identifier
+    client_label: str
+    last_activity: int
+    revoked: bool
+
+
+class BrowserSessionPage(Contract):
+    items: list[BrowserSessionItem]
+    next_cursor: str | None
+    has_more: bool
+    observed_at: str
+    store_incarnation: Identifier
+
+
+class ContextBootstrap(Contract):
+    pass
+
+
+class ContextBootstrapped(CurrentHumanContext):
+    csrf_token: Annotated[str, StringConstraints(min_length=43, max_length=43), Field(repr=False)]
+
+
+class SessionRevoke(Contract):
+    kind: Literal["identity.session.revoke.v1"] = "identity.session.revoke.v1"
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    target_session_id: Identifier
+    expected_security_version: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+
+
+class SessionRevokeRequest(SessionRevoke):
+    request_id: Identifier | None = None
+    request_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")] | None = None
+    nonce: Annotated[str, StringConstraints(min_length=43, max_length=43)] | None = None
+
+    @model_validator(mode="after")
+    def complete_confirmation(self) -> "SessionRevokeRequest":
+        if any(
+            value is not None for value in (self.request_id, self.request_hash, self.nonce)
+        ) and any(value is None for value in (self.request_id, self.request_hash, self.nonce)):
+            raise ValueError("Session confirmation requires its complete exact preview")
+        return self
+
+
+class SessionLogout(Contract):
+    kind: Literal["identity.session.logout.v1"] = "identity.session.logout.v1"
+    schema_version: SchemaVersion
+    idempotency_key: Identifier
+    expected_security_version: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+
+
+class SessionMutationReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    outcome: Literal["CANONICAL_COMMITTED"] = "CANONICAL_COMMITTED"
+    command: Literal["identity.session.revoke.v1", "identity.session.logout.v1"]
+    operation_id: Identifier
+    committed_at: str
+    session_id: Identifier
+    principal_id: Identifier
+    revoked: Literal[True]
+    security_version: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    request: SessionRevoke | SessionLogout
 
 
 class ProjectCreate(Contract):
@@ -536,6 +629,13 @@ class DomainError(Exception):
         self.code = code
         self.reason = reason
         super().__init__(reason)
+
+
+class RuntimeConfigurationUnavailable(DomainError):
+    """Missing current runtime eligibility, distinct from corrupt retained state."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__("DEPENDENCY_UNAVAILABLE", reason)
 
 
 ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
@@ -1243,4 +1343,69 @@ CanonicalReceipt = (
     | InstructionReceipt
     | GrantReceipt
     | DeploymentPolicyReceipt
+    | SessionMutationReceipt
 )
+
+
+class OperationIdentityResolve(Contract):
+    schema_version: SchemaVersion
+    command: Identifier
+    idempotency_key: Identifier
+    payload_digest: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    scope: Annotated[
+        dict[
+            str,
+            Annotated[str, StringConstraints(min_length=1, max_length=1024)]
+            | Annotated[list[Identifier], Field(max_length=128)],
+        ],
+        Field(max_length=16),
+    ]
+    store_incarnation: Identifier
+
+
+class IdentityObservation(Contract):
+    command: Identifier
+    store_incarnation: Identifier
+    absence_is_final: Literal[False] = False
+
+
+class ObservedOperationReceipt(IdentityObservation):
+    status: Literal["OBSERVED_RECEIPT"]
+    receipt: CanonicalReceipt
+
+
+class ObservedPendingOperation(IdentityObservation):
+    status: Literal["OBSERVED_PENDING"]
+    evidence_kind: str
+    evidence_id: Identifier
+    observed_state: str
+
+
+class ObservedUnknownOperation(IdentityObservation):
+    status: Literal["OBSERVED_UNKNOWN"]
+    evidence_kind: str
+    evidence_id: Identifier
+    observed_state: str
+
+
+class UnobservedOperation(IdentityObservation):
+    status: Literal["NOT_OBSERVED"]
+
+
+class ReconciliationRequired(IdentityObservation):
+    status: Literal["RECONCILIATION_REQUIRED"]
+
+
+class OperationIdentityResolution(
+    RootModel[
+        Annotated[
+            ObservedOperationReceipt
+            | ObservedPendingOperation
+            | ObservedUnknownOperation
+            | UnobservedOperation
+            | ReconciliationRequired,
+            Field(discriminator="status"),
+        ]
+    ]
+):
+    pass

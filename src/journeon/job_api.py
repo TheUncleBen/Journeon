@@ -6,7 +6,7 @@ from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import defer
 
 from journeon.api import authenticated_context
-from journeon.contracts import DomainError, ErrorEnvelope
+from journeon.contracts import DomainError, ErrorEnvelope, RuntimeConfigurationUnavailable
 from journeon.database import transaction
 from journeon.instruction_config import InstructionConfiguration
 from journeon.job_contracts import (
@@ -72,23 +72,23 @@ def replay(
                 )
             from journeon.registry import MODULES
 
-            if event.schema_version != 1 or event.event_type not in MODULES.get(
-                event.owner, {}
-            ).get("events_published", ()):
-                continue
             receipt = db.get(Receipt, event.operation_id, options=[defer(Receipt.result)])
             if receipt is None:
-                continue
-            if (event.owner, event.target_kind, event.target_id, event.project_id) != (
-                receipt.owner,
-                receipt.target_kind,
-                receipt.target_id,
-                receipt.project_id,
-            ):
                 continue
             try:
                 check_receipt_configuration(db, actor, receipt, engine, configuration)
                 result = authorized_receipt(db, actor, receipt)
+                if event.schema_version != 1 or event.event_type not in MODULES.get(
+                    event.owner, {}
+                ).get("events_published", ()):
+                    raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored event requires repair")
+                if (event.owner, event.target_kind, event.target_id, event.project_id) != (
+                    receipt.owner,
+                    receipt.target_kind,
+                    receipt.target_id,
+                    receipt.project_id,
+                ):
+                    raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored event requires repair")
                 from pydantic import TypeAdapter
 
                 from journeon.contracts import CanonicalReceipt
@@ -96,9 +96,17 @@ def replay(
                 adapter: TypeAdapter[CanonicalReceipt] = TypeAdapter(cast(Any, CanonicalReceipt))
                 retained = adapter.validate_python(event.payload)
                 if retained != result:
-                    continue
-            except (DomainError, ValueError):
+                    raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored event requires repair")
+            except RuntimeConfigurationUnavailable:
                 continue
+            except DomainError as error:
+                if error.code in {"PERMISSION_DENIED", "NOT_FOUND"}:
+                    continue
+                raise
+            except ValueError:
+                raise DomainError(
+                    "DEPENDENCY_UNAVAILABLE", "Stored event requires repair"
+                ) from None
             if len(events) == query.limit:
                 truncated = True
                 break

@@ -8,7 +8,14 @@ from sqlalchemy import Engine, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, defer
 
-from journeon.contracts import CanonicalReceipt, DomainError, PasskeyMutationReceipt
+from journeon.contracts import (
+    CanonicalReceipt,
+    DomainError,
+    OperationIdentityResolution,
+    OperationIdentityResolve,
+    PasskeyMutationReceipt,
+    RuntimeConfigurationUnavailable,
+)
 from journeon.database import require_compatible_schema, transaction
 from journeon.instruction_config import InstructionConfiguration
 from journeon.models import Passkey, Receipt
@@ -27,6 +34,10 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
     )
     if row.principal_id != actor.principal_id:
         raise DomainError("NOT_FOUND", "Operation is unavailable")
+    if row.owner == "identity" and row.target_kind == "browser_session":
+        from journeon.identity import authorized_session_receipt
+
+        return authorized_session_receipt(db, actor, row)
     if row.owner in {"permissions", "egress"}:
         from journeon.administration import authorized_receipt as administration_receipt
 
@@ -177,7 +188,7 @@ def check_receipt_configuration(
         authorize(db, actor, job, "receipt.read")
         if job.kind == "TASK_VERIFICATION":
             if configuration is None:
-                raise DomainError("DEPENDENCY_UNAVAILABLE", "Task dispatcher is not configured")
+                raise RuntimeConfigurationUnavailable("Task dispatcher is not configured")
             TaskDispatchService(engine, configuration).bound(db, actor, job)
     if row.owner == "work" and row.target_kind == "execution":
         from journeon.executions import ExecutionService, authorized_execution
@@ -208,6 +219,24 @@ class OperationService:
     ) -> None:
         self.engine = engine
         self.configuration = configuration
+
+    def resolve(
+        self, actor: AuthenticatedContext, query: OperationIdentityResolve
+    ) -> OperationIdentityResolution:
+        from journeon.operation_resolution import resolve_original
+
+        try:
+            with transaction(self.engine) as db:
+                require_compatible_schema(db)
+                return resolve_original(db, actor, query, self.engine, self.configuration)
+        except (ValidationError, json.JSONDecodeError):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Stored operation identity requires repair"
+            ) from None
+        except SQLAlchemyError:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "The operation store is unavailable"
+            ) from None
 
     def receipt(self, actor: AuthenticatedContext, operation_id: str) -> CanonicalReceipt:
         try:

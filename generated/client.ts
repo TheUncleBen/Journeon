@@ -131,6 +131,42 @@ export type BotView = {
   "visual_ref": string | null;
 };
 
+export type BrowserSessionContext = {
+  "absolute_deadline": number;
+  "audience": "unknown" | "official_browser";
+  "authentication_method": string;
+  "inactivity_seconds": number;
+  "issued_at": number;
+  "security_version": string;
+  "session_id": string;
+  "strong_authenticated_at": number | null;
+  "strong_freshness_seconds": number;
+};
+
+export type BrowserSessionItem = {
+  "absolute_deadline": number;
+  "audience": "unknown" | "official_browser";
+  "authentication_method": string;
+  "client_label": string;
+  "inactivity_seconds": number;
+  "issued_at": number;
+  "last_activity": number;
+  "principal_id": string;
+  "revoked": boolean;
+  "security_version": string;
+  "session_id": string;
+  "strong_authenticated_at": number | null;
+  "strong_freshness_seconds": number;
+};
+
+export type BrowserSessionPage = {
+  "has_more": boolean;
+  "items": Array<BrowserSessionItem>;
+  "next_cursor": string | null;
+  "observed_at": string;
+  "store_incarnation": string;
+};
+
 export type BundleOrigin = {
   "bot_id"?: string | null;
   "bot_revision"?: number | null;
@@ -237,6 +273,34 @@ export type ConfigurationReceipt = {
   "schema_version"?: 1;
   "target_id": string;
   "target_kind": "profile" | "bot" | "team" | "instruction_bundle";
+};
+
+export type ContextBootstrap = Record<string, never>;
+
+export type ContextBootstrapped = {
+  "csrf_token": string;
+  "dependencies": ContextDependencies;
+  "preference_revision": 0;
+  "preferences": null;
+  "principal_id": string;
+  "role": "OWNER" | "SHARED_USER";
+  "session": BrowserSessionContext;
+  "store_incarnation": string;
+};
+
+export type ContextDependencies = {
+  "display_preferences": "UNAVAILABLE";
+  "instruction_runtime": "CONFIGURED" | "UNCONFIGURED";
+};
+
+export type CurrentHumanContext = {
+  "dependencies": ContextDependencies;
+  "preference_revision": 0;
+  "preferences": null;
+  "principal_id": string;
+  "role": "OWNER" | "SHARED_USER";
+  "session": BrowserSessionContext;
+  "store_incarnation": string;
 };
 
 export type DeploymentPolicyReceipt = {
@@ -362,6 +426,25 @@ export type ExecutionReceipt = {
   "execution": ExecutionView;
   "operation_id": string;
   "outcome"?: "CANONICAL_COMMITTED";
+  "schema_version"?: 1;
+};
+
+export type ExecutionStart = {
+  "check_id": string;
+  "expected_policy_revision": number;
+  "idempotency_key": string;
+  "project_id": string;
+  "root_key": string;
+  "root_revision": number;
+  "route_key": string;
+  "route_revision": number;
+  "schema_version"?: 1;
+};
+
+export type ExecutionStop = {
+  "execution_id": string;
+  "expected_revision": number;
+  "idempotency_key": string;
   "schema_version"?: 1;
 };
 
@@ -686,13 +769,52 @@ export type LegacyPreview = {
   "unmapped": Array<string>;
 };
 
+export type ObservedOperationReceipt = {
+  "absence_is_final"?: false;
+  "command": string;
+  "receipt": ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | ReviewPolicyReceipt | ReviewTargetReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt | GrantReceipt | DeploymentPolicyReceipt | SessionMutationReceipt;
+  "status": "OBSERVED_RECEIPT";
+  "store_incarnation": string;
+};
+
+export type ObservedPendingOperation = {
+  "absence_is_final"?: false;
+  "command": string;
+  "evidence_id": string;
+  "evidence_kind": string;
+  "observed_state": string;
+  "status": "OBSERVED_PENDING";
+  "store_incarnation": string;
+};
+
+export type ObservedUnknownOperation = {
+  "absence_is_final"?: false;
+  "command": string;
+  "evidence_id": string;
+  "evidence_kind": string;
+  "observed_state": string;
+  "status": "OBSERVED_UNKNOWN";
+  "store_incarnation": string;
+};
+
 export type OfficialPreview = {
   "deadline": number;
-  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan | GrantSet | GrantRevoke | PolicyInitialize;
+  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan | GrantSet | SessionRevoke | GrantRevoke | PolicyInitialize;
   "nonce": string;
   "provenance"?: "OFFICIAL_EXACT_EFFECT";
   "request_hash": string;
   "request_id": string;
+};
+
+export type OperationIdentityResolution = ObservedOperationReceipt | ObservedPendingOperation | ObservedUnknownOperation | UnobservedOperation | ReconciliationRequired;
+
+export type OperationIdentityResolve = {
+  "command": string;
+  "idempotency_key": string;
+  "payload_digest": string;
+  "schema_version": 1;
+  "scope": Record<string, string | Array<string>>;
+  "store_incarnation": string;
 };
 
 export type OperationReceipt = {
@@ -907,14 +1029,14 @@ export type ProjectionView = {
   "status": "MATCH" | "DRIFT" | "UNMANAGED" | "ABSENT";
 };
 
-export type ProtectedEffectResult = InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt;
+export type ProtectedEffectResult = InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt | SessionMutationReceipt;
 
 export type ProtectedIdentity = {
   "request_id": string;
 };
 
 export type ProtectedPrepare = {
-  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan | GrantSet | GrantRevoke | PolicyInitialize;
+  "effect": RootAdmit | RootRevoke | PolicyConfigure | CandidateRegister | ReleaseInstall | InstructionChangeConsent | PublicationRecovery | RestorePlan | GrantSet | SessionRevoke | GrantRevoke | PolicyInitialize;
 };
 
 export type ProtectedState = {
@@ -941,6 +1063,13 @@ export type PublicationRecovery = {
   "publication_hash": string;
   "root_revisions": Array<RecoveryRootRevision>;
   "target_hash": string;
+};
+
+export type ReconciliationRequired = {
+  "absence_is_final"?: false;
+  "command": string;
+  "status": "RECONCILIATION_REQUIRED";
+  "store_incarnation": string;
 };
 
 export type RecoveryInspect = {
@@ -1173,6 +1302,45 @@ export type RunManifest = {
   "workspace_revision": number;
 };
 
+export type SessionLogout = {
+  "expected_security_version": string;
+  "idempotency_key": string;
+  "kind"?: "identity.session.logout.v1";
+  "schema_version": 1;
+};
+
+export type SessionMutationReceipt = {
+  "command": "identity.session.revoke.v1" | "identity.session.logout.v1";
+  "committed_at": string;
+  "operation_id": string;
+  "outcome"?: "CANONICAL_COMMITTED";
+  "principal_id": string;
+  "request": SessionRevoke | SessionLogout;
+  "revoked": true;
+  "schema_version"?: 1;
+  "security_version": string;
+  "session_id": string;
+};
+
+export type SessionRevoke = {
+  "expected_security_version": string;
+  "idempotency_key": string;
+  "kind"?: "identity.session.revoke.v1";
+  "schema_version": 1;
+  "target_session_id": string;
+};
+
+export type SessionRevokeRequest = {
+  "expected_security_version": string;
+  "idempotency_key": string;
+  "kind"?: "identity.session.revoke.v1";
+  "nonce"?: string | null;
+  "request_hash"?: string | null;
+  "request_id"?: string | null;
+  "schema_version": 1;
+  "target_session_id": string;
+};
+
 export type SourceEntry = {
   "byte_count": number;
   "content_hash": string;
@@ -1379,6 +1547,13 @@ export type TeamView = {
   "team_id": string;
 };
 
+export type UnobservedOperation = {
+  "absence_is_final"?: false;
+  "command": string;
+  "status": "NOT_OBSERVED";
+  "store_incarnation": string;
+};
+
 export type VariableBinding = {
   "asset_id": string;
   "name": string;
@@ -1451,7 +1626,7 @@ export type WorkflowTemplates = {
   "templates": Array<WorkflowTemplate>;
 };
 
-export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | ReviewPolicyReceipt | ReviewTargetReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt | GrantReceipt | DeploymentPolicyReceipt;
+export type CanonicalReceipt = ExecutionReceipt | AttemptReceipt | VerificationPolicyReceipt | ReviewPolicyReceipt | ReviewTargetReceipt | RestoreReceipt | JobReceipt | OperationReceipt | PasskeyMutationReceipt | TaskReceipt | ConfigurationReceipt | InstructionReceipt | GrantReceipt | DeploymentPolicyReceipt | SessionMutationReceipt;
 
 export class JourneonError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
@@ -1472,6 +1647,12 @@ export class JourneonClient {
     return body as T;
   }
 
+  getCurrentContext(): Promise<CurrentHumanContext> { return this.request('/api/v1/auth/context', {method: 'GET'}); }
+  bootstrapCurrentContext(): Promise<ContextBootstrapped> { return this.request('/api/v1/auth/context/bootstrap', {method: 'POST', body: '{}'}); }
+  listBrowserSessions(limit: number, cursor?: string): Promise<BrowserSessionPage> { const query = new URLSearchParams({limit: String(limit)}); if (cursor !== undefined) query.set('cursor', cursor); return this.request(`/api/v1/auth/sessions?${query}`, {method: 'GET'}); }
+  revokeBrowserSession(command: SessionRevokeRequest, csrfToken: string): Promise<SessionMutationReceipt> { return this.request('/api/v1/auth/sessions/revoke', {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
+  logoutBrowserSession(command: SessionLogout, csrfToken: string): Promise<SessionMutationReceipt> { return this.request('/api/v1/auth/logout', {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
+  resolveOperationIdentity(command: OperationIdentityResolve, csrfToken: string): Promise<OperationIdentityResolution> { return this.request('/api/v1/operations/resolve', {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
   inspectInstructionRoot(command: RootInspect, csrfToken: string): Promise<RootObservation> {
     return this.request(`/api/v1/project-roots/inspect`, {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)});
   }
@@ -1738,4 +1919,289 @@ export class JourneonClient {
     return this.request(`/api/v1/operations/${encodeURIComponent(operationId)}`,
       {method: "GET"});
   }
+}
+
+type DigestSchema = {
+  type?: string; trim?: boolean; model?: string; literal?: unknown[];
+  union?: DigestSchema[]; array?: DigestSchema; map?: DigestSchema;
+  fields?: Record<string, {schema: DigestSchema; default?: unknown}>;
+};
+
+function digestKeyOrder(left: string, right: string): number {
+  const a = Array.from(left, c => c.codePointAt(0)!);
+  const b = Array.from(right, c => c.codePointAt(0)!);
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    if (a[i] !== b[i]) return a[i] - b[i];
+  }
+  return a.length - b.length;
+}
+
+function digestString(value: string): string {
+  for (const character of value) {
+    const point = character.codePointAt(0)!;
+    if (point >= 0xd800 && point <= 0xdfff) {
+      throw new TypeError("Command contains an unpaired surrogate");
+    }
+  }
+  return JSON.stringify(value);
+}
+
+function digestFloat(value: number): string {
+  if (!Number.isFinite(value)) throw new TypeError("Command numbers must be finite");
+  // JSON command transport writes either signed zero as 0 before Python normalization.
+  if (value === 0) return "0.0";
+  const [mantissa, exponent] = value.toExponential().split("e");
+  const power = Number(exponent);
+  if (power >= -4 && power < 16) {
+    const text = value.toString();
+    return text.includes(".") ? text : text + ".0";
+  }
+  return mantissa + "e" + (power < 0 ? "-" : "+") + String(Math.abs(power)).padStart(2, "0");
+}
+
+function digestValue(
+  schema: DigestSchema, value: unknown, excluded: string[] = [], sort: string | null = null,
+): string {
+  if (schema.model) return digestValue(digestModels[schema.model], value, excluded, sort);
+  if (schema.union) {
+    for (const member of schema.union) {
+      try { return digestValue(member, value); }
+      catch (error) { if (!(error instanceof TypeError)) throw error; }
+    }
+    throw new TypeError("Command value does not match its declared variants");
+  }
+  if (schema.literal) {
+    if (!schema.literal.some(item => item === value)) {
+      throw new TypeError("Command literal is invalid");
+    }
+    return JSON.stringify(value);
+  }
+  if (schema.type === "null" && value === null) return "null";
+  if (schema.type === "boolean" && typeof value === "boolean") return JSON.stringify(value);
+  if (schema.type === "string" && typeof value === "string") {
+    if (schema.trim) {
+      const spaces = "[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a"
+        + "\u2028\u2029\u202f\u205f\u3000]";
+      value = value.replace(new RegExp("^" + spaces + "+|" + spaces + "+$", "g"), "");
+    }
+    return digestString(value as string);
+  }
+  if (schema.type === "integer" && typeof value === "number" && Number.isInteger(value)) {
+    const wire = JSON.stringify(value);
+    if (!/[eE]/.test(wire)) return wire;
+    throw new TypeError("Command integer has no exact integer JSON transport token");
+  }
+  if (schema.type === "float" && typeof value === "number") return digestFloat(value);
+  if (schema.array && Array.isArray(value)) {
+    return "[" + Array.from(value, item => digestValue(schema.array!, item)).join(",") + "]";
+  }
+  if ((schema.fields || schema.map) && value !== null
+      && typeof value === "object" && !Array.isArray(value)) {
+    const input = value as Record<string, unknown>;
+    const prototype = Object.getPrototypeOf(input);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new TypeError("Command objects must contain plain JSON data");
+    }
+    if (schema.fields && Object.keys(input).some(key =>
+        !Object.hasOwn(schema.fields!, key) && !excluded.includes(key))) {
+      throw new TypeError("Command contains an unknown field");
+    }
+    const keys = Object.keys(schema.fields ?? input)
+      .filter(key => !excluded.includes(key)).sort(digestKeyOrder);
+    return "{" + keys.map(key => {
+      const field = schema.fields?.[key];
+      let item = Object.hasOwn(input, key) && input[key] !== undefined
+        ? input[key] : field?.default;
+      if (item === undefined) throw new TypeError("Command is missing a required field");
+      if (key === sort && Array.isArray(item)) item = [...item].sort(digestKeyOrder);
+      return digestString(key) + ":" + digestValue(field?.schema ?? schema.map!, item);
+    }).join(",") + "}";
+  }
+  throw new TypeError("Command value cannot be represented by its canonical input type");
+}
+
+async function commandDigest(
+  model: string, command: object, excluded: string[], sort: string | null,
+): Promise<string> {
+  const bytes = new TextEncoder().encode(digestValue({model}, command, excluded, sort));
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+const digestModels: Record<string, DigestSchema> = {"AttemptPrepare":{"fields":{"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"origin":{"schema":{"union":[{"model":"TaskAttemptOrigin"},{"model":"JobAttemptOrigin"}]}},"previous_attempt_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"project_id":{"schema":{"type":"string"}},"schema_version":{"schema":{"literal":[1]}},"workspace_key":{"schema":{"type":"string"}},"workspace_revision":{"schema":{"type":"integer"}}}},"BotCreate":{"fields":{"additive":{"schema":{"model":"InstructionTemplate"}},"expected_profile_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"memory_enabled":{"schema":{"type":"boolean"}},"name":{"schema":{"trim":true,"type":"string"}},"overrides":{"schema":{"model":"Preferences"}},"profile_id":{"schema":{"type":"string"}}}},"BotImpact":{"fields":{"baseline_changed":{"schema":{"type":"boolean"}},"bot_id":{"schema":{"type":"string"}},"changed_inherited_fields":{"schema":{"array":{"literal":["harness","model","provider","host"]}}},"revision":{"schema":{"type":"integer"}}}},"BotRevise":{"fields":{"additive":{"schema":{"model":"InstructionTemplate"}},"bot_id":{"schema":{"type":"string"}},"expected_hash":{"schema":{"type":"string"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"name":{"schema":{"trim":true,"type":"string"}},"overrides":{"schema":{"model":"Preferences"}},"reason":{"schema":{"trim":true,"type":"string"}},"reset_to_inherit":{"schema":{"array":{"literal":["harness","model","provider","host"]}}},"visual_ref":{"schema":{"union":[{"type":"string"},{"type":"null"}]}}}},"BundleOrigin":{"fields":{"bot_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"bot_revision":{"default":null,"schema":{"union":[{"type":"integer"},{"type":"null"}]}},"kind":{"schema":{"literal":["NAMED_BOT","ONE_OFF_PROFILE"]}},"source_id":{"schema":{"type":"string"}},"source_kind":{"schema":{"literal":["CHAT","TASK_ATTEMPT","OTHER"]}},"task_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}}}},"BundleResolve":{"fields":{"components":{"schema":{"array":{"model":"ComponentRef"}}},"idempotency_key":{"schema":{"type":"string"}},"origin":{"schema":{"model":"BundleOrigin"}},"profile_id":{"schema":{"type":"string"}},"profile_revision":{"schema":{"type":"integer"}},"project_id":{"schema":{"type":"string"}},"project_revision":{"schema":{"type":"integer"}},"variables":{"schema":{"array":{"model":"VariableBinding"}}}}},"CandidateRegister":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"instruction.candidate.register.v1","schema":{"literal":["instruction.candidate.register.v1"]}},"manifest_digest":{"schema":{"type":"string"}}}},"ComponentRef":{"fields":{"asset_id":{"schema":{"type":"string"}},"content_hash":{"schema":{"type":"string"}},"revision":{"schema":{"type":"integer"}}}},"Document":{"fields":{"content":{"schema":{"type":"string"}},"path":{"schema":{"type":"string"}}}},"ExecutionStart":{"fields":{"check_id":{"schema":{"type":"string"}},"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"root_key":{"schema":{"type":"string"}},"root_revision":{"schema":{"type":"integer"}},"route_key":{"schema":{"type":"string"}},"route_revision":{"schema":{"type":"integer"}},"schema_version":{"default":1,"schema":{"literal":[1]}}}},"ExecutionStop":{"fields":{"execution_id":{"schema":{"type":"string"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"schema_version":{"default":1,"schema":{"literal":[1]}}}},"GrantRevoke":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"grant_id":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"permission.grant.revoke.v1","schema":{"literal":["permission.grant.revoke.v1"]}},"schema_version":{"schema":{"literal":[1]}}}},"GrantSet":{"fields":{"capability":{"schema":{"type":"string"}},"enabled":{"schema":{"type":"boolean"}},"expected_revision":{"schema":{"type":"integer"}},"expires_at":{"schema":{"union":[{"type":"string"},{"type":"null"}]}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"permission.grant.set.v1","schema":{"literal":["permission.grant.set.v1"]}},"principal_id":{"schema":{"type":"string"}},"resource_id":{"schema":{"type":"string"}},"resource_kind":{"schema":{"literal":["deployment","project","profile","bot","team","instruction_bundle","legacy_collection"]}},"schema_version":{"schema":{"literal":[1]}}}},"HistorySelection":{"fields":{"project_id":{"schema":{"type":"string"}},"revisions":{"schema":{"array":{"type":"integer"}}}}},"InstructionAccept":{"fields":{"candidate_hash":{"schema":{"type":"string"}},"candidate_id":{"schema":{"type":"string"}},"consent_request_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"eval_ids":{"schema":{"array":{"type":"string"}}},"expected_binding_revision":{"schema":{"type":"integer"}},"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"review_ids":{"schema":{"array":{"type":"string"}}}}},"InstructionBind":{"fields":{"documents":{"schema":{"array":{"model":"Document"}}},"expected_binding_revision":{"schema":{"type":"integer"}},"expected_project_revision":{"schema":{"type":"integer"}},"expected_root_revision":{"schema":{"type":"integer"}},"expected_tree_hash":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"owner":{"schema":{"literal":["ENVIRONMENT","PROJECT"]}},"project_id":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"required_fragments":{"schema":{"array":{"type":"string"}}},"root_id":{"schema":{"type":"string"}}}},"InstructionChangeConsent":{"fields":{"candidate_hash":{"schema":{"type":"string"}},"candidate_id":{"schema":{"type":"string"}},"eval_ids":{"schema":{"array":{"type":"string"}}},"expected_binding_revision":{"schema":{"type":"integer"}},"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"project.instructions.accept.v1","schema":{"literal":["project.instructions.accept.v1"]}},"project_id":{"schema":{"type":"string"}},"review_ids":{"schema":{"array":{"type":"string"}}}}},"InstructionPolicy":{"fields":{"authorized_categories":{"schema":{"array":{"literal":["NAVIGATION_REPAIR","ORDINARY","SECURITY","DEPLOYMENT","PERMISSIONS","DESTRUCTIVE","ARCHITECTURE","GLOSSARY"]}}},"independent_review":{"schema":{"type":"boolean"}},"navigation_repairs":{"schema":{"type":"boolean"}},"require_confirmation":{"schema":{"type":"boolean"}},"required_evals":{"schema":{"array":{"literal":["instruction-boundaries-v1"]}}}}},"InstructionPropose":{"fields":{"category":{"schema":{"literal":["NAVIGATION_REPAIR","ORDINARY","SECURITY","DEPLOYMENT","PERMISSIONS","DESTRUCTIVE","ARCHITECTURE","GLOSSARY"]}},"documents":{"schema":{"array":{"model":"Document"}}},"expected_revision":{"schema":{"type":"integer"}},"expected_tree_hash":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"required_fragments":{"schema":{"array":{"type":"string"}}},"source_refs":{"schema":{"array":{"type":"string"}}}}},"InstructionRestore":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"expected_tree_hash":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"revision":{"schema":{"type":"integer"}}}},"InstructionReview":{"fields":{"candidate_hash":{"schema":{"type":"string"}},"candidate_id":{"schema":{"type":"string"}},"coverage":{"schema":{"trim":true,"type":"string"}},"expected_binding_revision":{"schema":{"type":"integer"}},"expected_policy_revision":{"schema":{"type":"integer"}},"findings":{"schema":{"array":{"trim":true,"type":"string"}}},"idempotency_key":{"schema":{"type":"string"}},"limitations":{"schema":{"trim":true,"type":"string"}},"project_id":{"schema":{"type":"string"}},"verdict":{"schema":{"literal":["PASS","FAIL"]}}}},"InstructionTemplate":{"fields":{"eval_ids":{"schema":{"array":{"type":"string"}}},"required_variables":{"schema":{"array":{"type":"string"}}},"template":{"schema":{"type":"string"}},"template_id":{"schema":{"type":"string"}}}},"JobAttemptOrigin":{"fields":{"job_id":{"schema":{"type":"string"}},"job_revision":{"schema":{"type":"integer"}},"kind":{"schema":{"literal":["JOB"]}}}},"PasskeyLabelCommand":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"label":{"schema":{"trim":true,"type":"string"}},"passkey_id":{"schema":{"type":"string"}},"schema_version":{"schema":{"literal":[1]}}}},"PolicyConfigure":{"fields":{"expected_binding_revision":{"schema":{"type":"integer"}},"expected_policy_revision":{"schema":{"type":"integer"}},"expected_project_revision":{"schema":{"type":"integer"}},"expected_root_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"project.instructions.policy.configure.v1","schema":{"literal":["project.instructions.policy.configure.v1"]}},"policy":{"schema":{"model":"InstructionPolicy"}},"project_id":{"schema":{"type":"string"}}}},"PolicyInitialize":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"egress.policy.initialize.v1","schema":{"literal":["egress.policy.initialize.v1"]}},"provider_mode":{"schema":{"literal":["LOCAL_ONLY"]}},"schema_version":{"schema":{"literal":[1]}}}},"Preferences":{"fields":{"harness":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"host":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"model":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"provider":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}}}},"ProfileCreate":{"fields":{"baseline":{"schema":{"model":"InstructionTemplate"}},"eligibility":{"schema":{"array":{"type":"string"}}},"idempotency_key":{"schema":{"type":"string"}},"name":{"schema":{"trim":true,"type":"string"}},"preferences":{"schema":{"model":"Preferences"}},"visual_ref":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}}}},"ProfileRevise":{"fields":{"baseline":{"schema":{"model":"InstructionTemplate"}},"eligibility":{"schema":{"array":{"type":"string"}}},"expected_affected_bots":{"schema":{"array":{"model":"BotImpact"}}},"expected_hash":{"schema":{"type":"string"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"name":{"schema":{"trim":true,"type":"string"}},"preferences":{"schema":{"model":"Preferences"}},"preview_digest":{"schema":{"type":"string"}},"profile_id":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"visual_ref":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}}}},"ProjectCreate":{"fields":{"description":{"default":"","schema":{"type":"string"}},"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"name":{"schema":{"trim":true,"type":"string"}},"provider_mode":{"default":"INHERIT","schema":{"literal":["INHERIT","NARROW","LOCAL_ONLY"]}},"schema_version":{"schema":{"literal":[1]}},"selected_providers":{"default":null,"schema":{"union":[{"array":{"type":"string"}},{"type":"null"}]}}}},"ProjectionCommand":{"fields":{"expected_observed_hash":{"schema":{"union":[{"type":"string"},{"type":"null"}]}},"expected_revision":{"schema":{"type":"integer"}},"expected_root_revision":{"schema":{"type":"integer"}},"filename":{"schema":{"literal":["AGENTS.md","CLAUDE.md","GEMINI.md"]}},"format_version":{"default":1,"schema":{"literal":[1]}},"idempotency_key":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"root_id":{"schema":{"type":"string"}}}},"PublicationRecovery":{"fields":{"disposition":{"schema":{"literal":["FINISH_TARGET","RESTORE_BASE"]}},"expected_binding_revision":{"schema":{"type":"integer"}},"expected_generation":{"schema":{"type":"integer"}},"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"project.instructions.recover.v1","schema":{"literal":["project.instructions.recover.v1"]}},"operation_id":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"publication_hash":{"schema":{"type":"string"}},"root_revisions":{"schema":{"array":{"model":"RecoveryRootRevision"}}},"target_hash":{"schema":{"type":"string"}}}},"RecoveryRootRevision":{"fields":{"revision":{"schema":{"type":"integer"}},"root_id":{"schema":{"type":"string"}}}},"ReleaseInstall":{"fields":{"evidence_id":{"schema":{"type":"string"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"instruction.release.install.v1","schema":{"literal":["instruction.release.install.v1"]}},"manifest_digest":{"schema":{"type":"string"}}}},"RestorePlan":{"fields":{"current_versions_hash":{"schema":{"type":"string"}},"data_class":{"schema":{"literal":["PROJECT_INSTRUCTION_HISTORY"]}},"dependencies_hash":{"schema":{"type":"string"}},"destination":{"schema":{"type":"string"}},"destination_path":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"incarnation":{"schema":{"type":"string"}},"kind":{"default":"lifecycle.restore.authorize.v1","schema":{"literal":["lifecycle.restore.authorize.v1"]}},"platform":{"schema":{"type":"string"}},"schema_revision":{"schema":{"type":"string"}},"security_effect":{"default":"PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY","schema":{"literal":["PRESERVE_CURRENT_DENY_OLD_PENDING_AUTHORITY"]}},"selection":{"schema":{"array":{"model":"HistorySelection"}}},"snapshot":{"schema":{"type":"string"}},"snapshot_hash":{"schema":{"type":"string"}},"source_path":{"schema":{"type":"string"}},"store_id":{"schema":{"type":"string"}}}},"ReviewPolicyConfigure":{"fields":{"automatic_round_limit":{"schema":{"union":[{"type":"integer"},{"type":"null"}]}},"expected_policy_revision":{"schema":{"type":"integer"}},"expected_project_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"independent_review_required":{"schema":{"type":"boolean"}},"material_severities":{"schema":{"array":{"type":"string"}}},"minimum_independence":{"schema":{"array":{"literal":["FRESH_SESSION","DISTINCT_AGENT","DISTINCT_MODEL_FAMILY","DISTINCT_PROVIDER","DISTINCT_HARNESS"]}}},"owner_override_severities":{"schema":{"array":{"type":"string"}}},"preferred_diversity":{"schema":{"array":{"literal":["FRESH_SESSION","DISTINCT_AGENT","DISTINCT_MODEL_FAMILY","DISTINCT_PROVIDER","DISTINCT_HARNESS"]}}},"project_id":{"schema":{"type":"string"}},"required_coverage":{"schema":{"array":{"type":"string"}}},"schema_version":{"schema":{"literal":[1]}},"stop_on_cycle":{"schema":{"type":"boolean"}},"stop_on_unchanged_target":{"schema":{"type":"boolean"}}}},"ReviewTargetSelect":{"fields":{"attempt_id":{"schema":{"type":"string"}},"expected_review_policy_revision":{"schema":{"type":"integer"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"schema_version":{"schema":{"literal":[1]}},"task_id":{"schema":{"type":"string"}}}},"RootAdmit":{"fields":{"config_revision":{"schema":{"type":"integer"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"inspection_digest":{"schema":{"type":"string"}},"kind":{"default":"project.root.admit.v1","schema":{"literal":["project.root.admit.v1"]}},"root_key":{"schema":{"type":"string"}}}},"RootRevoke":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"project.root.revoke.v1","schema":{"literal":["project.root.revoke.v1"]}},"root_id":{"schema":{"type":"string"}}}},"SessionLogout":{"fields":{"expected_security_version":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"identity.session.logout.v1","schema":{"literal":["identity.session.logout.v1"]}},"schema_version":{"schema":{"literal":[1]}}}},"SessionRevoke":{"fields":{"expected_security_version":{"schema":{"type":"string"}},"idempotency_key":{"schema":{"type":"string"}},"kind":{"default":"identity.session.revoke.v1","schema":{"literal":["identity.session.revoke.v1"]}},"schema_version":{"schema":{"literal":[1]}},"target_session_id":{"schema":{"type":"string"}}}},"TaskAdmission":{"fields":{"expected_policy_revision":{"schema":{"type":"integer"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"schema_version":{"schema":{"literal":[1]}},"task_id":{"schema":{"type":"string"}}}},"TaskAssign":{"fields":{"bot_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"contributor":{"default":false,"schema":{"type":"boolean"}},"expected_bot_revision":{"default":null,"schema":{"union":[{"type":"integer"},{"type":"null"}]}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"responsibility":{"schema":{"literal":["BOT","HUMAN","UNASSIGNED"]}},"schema_version":{"schema":{"literal":[1]}},"task_id":{"schema":{"type":"string"}}}},"TaskAttemptOrigin":{"fields":{"kind":{"schema":{"literal":["TASK"]}},"task_id":{"schema":{"type":"string"}},"task_revision":{"schema":{"type":"integer"}}}},"TaskComplete":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"schema_version":{"schema":{"literal":[1]}},"target_digest":{"schema":{"type":"string"}},"target_id":{"schema":{"type":"string"}},"task_id":{"schema":{"type":"string"}}}},"TaskControl":{"fields":{"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"schema_version":{"schema":{"literal":[1]}},"task_id":{"schema":{"type":"string"}}}},"TaskCreate":{"fields":{"dependencies":{"default":[],"schema":{"array":{"type":"string"}}},"expected_project_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"objective":{"schema":{"trim":true,"type":"string"}},"project_id":{"schema":{"type":"string"}},"responsibility":{"schema":{"literal":["HUMAN","UNASSIGNED"]}},"schema_version":{"schema":{"literal":[1]}},"success_conditions":{"default":[],"schema":{"array":{"trim":true,"type":"string"}}}}},"TaskDispatch":{"fields":{"attempt_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"expected_policy_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"origin":{"schema":{"model":"TaskAttemptOrigin"}},"previous_attempt_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"project_id":{"schema":{"type":"string"}},"route_key":{"schema":{"type":"string"}},"route_revision":{"schema":{"type":"integer"}},"schema_version":{"schema":{"literal":[1]}},"step_id":{"schema":{"type":"string"}},"workspace_key":{"schema":{"type":"string"}},"workspace_revision":{"schema":{"type":"integer"}}}},"TaskRevise":{"fields":{"expected_policy_revision":{"schema":{"type":"integer"}},"expected_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"reason":{"schema":{"trim":true,"type":"string"}},"schema_version":{"schema":{"literal":[1]}},"success_conditions":{"schema":{"array":{"trim":true,"type":"string"}}},"task_id":{"schema":{"type":"string"}},"workflow":{"schema":{"model":"TaskWorkflow"}}}},"TaskWorkflow":{"fields":{"loops":{"default":[],"schema":{"array":{"model":"WorkflowLoop"}}},"steps":{"schema":{"array":{"model":"WorkflowStep"}}}}},"TeamCreate":{"fields":{"idempotency_key":{"schema":{"type":"string"}},"lead_key":{"schema":{"type":"string"}},"members":{"schema":{"array":{"model":"TeamMember"}}},"name":{"schema":{"trim":true,"type":"string"}}}},"TeamMember":{"fields":{"bot":{"schema":{"model":"BotCreate"}},"key":{"schema":{"type":"string"}}}},"VariableBinding":{"fields":{"asset_id":{"schema":{"type":"string"}},"name":{"schema":{"type":"string"}},"value":{"schema":{"type":"string"}}}},"VerificationCheck":{"fields":{"argv":{"schema":{"array":{"trim":true,"type":"string"}}},"check_id":{"schema":{"type":"string"}},"criterion":{"schema":{"trim":true,"type":"string"}},"expected_exit_code":{"schema":{"type":"integer"}},"working_directory":{"schema":{"trim":true,"type":"string"}}}},"VerificationPolicyConfigure":{"fields":{"checks":{"schema":{"array":{"model":"VerificationCheck"}}},"enabled":{"schema":{"type":"boolean"}},"expected_policy_revision":{"schema":{"type":"integer"}},"expected_project_revision":{"schema":{"type":"integer"}},"idempotency_key":{"schema":{"type":"string"}},"project_id":{"schema":{"type":"string"}},"required_capabilities":{"default":[],"schema":{"array":{"type":"string"}}},"required_services":{"default":[],"schema":{"array":{"literal":["NATIVE","RESOURCE","SKILL","CONNECTION","TOOL"]}}},"schema_version":{"schema":{"literal":[1]}},"workflow":{"schema":{"model":"TaskWorkflow"}}}},"WorkflowLoop":{"fields":{"maximum_iterations":{"schema":{"type":"integer"}},"steps":{"schema":{"array":{"type":"string"}}}}},"WorkflowStep":{"fields":{"check_id":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"condition_operator":{"default":"EQ","schema":{"literal":["EQ","LT","LE","GT","GE"]}},"condition_step":{"default":null,"schema":{"union":[{"type":"string"},{"type":"null"}]}},"condition_value":{"default":null,"schema":{"union":[{"type":"boolean"},{"trim":true,"type":"string"},{"type":"float"},{"type":"null"}]}},"dependencies":{"default":[],"schema":{"array":{"type":"string"}}},"kind":{"schema":{"literal":["WORK","CONDITION","APPROVAL","VERIFICATION","REVIEW"]}},"step_id":{"schema":{"type":"string"}}}}};
+
+export function digestAttemptPrepare(command: AttemptPrepare): Promise<string> {
+  return commandDigest("AttemptPrepare", command, ["idempotency_key"], null);
+}
+
+export function digestBotCreate(command: BotCreate): Promise<string> {
+  return commandDigest("BotCreate", command, ["idempotency_key"], null);
+}
+
+export function digestBotRevise(command: BotRevise): Promise<string> {
+  return commandDigest("BotRevise", command, ["idempotency_key"], null);
+}
+
+export function digestBundleResolve(command: BundleResolve): Promise<string> {
+  return commandDigest("BundleResolve", command, ["idempotency_key"], null);
+}
+
+export function digestCandidateRegister(command: CandidateRegister): Promise<string> {
+  return commandDigest("CandidateRegister", command, [], null);
+}
+
+export function digestExecutionStart(command: ExecutionStart): Promise<string> {
+  return commandDigest("ExecutionStart", command, ["idempotency_key"], null);
+}
+
+export function digestExecutionStop(command: ExecutionStop): Promise<string> {
+  return commandDigest("ExecutionStop", command, ["idempotency_key"], null);
+}
+
+export function digestGrantRevoke(command: GrantRevoke): Promise<string> {
+  return commandDigest("GrantRevoke", command, [], null);
+}
+
+export function digestGrantRevokeConfirmed(command: GrantRevokeConfirmed): Promise<string> {
+  return commandDigest("GrantRevoke", command, ["nonce", "request_hash", "request_id"], null);
+}
+
+export function digestGrantSet(command: GrantSet): Promise<string> {
+  return commandDigest("GrantSet", command, [], null);
+}
+
+export function digestGrantSetConfirmed(command: GrantSetConfirmed): Promise<string> {
+  return commandDigest("GrantSet", command, ["nonce", "request_hash", "request_id"], null);
+}
+
+export function digestInstructionAccept(command: InstructionAccept): Promise<string> {
+  return commandDigest("InstructionAccept", command, [], null);
+}
+
+export function digestInstructionBind(command: InstructionBind): Promise<string> {
+  return commandDigest("InstructionBind", command, [], null);
+}
+
+export function digestInstructionChangeConsent(command: InstructionChangeConsent): Promise<string> {
+  return commandDigest("InstructionChangeConsent", command, [], null);
+}
+
+export function digestInstructionPropose(command: InstructionPropose): Promise<string> {
+  return commandDigest("InstructionPropose", command, [], null);
+}
+
+export function digestInstructionRestore(command: InstructionRestore): Promise<string> {
+  return commandDigest("InstructionRestore", command, [], null);
+}
+
+export function digestInstructionReview(command: InstructionReview): Promise<string> {
+  return commandDigest("InstructionReview", command, [], null);
+}
+
+export function digestPasskeyLabelCommand(command: PasskeyLabelCommand): Promise<string> {
+  return commandDigest("PasskeyLabelCommand", command, ["idempotency_key"], null);
+}
+
+export function digestPolicyConfigure(command: PolicyConfigure): Promise<string> {
+  return commandDigest("PolicyConfigure", command, [], null);
+}
+
+export function digestPolicyInitialize(command: PolicyInitialize): Promise<string> {
+  return commandDigest("PolicyInitialize", command, [], null);
+}
+
+export function digestPolicyInitializeConfirmed(command: PolicyInitializeConfirmed): Promise<string> {
+  return commandDigest("PolicyInitialize", command, ["nonce", "request_hash", "request_id"], null);
+}
+
+export function digestProfileCreate(command: ProfileCreate): Promise<string> {
+  return commandDigest("ProfileCreate", command, ["idempotency_key"], null);
+}
+
+export function digestProfileRevise(command: ProfileRevise): Promise<string> {
+  return commandDigest("ProfileRevise", command, ["idempotency_key"], null);
+}
+
+export function digestProjectCreate(command: ProjectCreate): Promise<string> {
+  return commandDigest("ProjectCreate", command, ["idempotency_key"], "selected_providers");
+}
+
+export function digestProjectionCommand(command: ProjectionCommand): Promise<string> {
+  return commandDigest("ProjectionCommand", command, [], null);
+}
+
+export function digestPublicationRecovery(command: PublicationRecovery): Promise<string> {
+  return commandDigest("PublicationRecovery", command, [], null);
+}
+
+export function digestReleaseInstall(command: ReleaseInstall): Promise<string> {
+  return commandDigest("ReleaseInstall", command, [], null);
+}
+
+export function digestRestorePlan(command: RestorePlan): Promise<string> {
+  return commandDigest("RestorePlan", command, [], null);
+}
+
+export function digestReviewPolicyConfigure(command: ReviewPolicyConfigure): Promise<string> {
+  return commandDigest("ReviewPolicyConfigure", command, ["idempotency_key"], null);
+}
+
+export function digestReviewTargetSelect(command: ReviewTargetSelect): Promise<string> {
+  return commandDigest("ReviewTargetSelect", command, ["idempotency_key"], null);
+}
+
+export function digestRootAdmit(command: RootAdmit): Promise<string> {
+  return commandDigest("RootAdmit", command, [], null);
+}
+
+export function digestRootRevoke(command: RootRevoke): Promise<string> {
+  return commandDigest("RootRevoke", command, [], null);
+}
+
+export function digestSessionLogout(command: SessionLogout): Promise<string> {
+  return commandDigest("SessionLogout", command, [], null);
+}
+
+export function digestSessionRevoke(command: SessionRevoke): Promise<string> {
+  return commandDigest("SessionRevoke", command, [], null);
+}
+
+export function digestSessionRevokeRequest(command: SessionRevokeRequest): Promise<string> {
+  return commandDigest("SessionRevoke", command, ["nonce", "request_hash", "request_id"], null);
+}
+
+export function digestTaskAdmission(command: TaskAdmission): Promise<string> {
+  return commandDigest("TaskAdmission", command, ["idempotency_key"], null);
+}
+
+export function digestTaskAssign(command: TaskAssign): Promise<string> {
+  return commandDigest("TaskAssign", command, ["idempotency_key"], null);
+}
+
+export function digestTaskComplete(command: TaskComplete): Promise<string> {
+  return commandDigest("TaskComplete", command, ["idempotency_key"], null);
+}
+
+export function digestTaskControl(command: TaskControl): Promise<string> {
+  return commandDigest("TaskControl", command, ["idempotency_key"], null);
+}
+
+export function digestTaskCreate(command: TaskCreate): Promise<string> {
+  return commandDigest("TaskCreate", command, ["idempotency_key"], "dependencies");
+}
+
+export function digestTaskDispatch(command: TaskDispatch): Promise<string> {
+  return commandDigest("TaskDispatch", command, ["idempotency_key"], null);
+}
+
+export function digestTaskRevise(command: TaskRevise): Promise<string> {
+  return commandDigest("TaskRevise", command, ["idempotency_key"], null);
+}
+
+export function digestTeamCreate(command: TeamCreate): Promise<string> {
+  return commandDigest("TeamCreate", command, ["idempotency_key"], null);
+}
+
+export function digestVerificationPolicyConfigure(command: VerificationPolicyConfigure): Promise<string> {
+  return commandDigest("VerificationPolicyConfigure", command, ["idempotency_key"], null);
 }

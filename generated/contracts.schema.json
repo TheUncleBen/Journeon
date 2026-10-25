@@ -3937,6 +3937,141 @@
     "title": "BotView",
     "type": "object"
   },
+  "BrowserSessionPage": {
+    "$defs": {
+      "BrowserSessionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_deadline": {
+            "title": "Absolute Deadline",
+            "type": "integer"
+          },
+          "audience": {
+            "enum": [
+              "unknown",
+              "official_browser"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "authentication_method": {
+            "title": "Authentication Method",
+            "type": "string"
+          },
+          "client_label": {
+            "title": "Client Label",
+            "type": "string"
+          },
+          "inactivity_seconds": {
+            "title": "Inactivity Seconds",
+            "type": "integer"
+          },
+          "issued_at": {
+            "title": "Issued At",
+            "type": "integer"
+          },
+          "last_activity": {
+            "title": "Last Activity",
+            "type": "integer"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "strong_authenticated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strong Authenticated At"
+          },
+          "strong_freshness_seconds": {
+            "title": "Strong Freshness Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "authentication_method",
+          "audience",
+          "issued_at",
+          "absolute_deadline",
+          "inactivity_seconds",
+          "strong_authenticated_at",
+          "strong_freshness_seconds",
+          "security_version",
+          "principal_id",
+          "client_label",
+          "last_activity",
+          "revoked"
+        ],
+        "title": "BrowserSessionItem",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/BrowserSessionItem"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "items",
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation"
+    ],
+    "title": "BrowserSessionPage",
+    "type": "object"
+  },
   "BundleResolve": {
     "$defs": {
       "BundleOrigin": {
@@ -4903,6 +5038,303 @@
       "revision"
     ],
     "title": "ConfigurationReceipt",
+    "type": "object"
+  },
+  "ContextBootstrap": {
+    "additionalProperties": false,
+    "properties": {},
+    "title": "ContextBootstrap",
+    "type": "object"
+  },
+  "ContextBootstrapped": {
+    "$defs": {
+      "BrowserSessionContext": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_deadline": {
+            "title": "Absolute Deadline",
+            "type": "integer"
+          },
+          "audience": {
+            "enum": [
+              "unknown",
+              "official_browser"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "authentication_method": {
+            "title": "Authentication Method",
+            "type": "string"
+          },
+          "inactivity_seconds": {
+            "title": "Inactivity Seconds",
+            "type": "integer"
+          },
+          "issued_at": {
+            "title": "Issued At",
+            "type": "integer"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "strong_authenticated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strong Authenticated At"
+          },
+          "strong_freshness_seconds": {
+            "title": "Strong Freshness Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "authentication_method",
+          "audience",
+          "issued_at",
+          "absolute_deadline",
+          "inactivity_seconds",
+          "strong_authenticated_at",
+          "strong_freshness_seconds",
+          "security_version"
+        ],
+        "title": "BrowserSessionContext",
+        "type": "object"
+      },
+      "ContextDependencies": {
+        "additionalProperties": false,
+        "properties": {
+          "display_preferences": {
+            "const": "UNAVAILABLE",
+            "title": "Display Preferences",
+            "type": "string"
+          },
+          "instruction_runtime": {
+            "enum": [
+              "CONFIGURED",
+              "UNCONFIGURED"
+            ],
+            "title": "Instruction Runtime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instruction_runtime",
+          "display_preferences"
+        ],
+        "title": "ContextDependencies",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "csrf_token": {
+        "maxLength": 43,
+        "minLength": 43,
+        "title": "Csrf Token",
+        "type": "string"
+      },
+      "dependencies": {
+        "$ref": "#/$defs/ContextDependencies"
+      },
+      "preference_revision": {
+        "const": 0,
+        "title": "Preference Revision",
+        "type": "integer"
+      },
+      "preferences": {
+        "title": "Preferences",
+        "type": "null"
+      },
+      "principal_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Principal Id",
+        "type": "string"
+      },
+      "role": {
+        "enum": [
+          "OWNER",
+          "SHARED_USER"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "session": {
+        "$ref": "#/$defs/BrowserSessionContext"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "principal_id",
+      "role",
+      "session",
+      "store_incarnation",
+      "preference_revision",
+      "preferences",
+      "dependencies",
+      "csrf_token"
+    ],
+    "title": "ContextBootstrapped",
+    "type": "object"
+  },
+  "CurrentHumanContext": {
+    "$defs": {
+      "BrowserSessionContext": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_deadline": {
+            "title": "Absolute Deadline",
+            "type": "integer"
+          },
+          "audience": {
+            "enum": [
+              "unknown",
+              "official_browser"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "authentication_method": {
+            "title": "Authentication Method",
+            "type": "string"
+          },
+          "inactivity_seconds": {
+            "title": "Inactivity Seconds",
+            "type": "integer"
+          },
+          "issued_at": {
+            "title": "Issued At",
+            "type": "integer"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "strong_authenticated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strong Authenticated At"
+          },
+          "strong_freshness_seconds": {
+            "title": "Strong Freshness Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "authentication_method",
+          "audience",
+          "issued_at",
+          "absolute_deadline",
+          "inactivity_seconds",
+          "strong_authenticated_at",
+          "strong_freshness_seconds",
+          "security_version"
+        ],
+        "title": "BrowserSessionContext",
+        "type": "object"
+      },
+      "ContextDependencies": {
+        "additionalProperties": false,
+        "properties": {
+          "display_preferences": {
+            "const": "UNAVAILABLE",
+            "title": "Display Preferences",
+            "type": "string"
+          },
+          "instruction_runtime": {
+            "enum": [
+              "CONFIGURED",
+              "UNCONFIGURED"
+            ],
+            "title": "Instruction Runtime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instruction_runtime",
+          "display_preferences"
+        ],
+        "title": "ContextDependencies",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "dependencies": {
+        "$ref": "#/$defs/ContextDependencies"
+      },
+      "preference_revision": {
+        "const": 0,
+        "title": "Preference Revision",
+        "type": "integer"
+      },
+      "preferences": {
+        "title": "Preferences",
+        "type": "null"
+      },
+      "principal_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Principal Id",
+        "type": "string"
+      },
+      "role": {
+        "enum": [
+          "OWNER",
+          "SHARED_USER"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "session": {
+        "$ref": "#/$defs/BrowserSessionContext"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "principal_id",
+      "role",
+      "session",
+      "store_incarnation",
+      "preference_revision",
+      "preferences",
+      "dependencies"
+    ],
+    "title": "CurrentHumanContext",
     "type": "object"
   },
   "DeploymentPolicyReceipt": {
@@ -8326,6 +8758,45 @@
         ],
         "title": "RootRevoke",
         "type": "object"
+      },
+      "SessionRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevoke",
+        "type": "object"
       }
     },
     "additionalProperties": false,
@@ -8338,6 +8809,7 @@
         "discriminator": {
           "mapping": {
             "egress.policy.initialize.v1": "#/$defs/PolicyInitialize",
+            "identity.session.revoke.v1": "#/$defs/SessionRevoke",
             "instruction.candidate.register.v1": "#/$defs/CandidateRegister",
             "instruction.release.install.v1": "#/$defs/ReleaseInstall",
             "lifecycle.restore.authorize.v1": "#/$defs/RestorePlan",
@@ -8380,6 +8852,9 @@
             "$ref": "#/$defs/GrantSet"
           },
           {
+            "$ref": "#/$defs/SessionRevoke"
+          },
+          {
             "$ref": "#/$defs/GrantRevoke"
           },
           {
@@ -8417,6 +8892,3562 @@
       "nonce"
     ],
     "title": "OfficialPreview",
+    "type": "object"
+  },
+  "OperationIdentityResolution": {
+    "$defs": {
+      "AdmissionDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "bot_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Revision"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "criteria_revision": {
+            "minimum": 1,
+            "title": "Criteria Revision",
+            "type": "integer"
+          },
+          "decision": {
+            "enum": [
+              "ADMIT",
+              "QUEUE",
+              "DENY",
+              "REQUIRE_APPROVAL"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "execution_authorized": {
+            "const": false,
+            "default": false,
+            "title": "Execution Authorized",
+            "type": "boolean"
+          },
+          "execution_started": {
+            "const": false,
+            "default": false,
+            "title": "Execution Started",
+            "type": "boolean"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Revision"
+          },
+          "principal_epoch": {
+            "minimum": 1,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "profile_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile Revision"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "scope": {
+            "const": "TASK_PREPARATION",
+            "default": "TASK_PREPARATION",
+            "title": "Scope",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          },
+          "workflow_revision": {
+            "minimum": 1,
+            "title": "Workflow Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decision",
+          "reason",
+          "task_revision",
+          "criteria_revision",
+          "workflow_revision",
+          "policy_revision",
+          "authentication_ref",
+          "principal_epoch",
+          "checked_at"
+        ],
+        "title": "AdmissionDecision",
+        "type": "object"
+      },
+      "AttemptReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "$ref": "#/$defs/AttemptView"
+          },
+          "command": {
+            "const": "attempt.prepare.v1",
+            "default": "attempt.prepare.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "attempt"
+        ],
+        "title": "AttemptReceipt",
+        "type": "object"
+      },
+      "AttemptView": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_authorized": {
+            "const": false,
+            "default": false,
+            "title": "Execution Authorized",
+            "type": "boolean"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/RunManifest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "origin": {
+            "discriminator": {
+              "mapping": {
+                "JOB": "#/$defs/JobAttemptOrigin",
+                "TASK": "#/$defs/TaskAttemptOrigin"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TaskAttemptOrigin"
+              },
+              {
+                "$ref": "#/$defs/JobAttemptOrigin"
+              }
+            ],
+            "title": "Origin"
+          },
+          "preparation_operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Preparation Operation Id",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "PREPARING",
+              "PREPARED",
+              "RECOVERY_REQUIRED"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt_id",
+          "project_id",
+          "origin",
+          "revision",
+          "state",
+          "preparation_operation_id",
+          "manifest",
+          "created_at"
+        ],
+        "title": "AttemptView",
+        "type": "object"
+      },
+      "ChangeSetSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "base_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Commit"
+          },
+          "binary_diff_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Binary Diff Hash"
+          },
+          "byte_count": {
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Deleted",
+            "type": "array"
+          },
+          "git_history": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GitHistory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head"
+          },
+          "index": {
+            "items": {
+              "$ref": "#/$defs/IndexEntry"
+            },
+            "title": "Index",
+            "type": "array"
+          },
+          "index_hash": {
+            "title": "Index Hash",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "GIT",
+              "DIRECTORY"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "submodules": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Submodules",
+            "type": "object"
+          },
+          "untracked": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Untracked",
+            "type": "array"
+          },
+          "working": {
+            "items": {
+              "$ref": "#/$defs/SourceEntry"
+            },
+            "title": "Working",
+            "type": "array"
+          },
+          "working_hash": {
+            "title": "Working Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "base_commit",
+          "head",
+          "index",
+          "working",
+          "deleted",
+          "untracked",
+          "index_hash",
+          "working_hash",
+          "binary_diff_hash",
+          "submodules",
+          "byte_count",
+          "snapshot_hash"
+        ],
+        "title": "ChangeSetSnapshot",
+        "type": "object"
+      },
+      "ComponentRef": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ComponentRef",
+        "type": "object"
+      },
+      "ConfigurationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "profile.create.v1",
+              "profile.revise.v1",
+              "bot.create.v1",
+              "bot.revise.v1",
+              "team.create.v1",
+              "instruction.bundle.resolve.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "member_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Member Ids",
+            "type": "array"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "enum": [
+              "profile",
+              "bot",
+              "team",
+              "instruction_bundle"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "committed_at",
+          "target_kind",
+          "target_id",
+          "revision"
+        ],
+        "title": "ConfigurationReceipt",
+        "type": "object"
+      },
+      "DeploymentPolicyReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "egress.policy.initialize.v1",
+            "default": "egress.policy.initialize.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/$defs/DeploymentPolicyView"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "policy"
+        ],
+        "title": "DeploymentPolicyReceipt",
+        "type": "object"
+      },
+      "DeploymentPolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "approved_providers": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Approved Providers",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "CONFIGURED",
+              "UNCONFIGURED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "verification_policy_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Policy Ref"
+          }
+        },
+        "required": [
+          "status",
+          "revision",
+          "approval_id",
+          "approved_by",
+          "approved_providers",
+          "verification_policy_ref"
+        ],
+        "title": "DeploymentPolicyView",
+        "type": "object"
+      },
+      "DeterministicInstructionBundle": {
+        "additionalProperties": false,
+        "properties": {
+          "bundle_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Bundle Id",
+            "type": "string"
+          },
+          "byte_count": {
+            "minimum": 0,
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/$defs/ComponentRef"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "DETERMINISTIC",
+            "default": "DETERMINISTIC",
+            "title": "Kind",
+            "type": "string"
+          },
+          "production": {
+            "$ref": "#/$defs/ProductionInstructionProvenance"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "rendering": {
+            "title": "Rendering",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bundle_id",
+          "initiating_principal_id",
+          "project_id",
+          "task_id",
+          "task_revision",
+          "production",
+          "components",
+          "rendering",
+          "content_digest",
+          "byte_count"
+        ],
+        "title": "DeterministicInstructionBundle",
+        "type": "object"
+      },
+      "ExecutionArtifact": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_count": {
+            "minimum": 0,
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "data": {
+            "title": "Data",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "byte_count",
+          "sha256",
+          "data"
+        ],
+        "title": "ExecutionArtifact",
+        "type": "object"
+      },
+      "ExecutionCompletion": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/$defs/ExecutionArtifact"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "drained": {
+            "title": "Drained",
+            "type": "boolean"
+          },
+          "exit_code": {
+            "title": "Exit Code",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "RESULT",
+            "default": "RESULT",
+            "title": "Kind",
+            "type": "string"
+          },
+          "output_bytes": {
+            "minimum": 0,
+            "title": "Output Bytes",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "EXITED",
+              "AUTHORITY_EXPIRED",
+              "CANCELLED",
+              "CONTROLLER_LOST",
+              "OUTPUT_LIMIT",
+              "DRAIN_INCOMPLETE",
+              "ARTIFACT_LIMIT",
+              "ARTIFACT_UNAVAILABLE"
+            ],
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "exit_code",
+          "reason",
+          "drained",
+          "output_bytes",
+          "artifacts"
+        ],
+        "title": "ExecutionCompletion",
+        "type": "object"
+      },
+      "ExecutionOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "string"
+          },
+          "kind": {
+            "const": "OUTPUT",
+            "default": "OUTPUT",
+            "title": "Kind",
+            "type": "string"
+          },
+          "stream": {
+            "enum": [
+              "stdout",
+              "stderr"
+            ],
+            "title": "Stream",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stream",
+          "data"
+        ],
+        "title": "ExecutionOutput",
+        "type": "object"
+      },
+      "ExecutionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "execution.start.v1",
+              "execution.stop.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "execution": {
+            "$ref": "#/$defs/ExecutionView"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "committed_at",
+          "execution"
+        ],
+        "title": "ExecutionReceipt",
+        "type": "object"
+      },
+      "ExecutionView": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Id"
+          },
+          "attempt_manifest_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Manifest Id"
+          },
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "check_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Check Id",
+            "type": "string"
+          },
+          "completion": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ExecutionCompletion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "containment": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Containment",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "drained": {
+            "default": false,
+            "title": "Drained",
+            "type": "boolean"
+          },
+          "evidence_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Digest"
+          },
+          "execution_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "host_fingerprint": {
+            "title": "Host Fingerprint",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "invocation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Invocation Id"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Job Id"
+          },
+          "launcher_exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Launcher Exit Code"
+          },
+          "manifest_digest": {
+            "title": "Manifest Digest",
+            "type": "string"
+          },
+          "manifest_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Manifest Id"
+          },
+          "origin": {
+            "default": "DIRECT_VERIFICATION",
+            "enum": [
+              "DIRECT_VERIFICATION",
+              "TASK_VERIFICATION"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "output": {
+            "items": {
+              "$ref": "#/$defs/ExecutionOutput"
+            },
+            "title": "Output",
+            "type": "array"
+          },
+          "policy_revision": {
+            "minimum": 1,
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "principal_epoch": {
+            "minimum": 1,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "root_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Key",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          },
+          "route_digest": {
+            "title": "Route Digest",
+            "type": "string"
+          },
+          "route_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Route Key",
+            "type": "string"
+          },
+          "route_revision": {
+            "minimum": 1,
+            "title": "Route Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "STARTING",
+              "RUNNING",
+              "COMPLETED",
+              "CANCELLED",
+              "UNKNOWN"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "stop_requested": {
+            "default": false,
+            "title": "Stop Requested",
+            "type": "boolean"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "verification_passed": {
+            "default": false,
+            "title": "Verification Passed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "execution_id",
+          "project_id",
+          "root_key",
+          "root_revision",
+          "policy_revision",
+          "revision",
+          "state",
+          "manifest_digest",
+          "route_key",
+          "route_revision",
+          "route_digest",
+          "check_id",
+          "initiating_principal_id",
+          "authentication_ref",
+          "principal_epoch",
+          "host_fingerprint",
+          "created_at",
+          "unit"
+        ],
+        "title": "ExecutionView",
+        "type": "object"
+      },
+      "GitHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "boundaries": {
+            "items": {
+              "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+              "type": "string"
+            },
+            "title": "Boundaries",
+            "type": "array"
+          },
+          "shallow": {
+            "title": "Shallow",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "shallow",
+          "boundaries"
+        ],
+        "title": "GitHistory",
+        "type": "object"
+      },
+      "GrantReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "permission.grant.set.v1",
+              "permission.grant.revoke.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "grant": {
+            "$ref": "#/$defs/GrantView"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "command",
+          "operation_id",
+          "committed_at",
+          "grant"
+        ],
+        "title": "GrantReceipt",
+        "type": "object"
+      },
+      "GrantView": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$",
+            "title": "Capability",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "grant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Grant Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "provenance": {
+            "title": "Provenance",
+            "type": "string"
+          },
+          "resource_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_kind": {
+            "title": "Resource Kind",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "grant_id",
+          "principal_id",
+          "capability",
+          "resource_kind",
+          "resource_id",
+          "enabled",
+          "revision",
+          "expires_at",
+          "provenance"
+        ],
+        "title": "GrantView",
+        "type": "object"
+      },
+      "IndexEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "object_id": {
+            "title": "Object Id",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "stage": {
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Stage",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "mode",
+          "object_id",
+          "stage",
+          "content_hash"
+        ],
+        "title": "IndexEntry",
+        "type": "object"
+      },
+      "InstructionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committed At"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "PROJECT",
+              "DEVELOPMENT_CANDIDATE",
+              "VERIFIED_RELEASE",
+              "ROOT"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "CANONICAL_COMMITTED",
+              "PENDING",
+              "RECOVERY_NEEDED",
+              "CONFLICT",
+              "ABANDONED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "enum": [
+              "instruction_root",
+              "project_instructions",
+              "instruction_install"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "target_kind",
+          "target_id",
+          "revision",
+          "status",
+          "committed_at",
+          "content_hash",
+          "provenance"
+        ],
+        "title": "InstructionReceipt",
+        "type": "object"
+      },
+      "JobAttemptOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_revision": {
+            "minimum": 1,
+            "title": "Job Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "JOB",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "job_id",
+          "job_revision"
+        ],
+        "title": "JobAttemptOrigin",
+        "type": "object"
+      },
+      "JobReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "job.admitted.v1",
+              "job.changed.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "RETRY_WAIT"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "const": "job",
+            "default": "job",
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "target_id",
+          "revision",
+          "committed_at",
+          "state"
+        ],
+        "title": "JobReceipt",
+        "type": "object"
+      },
+      "ObservedOperationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "receipt": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ExecutionReceipt"
+              },
+              {
+                "$ref": "#/$defs/AttemptReceipt"
+              },
+              {
+                "$ref": "#/$defs/VerificationPolicyReceipt"
+              },
+              {
+                "$ref": "#/$defs/ReviewPolicyReceipt"
+              },
+              {
+                "$ref": "#/$defs/ReviewTargetReceipt"
+              },
+              {
+                "$ref": "#/$defs/RestoreReceipt"
+              },
+              {
+                "$ref": "#/$defs/JobReceipt"
+              },
+              {
+                "$ref": "#/$defs/OperationReceipt"
+              },
+              {
+                "$ref": "#/$defs/PasskeyMutationReceipt"
+              },
+              {
+                "$ref": "#/$defs/TaskReceipt"
+              },
+              {
+                "$ref": "#/$defs/ConfigurationReceipt"
+              },
+              {
+                "$ref": "#/$defs/InstructionReceipt"
+              },
+              {
+                "$ref": "#/$defs/GrantReceipt"
+              },
+              {
+                "$ref": "#/$defs/DeploymentPolicyReceipt"
+              },
+              {
+                "$ref": "#/$defs/SessionMutationReceipt"
+              }
+            ],
+            "title": "Receipt"
+          },
+          "status": {
+            "const": "OBSERVED_RECEIPT",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status",
+          "receipt"
+        ],
+        "title": "ObservedOperationReceipt",
+        "type": "object"
+      },
+      "ObservedPendingOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "evidence_kind": {
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "observed_state": {
+            "title": "Observed State",
+            "type": "string"
+          },
+          "status": {
+            "const": "OBSERVED_PENDING",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status",
+          "evidence_kind",
+          "evidence_id",
+          "observed_state"
+        ],
+        "title": "ObservedPendingOperation",
+        "type": "object"
+      },
+      "ObservedUnknownOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "evidence_kind": {
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "observed_state": {
+            "title": "Observed State",
+            "type": "string"
+          },
+          "status": {
+            "const": "OBSERVED_UNKNOWN",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status",
+          "evidence_kind",
+          "evidence_id",
+          "observed_state"
+        ],
+        "title": "ObservedUnknownOperation",
+        "type": "object"
+      },
+      "OperationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "project.create.v1",
+            "default": "project.create.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "project": {
+            "$ref": "#/$defs/ProjectCreated"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "project"
+        ],
+        "title": "OperationReceipt",
+        "type": "object"
+      },
+      "PasskeyMutationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "passkey.label.v1",
+            "default": "passkey.label.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "passkey": {
+            "$ref": "#/$defs/PasskeySummary"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "passkey"
+        ],
+        "title": "PasskeyMutationReceipt",
+        "type": "object"
+      },
+      "PasskeySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "passkey_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Passkey Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "passkey_id",
+          "principal_id",
+          "revision",
+          "label",
+          "revoked"
+        ],
+        "title": "PasskeySummary",
+        "type": "object"
+      },
+      "ProductionInstructionProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "installation_manifest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Installation Manifest",
+            "type": "string"
+          },
+          "installation_provenance": {
+            "enum": [
+              "DEVELOPMENT_CANDIDATE",
+              "VERIFIED_RELEASE"
+            ],
+            "title": "Installation Provenance",
+            "type": "string"
+          },
+          "installation_revision": {
+            "minimum": 1,
+            "title": "Installation Revision",
+            "type": "integer"
+          },
+          "project_instruction_revision": {
+            "minimum": 1,
+            "title": "Project Instruction Revision",
+            "type": "integer"
+          },
+          "project_tree_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Project Tree Hash",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "installation_revision",
+          "installation_manifest",
+          "installation_provenance",
+          "project_instruction_revision",
+          "project_tree_hash",
+          "root_id",
+          "root_revision"
+        ],
+        "title": "ProductionInstructionProvenance",
+        "type": "object"
+      },
+      "ProjectCreated": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "instruction_authority_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Instruction Authority Ref",
+            "type": "string"
+          },
+          "instruction_owner": {
+            "const": "ENVIRONMENT",
+            "default": "ENVIRONMENT",
+            "title": "Instruction Owner",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "provider_allowance_at_creation": {
+            "$ref": "#/$defs/ProviderSnapshot"
+          },
+          "resource_refs": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Resource Refs",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "verification_policy_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Policy Ref"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "name",
+          "description",
+          "instruction_authority_ref",
+          "provider_allowance_at_creation",
+          "verification_policy_ref",
+          "resource_refs"
+        ],
+        "title": "ProjectCreated",
+        "type": "object"
+      },
+      "ProviderSnapshot": {
+        "additionalProperties": false,
+        "description": "Historical consent only; never proof of current egress/route eligibility.",
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "interpretation": {
+            "const": "HISTORICAL_CREATION_SNAPSHOT",
+            "default": "HISTORICAL_CREATION_SNAPSHOT",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "INHERIT",
+              "NARROW",
+              "LOCAL_ONLY"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "policy_revision": {
+            "minimum": 1,
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "providers": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "policy_revision",
+          "approval_id",
+          "providers"
+        ],
+        "title": "ProviderSnapshot",
+        "type": "object"
+      },
+      "ReconciliationRequired": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "status": {
+            "const": "RECONCILIATION_REQUIRED",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status"
+        ],
+        "title": "ReconciliationRequired",
+        "type": "object"
+      },
+      "RestoreReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "lifecycle.restore.v1",
+            "default": "lifecycle.restore.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Incarnation",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "plan_hash": {
+            "title": "Plan Hash",
+            "type": "string"
+          },
+          "restored_history_count": {
+            "title": "Restored History Count",
+            "type": "integer"
+          },
+          "status": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Status",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "const": "store",
+            "default": "store",
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "target_id",
+          "incarnation",
+          "plan_hash",
+          "restored_history_count",
+          "committed_at"
+        ],
+        "title": "RestoreReceipt",
+        "type": "object"
+      },
+      "ReviewPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "automatic_round_limit": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Automatic Round Limit"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "independent_review_required": {
+            "title": "Independent Review Required",
+            "type": "boolean"
+          },
+          "material_severities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Material Severities",
+            "type": "array"
+          },
+          "minimum_independence": {
+            "items": {
+              "enum": [
+                "FRESH_SESSION",
+                "DISTINCT_AGENT",
+                "DISTINCT_MODEL_FAMILY",
+                "DISTINCT_PROVIDER",
+                "DISTINCT_HARNESS"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Minimum Independence",
+            "type": "array"
+          },
+          "owner_override_severities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Owner Override Severities",
+            "type": "array"
+          },
+          "preferred_diversity": {
+            "items": {
+              "enum": [
+                "FRESH_SESSION",
+                "DISTINCT_AGENT",
+                "DISTINCT_MODEL_FAMILY",
+                "DISTINCT_PROVIDER",
+                "DISTINCT_HARNESS"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Preferred Diversity",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_coverage": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Coverage",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "stop_on_cycle": {
+            "title": "Stop On Cycle",
+            "type": "boolean"
+          },
+          "stop_on_unchanged_target": {
+            "title": "Stop On Unchanged Target",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "independent_review_required",
+          "minimum_independence",
+          "preferred_diversity",
+          "required_coverage",
+          "material_severities",
+          "owner_override_severities",
+          "automatic_round_limit",
+          "stop_on_cycle",
+          "stop_on_unchanged_target",
+          "project_id",
+          "revision",
+          "created_by",
+          "created_at"
+        ],
+        "title": "ReviewPolicy",
+        "type": "object"
+      },
+      "ReviewPolicyReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "project.review.configure.v1",
+            "default": "project.review.configure.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/$defs/ReviewPolicy"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "policy"
+        ],
+        "title": "ReviewPolicyReceipt",
+        "type": "object"
+      },
+      "ReviewTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "authorship_status": {
+            "const": "UNAVAILABLE",
+            "default": "UNAVAILABLE",
+            "title": "Authorship Status",
+            "type": "string"
+          },
+          "candidate": {
+            "const": "ADMITTED_ATTEMPT_SNAPSHOT",
+            "default": "ADMITTED_ATTEMPT_SNAPSHOT",
+            "title": "Candidate",
+            "type": "string"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "kind": {
+            "const": "CHANGESET",
+            "default": "CHANGESET",
+            "title": "Kind",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/$defs/RunManifest"
+          },
+          "review_policy": {
+            "$ref": "#/$defs/ReviewPolicy"
+          },
+          "selected_at": {
+            "title": "Selected At",
+            "type": "string"
+          },
+          "selected_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Selected By",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "manifest",
+          "review_policy",
+          "selected_by",
+          "selected_at",
+          "content_digest"
+        ],
+        "title": "ReviewTarget",
+        "type": "object"
+      },
+      "ReviewTargetReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "task.review.select.v1",
+            "default": "task.review.select.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target": {
+            "$ref": "#/$defs/ReviewTarget"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "target"
+        ],
+        "title": "ReviewTargetReceipt",
+        "type": "object"
+      },
+      "RunManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "authentication_ref": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Authentication Ref",
+            "type": "string"
+          },
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "instruction_bundle": {
+            "$ref": "#/$defs/DeterministicInstructionBundle"
+          },
+          "manifest_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Manifest Id",
+            "type": "string"
+          },
+          "origin": {
+            "discriminator": {
+              "mapping": {
+                "JOB": "#/$defs/JobAttemptOrigin",
+                "TASK": "#/$defs/TaskAttemptOrigin"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TaskAttemptOrigin"
+              },
+              {
+                "$ref": "#/$defs/JobAttemptOrigin"
+              }
+            ],
+            "title": "Origin"
+          },
+          "previous_attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Attempt Id"
+          },
+          "principal_epoch": {
+            "minimum": 1,
+            "title": "Principal Epoch",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "root_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Root Id",
+            "type": "string"
+          },
+          "root_revision": {
+            "minimum": 1,
+            "title": "Root Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "snapshot": {
+            "$ref": "#/$defs/ChangeSetSnapshot"
+          },
+          "task": {
+            "$ref": "#/$defs/TaskView"
+          },
+          "verification_policy": {
+            "$ref": "#/$defs/VerificationPolicy"
+          },
+          "workspace_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Workspace Key",
+            "type": "string"
+          },
+          "workspace_kind": {
+            "enum": [
+              "GIT",
+              "DIRECTORY"
+            ],
+            "title": "Workspace Kind",
+            "type": "string"
+          },
+          "workspace_revision": {
+            "minimum": 1,
+            "title": "Workspace Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "manifest_id",
+          "attempt_id",
+          "origin",
+          "initiating_principal_id",
+          "authentication_ref",
+          "principal_epoch",
+          "project_id",
+          "task",
+          "verification_policy",
+          "instruction_bundle",
+          "workspace_key",
+          "workspace_revision",
+          "root_id",
+          "root_revision",
+          "workspace_kind",
+          "snapshot",
+          "previous_attempt_id",
+          "created_at",
+          "content_digest"
+        ],
+        "title": "RunManifest",
+        "type": "object"
+      },
+      "SessionLogout": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.logout.v1",
+            "default": "identity.session.logout.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "expected_security_version"
+        ],
+        "title": "SessionLogout",
+        "type": "object"
+      },
+      "SessionMutationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "identity.session.revoke.v1",
+              "identity.session.logout.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SessionRevoke"
+              },
+              {
+                "$ref": "#/$defs/SessionLogout"
+              }
+            ],
+            "title": "Request"
+          },
+          "revoked": {
+            "const": true,
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "operation_id",
+          "committed_at",
+          "session_id",
+          "principal_id",
+          "revoked",
+          "security_version",
+          "request"
+        ],
+        "title": "SessionMutationReceipt",
+        "type": "object"
+      },
+      "SessionRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevoke",
+        "type": "object"
+      },
+      "SourceEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_count": {
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "FILE",
+              "DIRECTORY",
+              "SYMLINK"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "link_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Link Target"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "integer"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind",
+          "mode",
+          "content_hash",
+          "byte_count"
+        ],
+        "title": "SourceEntry",
+        "type": "object"
+      },
+      "TaskAssignment": {
+        "additionalProperties": false,
+        "properties": {
+          "assigned_at": {
+            "title": "Assigned At",
+            "type": "string"
+          },
+          "assigned_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Assigned By",
+            "type": "string"
+          },
+          "bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bot Id"
+          },
+          "kind": {
+            "default": "CREATE",
+            "enum": [
+              "CREATE",
+              "REASSIGN",
+              "HANDOFF"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "previous_bot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Previous Bot Id"
+          },
+          "principal_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Principal Id"
+          },
+          "reason": {
+            "default": "Task created",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "responsibility": {
+            "enum": [
+              "HUMAN",
+              "UNASSIGNED",
+              "BOT"
+            ],
+            "title": "Responsibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "responsibility",
+          "principal_id",
+          "assigned_by",
+          "assigned_at"
+        ],
+        "title": "TaskAssignment",
+        "type": "object"
+      },
+      "TaskAttemptOrigin": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "TASK",
+            "title": "Kind",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_revision": {
+            "minimum": 1,
+            "title": "Task Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "task_id",
+          "task_revision"
+        ],
+        "title": "TaskAttemptOrigin",
+        "type": "object"
+      },
+      "TaskCompletionBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "manifest_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Manifest Id",
+            "type": "string"
+          },
+          "review_policy_revision": {
+            "minimum": 1,
+            "title": "Review Policy Revision",
+            "type": "integer"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "target_digest": {
+            "title": "Target Digest",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "target_digest",
+          "attempt_id",
+          "manifest_id",
+          "snapshot_hash",
+          "review_policy_revision",
+          "evidence_ids"
+        ],
+        "title": "TaskCompletionBinding",
+        "type": "object"
+      },
+      "TaskCriterion": {
+        "additionalProperties": false,
+        "properties": {
+          "objective_revision": {
+            "minimum": 1,
+            "title": "Objective Revision",
+            "type": "integer"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "provenance": {
+            "default": "USER",
+            "enum": [
+              "USER",
+              "PROJECT"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "principal_id",
+          "objective_revision"
+        ],
+        "title": "TaskCriterion",
+        "type": "object"
+      },
+      "TaskPolicyBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "policy_ref": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Ref"
+          },
+          "policy_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policy Revision"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1,
+            "title": "Project Revision",
+            "type": "integer"
+          },
+          "source": {
+            "const": "PROJECT",
+            "default": "PROJECT",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "project_revision",
+          "policy_ref"
+        ],
+        "title": "TaskPolicyBinding",
+        "type": "object"
+      },
+      "TaskReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "task.create.v1",
+              "task.pause.v1",
+              "task.resume.v1",
+              "task.cancel.v1",
+              "task.revise.v1",
+              "task.assign.v1",
+              "task.admit.v1",
+              "task.complete.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "task": {
+            "$ref": "#/$defs/TaskView"
+          }
+        },
+        "required": [
+          "operation_id",
+          "command",
+          "committed_at",
+          "task"
+        ],
+        "title": "TaskReceipt",
+        "type": "object"
+      },
+      "TaskView": {
+        "additionalProperties": false,
+        "properties": {
+          "admission": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AdmissionDecision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "assignment": {
+            "$ref": "#/$defs/TaskAssignment"
+          },
+          "assignment_history": {
+            "items": {
+              "$ref": "#/$defs/TaskAssignment"
+            },
+            "title": "Assignment History",
+            "type": "array"
+          },
+          "blocker": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocker"
+          },
+          "completion": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TaskCompletionBinding"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "contributors": {
+            "items": {
+              "$ref": "#/$defs/TaskAssignment"
+            },
+            "title": "Contributors",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "criteria_revision": {
+            "minimum": 1,
+            "title": "Criteria Revision",
+            "type": "integer"
+          },
+          "dependencies": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "initiating_principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Initiating Principal Id",
+            "type": "string"
+          },
+          "objective": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Objective",
+            "type": "string"
+          },
+          "objective_revision": {
+            "minimum": 1,
+            "title": "Objective Revision",
+            "type": "integer"
+          },
+          "pause_reason": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pause Reason"
+          },
+          "paused": {
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "BACKLOG",
+              "READY",
+              "RUNNING",
+              "WAITING",
+              "REVIEW",
+              "BLOCKED",
+              "DONE",
+              "CANCELLED",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Reason"
+          },
+          "success_conditions": {
+            "items": {
+              "$ref": "#/$defs/TaskCriterion"
+            },
+            "title": "Success Conditions",
+            "type": "array"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "verification_policy": {
+            "$ref": "#/$defs/TaskPolicyBinding"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TaskWorkflow"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "workflow_revision": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Workflow Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id",
+          "initiating_principal_id",
+          "revision",
+          "objective",
+          "objective_revision",
+          "criteria_revision",
+          "success_conditions",
+          "verification_policy",
+          "assignment",
+          "assignment_history",
+          "dependencies",
+          "state",
+          "paused",
+          "pause_reason",
+          "stop_reason",
+          "blocker",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskView",
+        "type": "object"
+      },
+      "TaskWorkflow": {
+        "additionalProperties": false,
+        "properties": {
+          "loops": {
+            "items": {
+              "$ref": "#/$defs/WorkflowLoop"
+            },
+            "maxItems": 128,
+            "title": "Loops",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/$defs/WorkflowStep"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "TaskWorkflow",
+        "type": "object"
+      },
+      "UnobservedOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "absence_is_final": {
+            "const": false,
+            "default": false,
+            "title": "Absence Is Final",
+            "type": "boolean"
+          },
+          "command": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Command",
+            "type": "string"
+          },
+          "status": {
+            "const": "NOT_OBSERVED",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "store_incarnation",
+          "status"
+        ],
+        "title": "UnobservedOperation",
+        "type": "object"
+      },
+      "VerificationCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "argv": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Argv",
+            "type": "array"
+          },
+          "check_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Check Id",
+            "type": "string"
+          },
+          "criterion": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Criterion",
+            "type": "string"
+          },
+          "expected_exit_code": {
+            "title": "Expected Exit Code",
+            "type": "integer"
+          },
+          "working_directory": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Working Directory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "criterion",
+          "argv",
+          "working_directory",
+          "expected_exit_code"
+        ],
+        "title": "VerificationCheck",
+        "type": "object"
+      },
+      "VerificationPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/$defs/VerificationCheck"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Checks",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "required_capabilities": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Required Capabilities",
+            "type": "array"
+          },
+          "required_services": {
+            "items": {
+              "enum": [
+                "NATIVE",
+                "RESOURCE",
+                "SKILL",
+                "CONNECTION",
+                "TOOL"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Required Services",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/$defs/TaskWorkflow"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "enabled",
+          "checks",
+          "workflow",
+          "created_by",
+          "created_at"
+        ],
+        "title": "VerificationPolicy",
+        "type": "object"
+      },
+      "VerificationPolicyReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "const": "project.verification.configure.v1",
+            "default": "project.verification.configure.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/$defs/VerificationPolicy"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "committed_at",
+          "policy"
+        ],
+        "title": "VerificationPolicyReceipt",
+        "type": "object"
+      },
+      "WorkflowLoop": {
+        "additionalProperties": false,
+        "properties": {
+          "maximum_iterations": {
+            "minimum": 1,
+            "title": "Maximum Iterations",
+            "type": "integer"
+          },
+          "steps": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps",
+          "maximum_iterations"
+        ],
+        "title": "WorkflowLoop",
+        "type": "object"
+      },
+      "WorkflowStep": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Check Id"
+          },
+          "condition_operator": {
+            "default": "EQ",
+            "enum": [
+              "EQ",
+              "LT",
+              "LE",
+              "GT",
+              "GE"
+            ],
+            "title": "Condition Operator",
+            "type": "string"
+          },
+          "condition_step": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Condition Step"
+          },
+          "condition_value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Condition Value"
+          },
+          "dependencies": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "WORK",
+              "CONDITION",
+              "APPROVAL",
+              "VERIFICATION",
+              "REVIEW"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "step_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Step Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "kind"
+        ],
+        "title": "WorkflowStep",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "NOT_OBSERVED": "#/$defs/UnobservedOperation",
+        "OBSERVED_PENDING": "#/$defs/ObservedPendingOperation",
+        "OBSERVED_RECEIPT": "#/$defs/ObservedOperationReceipt",
+        "OBSERVED_UNKNOWN": "#/$defs/ObservedUnknownOperation",
+        "RECONCILIATION_REQUIRED": "#/$defs/ReconciliationRequired"
+      },
+      "propertyName": "status"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/ObservedOperationReceipt"
+      },
+      {
+        "$ref": "#/$defs/ObservedPendingOperation"
+      },
+      {
+        "$ref": "#/$defs/ObservedUnknownOperation"
+      },
+      {
+        "$ref": "#/$defs/UnobservedOperation"
+      },
+      {
+        "$ref": "#/$defs/ReconciliationRequired"
+      }
+    ],
+    "title": "OperationIdentityResolution"
+  },
+  "OperationIdentityResolve": {
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Command",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "payload_digest": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Payload Digest",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "scope": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "items": {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              "maxItems": 128,
+              "type": "array"
+            }
+          ]
+        },
+        "maxProperties": 16,
+        "title": "Scope",
+        "type": "object"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "schema_version",
+      "command",
+      "idempotency_key",
+      "payload_digest",
+      "scope",
+      "store_incarnation"
+    ],
+    "title": "OperationIdentityResolve",
     "type": "object"
   },
   "OperationReceipt": {
@@ -10452,6 +14483,155 @@
         ],
         "title": "RestoreAuthorization",
         "type": "object"
+      },
+      "SessionLogout": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.logout.v1",
+            "default": "identity.session.logout.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "expected_security_version"
+        ],
+        "title": "SessionLogout",
+        "type": "object"
+      },
+      "SessionMutationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "identity.session.revoke.v1",
+              "identity.session.logout.v1"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "CANONICAL_COMMITTED",
+            "default": "CANONICAL_COMMITTED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SessionRevoke"
+              },
+              {
+                "$ref": "#/$defs/SessionLogout"
+              }
+            ],
+            "title": "Request"
+          },
+          "revoked": {
+            "const": true,
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Security Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "operation_id",
+          "committed_at",
+          "session_id",
+          "principal_id",
+          "revoked",
+          "security_version",
+          "request"
+        ],
+        "title": "SessionMutationReceipt",
+        "type": "object"
+      },
+      "SessionRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevoke",
+        "type": "object"
       }
     },
     "anyOf": [
@@ -10466,6 +14646,9 @@
       },
       {
         "$ref": "#/$defs/DeploymentPolicyReceipt"
+      },
+      {
+        "$ref": "#/$defs/SessionMutationReceipt"
       }
     ],
     "title": "ProtectedEffectResult"
@@ -11205,6 +15388,45 @@
         ],
         "title": "RootRevoke",
         "type": "object"
+      },
+      "SessionRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevoke",
+        "type": "object"
       }
     },
     "additionalProperties": false,
@@ -11213,6 +15435,7 @@
         "discriminator": {
           "mapping": {
             "egress.policy.initialize.v1": "#/$defs/PolicyInitialize",
+            "identity.session.revoke.v1": "#/$defs/SessionRevoke",
             "instruction.candidate.register.v1": "#/$defs/CandidateRegister",
             "instruction.release.install.v1": "#/$defs/ReleaseInstall",
             "lifecycle.restore.authorize.v1": "#/$defs/RestorePlan",
@@ -11253,6 +15476,9 @@
           },
           {
             "$ref": "#/$defs/GrantSet"
+          },
+          {
+            "$ref": "#/$defs/SessionRevoke"
           },
           {
             "$ref": "#/$defs/GrantRevoke"
@@ -15504,6 +19730,269 @@
       "digest"
     ],
     "title": "RootObservation",
+    "type": "object"
+  },
+  "SessionLogout": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_security_version": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Security Version",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "kind": {
+        "const": "identity.session.logout.v1",
+        "default": "identity.session.logout.v1",
+        "title": "Kind",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "schema_version",
+      "idempotency_key",
+      "expected_security_version"
+    ],
+    "title": "SessionLogout",
+    "type": "object"
+  },
+  "SessionMutationReceipt": {
+    "$defs": {
+      "SessionLogout": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.logout.v1",
+            "default": "identity.session.logout.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "expected_security_version"
+        ],
+        "title": "SessionLogout",
+        "type": "object"
+      },
+      "SessionRevoke": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_security_version": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Security Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "identity.session.revoke.v1",
+            "default": "identity.session.revoke.v1",
+            "title": "Kind",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "target_session_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "target_session_id",
+          "expected_security_version"
+        ],
+        "title": "SessionRevoke",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "enum": [
+          "identity.session.revoke.v1",
+          "identity.session.logout.v1"
+        ],
+        "title": "Command",
+        "type": "string"
+      },
+      "committed_at": {
+        "title": "Committed At",
+        "type": "string"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "outcome": {
+        "const": "CANONICAL_COMMITTED",
+        "default": "CANONICAL_COMMITTED",
+        "title": "Outcome",
+        "type": "string"
+      },
+      "principal_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Principal Id",
+        "type": "string"
+      },
+      "request": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/SessionRevoke"
+          },
+          {
+            "$ref": "#/$defs/SessionLogout"
+          }
+        ],
+        "title": "Request"
+      },
+      "revoked": {
+        "const": true,
+        "title": "Revoked",
+        "type": "boolean"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "security_version": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Security Version",
+        "type": "string"
+      },
+      "session_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Session Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "command",
+      "operation_id",
+      "committed_at",
+      "session_id",
+      "principal_id",
+      "revoked",
+      "security_version",
+      "request"
+    ],
+    "title": "SessionMutationReceipt",
+    "type": "object"
+  },
+  "SessionRevokeRequest": {
+    "additionalProperties": false,
+    "properties": {
+      "expected_security_version": {
+        "pattern": "^[a-f0-9]{64}$",
+        "title": "Expected Security Version",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "kind": {
+        "const": "identity.session.revoke.v1",
+        "default": "identity.session.revoke.v1",
+        "title": "Kind",
+        "type": "string"
+      },
+      "nonce": {
+        "anyOf": [
+          {
+            "maxLength": 43,
+            "minLength": 43,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Nonce"
+      },
+      "request_hash": {
+        "anyOf": [
+          {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Request Hash"
+      },
+      "request_id": {
+        "anyOf": [
+          {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Request Id"
+      },
+      "schema_version": {
+        "const": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "target_session_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Target Session Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "schema_version",
+      "idempotency_key",
+      "target_session_id",
+      "expected_security_version"
+    ],
+    "title": "SessionRevokeRequest",
     "type": "object"
   },
   "TaskAdmission": {

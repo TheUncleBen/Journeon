@@ -17,6 +17,8 @@ from journeon.contracts import (
     GrantRevoke,
     GrantSet,
     PolicyInitialize,
+    SessionMutationReceipt,
+    SessionRevoke,
 )
 from journeon.database import require_compatible_schema, transaction
 from journeon.instruction_config import InstructionConfiguration
@@ -54,7 +56,7 @@ class InstructionConfirmation:
             policy_hash(db, record),
             self.configuration.model_dump(mode="json"),
         ]
-        if command in ADMINISTRATION_COMMANDS:
+        if command in ADMINISTRATION_COMMANDS or command == "identity.session.revoke.v1":
             from journeon.administration import incarnation
 
             material.append(incarnation(db))
@@ -122,6 +124,10 @@ class InstructionConfirmation:
                 from journeon.administration import validate_effect
 
                 validate_effect(db, actor, effect)
+            if isinstance(effect, SessionRevoke):
+                from journeon.identity import validate_session_revoke
+
+                validate_session_revoke(db, actor, effect, official=True)
             now = utc_seconds()
             row = ProtectedRequest(
                 id=str(uuid4()),
@@ -277,6 +283,10 @@ class InstructionConfirmation:
             from journeon.administration import validate_effect
 
             validate_effect(db, actor, effect)
+        if check_target and isinstance(effect, SessionRevoke):
+            from journeon.identity import validate_session_revoke
+
+            validate_session_revoke(db, actor, effect, official=True)
         return effect
 
     def preview(self, actor: AuthenticatedContext, identity: str) -> OfficialPreview:
@@ -305,7 +315,13 @@ class InstructionConfirmation:
 
     def confirm(
         self, actor: AuthenticatedContext, command: ExactConfirmation
-    ) -> InstructionReceipt | RestoreAuthorization | GrantReceipt | DeploymentPolicyReceipt:
+    ) -> (
+        InstructionReceipt
+        | RestoreAuthorization
+        | GrantReceipt
+        | DeploymentPolicyReceipt
+        | SessionMutationReceipt
+    ):
         # External observations happen before the serialized effect transaction.
         from journeon.instruction_admin import InstructionAdministration
 
@@ -346,6 +362,10 @@ class InstructionConfirmation:
                     result = decode(receipt)
                     settle_recovery_in_transaction(db, operation)
                     return result
+                if row.command == "identity.session.revoke.v1":
+                    from journeon.identity import authorized_session_receipt
+
+                    return authorized_session_receipt(db, actor, receipt)
                 if row.command in ADMINISTRATION_COMMANDS:
                     from journeon.administration import authorized_receipt
 
@@ -420,6 +440,35 @@ class InstructionConfirmation:
             return ProjectInstructionService(self.engine, self.configuration).accept(
                 actor, accepted
             )
+        if isinstance(effect, SessionRevoke):
+            from journeon.identity import apply_session_end
+
+            with transaction(self.engine) as db:
+                row = self._request(db, actor, command.request_id)
+                bound = self._bound(db, actor, row)
+                if not isinstance(bound, SessionRevoke):
+                    raise DomainError("PERMISSION_DENIED", "Session effect is unavailable")
+                now = utc_seconds()
+                if (
+                    command.request_hash != row.payload_hash
+                    or row.nonce_hash is None
+                    or row.nonce_deadline is None
+                    or now >= row.nonce_deadline
+                    or not secrets.compare_digest(row.nonce_hash, digest(command.nonce))
+                ):
+                    raise DomainError(
+                        "PERMISSION_DENIED", "Current exact preview consent is required"
+                    )
+                session_result = apply_session_end(
+                    db, actor, bound, operation_id=row.operation_id, official=True
+                )
+                self._bound(db, actor, row, check_target=False)
+                row.state = "COMMITTED"
+                row.approved_at = now
+                row.approval_deadline = None
+                row.nonce_hash = None
+                row.nonce_deadline = None
+                return session_result
         if isinstance(effect, (GrantSet, GrantRevoke, PolicyInitialize)):
             from journeon.administration import apply
 

@@ -312,6 +312,19 @@ class JobService:
             from journeon.task_dispatch import TaskDispatchService
 
             TaskDispatchService(self.engine, self.configuration).bound(db, actor, row)
+        else:
+            from journeon.project_instructions import ProjectInstructionService
+
+            try:
+                ProjectInstructionService(self.engine, self.configuration).binding(
+                    db, actor, row.project_id
+                )
+            except DomainError as error:
+                if error.code == "REVISION_CONFLICT":
+                    raise DomainError(
+                        "PERMISSION_DENIED", "Current instruction root is unavailable"
+                    ) from None
+                raise
         return view(row)
 
     def list(

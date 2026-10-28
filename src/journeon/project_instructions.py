@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 if TYPE_CHECKING:
     from journeon.jobs import ExecutionIdentity
+    from journeon.search_contracts import AcceptedNavigation
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -290,6 +291,61 @@ class ProjectInstructionService:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Project instructions are not bound")
         self.location(db, actor, row)
         return row
+
+    def accepted_navigation_in(
+        self, db: Session, actor: AuthenticatedContext, project_id: str
+    ) -> "AcceptedNavigation":
+        from journeon.search_contracts import AcceptedNavigation
+
+        try:
+            binding = self.binding(db, actor, project_id)
+        except DomainError as error:
+            if error.code == "REVISION_CONFLICT":
+                raise DomainError(
+                    "PERMISSION_DENIED", "Current instruction root is unavailable"
+                ) from None
+            raise
+        if binding.active_operation:
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Instruction publication is unresolved")
+        history = db.get(ProjectInstructionRevision, (project_id, binding.revision))
+        if history is None or history.tree_hash != binding.tree_hash:
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Accepted instruction metadata requires repair"
+            )
+        try:
+            data = history.snapshot
+            documents, refs, required = (
+                data["documents"],
+                data["document_refs"],
+                data["required_fragments"],
+            )
+            if (
+                not isinstance(documents, dict)
+                or not isinstance(refs, dict)
+                or not isinstance(required, list)
+                or not all(isinstance(path, str) for path in required)
+                or set(documents) != set(refs)
+                or "INDEX.md" not in documents
+                or len(documents) > 256
+                or len(set(required)) != len(required)
+                or any(path not in documents or path == "INDEX.md" for path in required)
+            ):
+                raise ValueError
+            for path, raw in refs.items():
+                Document(path=path, content="")
+                ref = DocumentReference.model_validate(raw)
+                if (ref.project_id, ref.revision, ref.path) != (project_id, binding.revision, path):
+                    raise ValueError
+            return AcceptedNavigation(
+                project_id=project_id,
+                revision=binding.revision,
+                document_paths=sorted(refs),
+                required_fragments=required,
+            )
+        except (KeyError, TypeError, ValueError):
+            raise DomainError(
+                "DEPENDENCY_UNAVAILABLE", "Accepted instruction metadata requires repair"
+            ) from None
 
     def read(self, actor: AuthenticatedContext, project_id: str) -> InstructionView:
         with transaction(self.engine) as db:

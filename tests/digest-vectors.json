@@ -267,6 +267,18 @@
     }
   },
   {
+    "model": "NotificationDismiss",
+    "canonical_model": "NotificationDismiss",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "dismiss",
+      "attention_id": "attention",
+      "expected_revision": 0,
+      "expected_source_revision": 1
+    }
+  },
+  {
     "model": "PasskeyLabelCommand",
     "canonical_model": "PasskeyLabelCommand",
     "exclude_key": true,

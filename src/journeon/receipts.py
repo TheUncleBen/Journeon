@@ -90,6 +90,10 @@ def authorized_receipt(db: Session, actor: AuthenticatedContext, row: Receipt) -
         if restored.operation_id != row.id or restored.target_id != store.store_id:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Restore receipt requires repair")
         return restored
+    if row.owner == "jobs" and row.command == "notification.dismiss.v1":
+        from journeon.notification_presentation import authorized_notification_receipt
+
+        return authorized_notification_receipt(db, actor, row)
     if row.owner == "jobs":
         from journeon.job_contracts import JobReceipt
         from journeon.jobs import authorize
@@ -186,6 +190,14 @@ def check_receipt_configuration(
         if job is None:
             raise DomainError("NOT_FOUND", "Job is unavailable")
         authorize(db, actor, job, "receipt.read")
+        if row.command == "notification.dismiss.v1":
+            from journeon.notification_presentation import presentation_receipt_source
+
+            if configuration is None:
+                raise RuntimeConfigurationUnavailable(
+                    "Explicit instruction runtime configuration is required"
+                )
+            presentation_receipt_source(db, actor, row, engine, configuration)
         if job.kind == "TASK_VERIFICATION":
             if configuration is None:
                 raise RuntimeConfigurationUnavailable("Task dispatcher is not configured")

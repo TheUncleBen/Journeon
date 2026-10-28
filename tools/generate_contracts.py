@@ -11,6 +11,7 @@ from pydantic import BaseModel, TypeAdapter
 from sqlalchemy import create_engine
 
 from journeon.api import create_app
+from journeon.attention_contracts import AttentionPage
 from journeon.contracts import (
     AttemptPrepare,
     AttemptReceipt,
@@ -35,6 +36,8 @@ from journeon.contracts import (
     ExecutionView,
     LegacyPlan,
     LegacyPreview,
+    NotificationDismiss,
+    NotificationReceipt,
     OperationIdentityResolution,
     OperationIdentityResolve,
     OperationReceipt,
@@ -75,6 +78,7 @@ from journeon.discovery_contracts import AttemptPage, JobPage, ProjectPage, Task
 from journeon.instruction_contracts import ProtectedEffect
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.registry import AUTHENTICATION, COMMANDS, registry_manifest
+from journeon.search_contracts import SearchPage
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -250,6 +254,9 @@ def artifacts() -> dict[str, str]:
             "listTasks": ("GET", "/api/v1/projects/{project_id}/tasks"),
             "listAttempts": ("GET", "/api/v1/tasks/{task_id}/attempts"),
             "listJobs": ("GET", "/api/v1/jobs"),
+            "searchWorkspace": ("GET", "/api/v1/search"),
+            "listAttention": ("GET", "/api/v1/attention"),
+            "dismissNotification": ("POST", "/api/v1/notifications/dismiss"),
         }
     )
     if operations != expected_operations:
@@ -295,6 +302,30 @@ def artifacts() -> dict[str, str]:
             "for (const name of ['project_id', 'task_id', 'attempt_id', 'cursor'] as const) { "
             "const value = filters[name]; if (value !== undefined) query.set(name, value); } "
             "return this.request(`/api/v1/jobs?${query}`, {method: 'GET'}); }",
+        ]
+    )
+    instruction_methods.extend(
+        [
+            "  searchWorkspace(q: string, kinds: SearchItem['kind'][], limit: number, "
+            "filters: {project_id?: string; cursor?: string} = {}): Promise<SearchPage> { "
+            "const query = new URLSearchParams({q, limit: String(limit)}); "
+            "for (const kind of kinds) query.append('kinds', kind); "
+            "for (const name of ['project_id', 'cursor'] as const) { "
+            "const value = filters[name]; if (value !== undefined) query.set(name, value); } "
+            "return this.request(`/api/v1/search?${query}`, {method: 'GET'}); }",
+            "  listAttention(limit: number, filters: {project_id?: string; cursor?: string; "
+            "canonical_disposition?: AttentionItem['canonical_disposition']; "
+            "presentation_disposition?: AttentionItem['presentation_disposition']} = {}): "
+            "Promise<AttentionPage> { "
+            "const query = new URLSearchParams({limit: String(limit)}); "
+            "for (const name of ['project_id', 'cursor', 'canonical_disposition', "
+            "'presentation_disposition'] as const) { "
+            "const value = filters[name]; if (value !== undefined) query.set(name, value); } "
+            "return this.request(`/api/v1/attention?${query}`, {method: 'GET'}); }",
+            "  dismissNotification(command: NotificationDismiss, csrfToken: string): "
+            "Promise<NotificationReceipt> { "
+            "return this.request('/api/v1/notifications/dismiss', {method: 'POST', "
+            "headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }",
         ]
     )
     for operation, request_name, result_name in (
@@ -635,6 +666,10 @@ export class JourneonClient {
             TaskPage,
             AttemptPage,
             JobPage,
+            SearchPage,
+            AttentionPage,
+            NotificationDismiss,
+            NotificationReceipt,
             ContextBootstrap,
             ContextBootstrapped,
             SessionRevokeRequest,
@@ -697,6 +732,7 @@ export class JourneonClient {
 
 
 EXCLUDE_KEY_COMMANDS = {
+    "notification.dismiss.v1",
     "project.create.v1",
     "passkey.label.v1",
     "profile.create.v1",

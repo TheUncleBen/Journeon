@@ -76,6 +76,51 @@ Owner. Attempts retain their originating Principal, exact instruction scope and
 current workspace checks. Jobs retain their kind-specific authorization and Task
 binding checks. Missing required Attempt or Job configuration returns unavailable.
 
+## Scoped search and Attention
+
+`GET /api/v1/search` requires `q` (1–200 characters), repeated `kinds` parameters,
+and an explicit `limit` (1–100). Optional `project_id` and `cursor` narrow a live
+page. The implemented kinds are `PROJECT`, `TASK`, `ATTEMPT`, `JOB`, and
+`INSTRUCTION_NAVIGATION`; `supported_coverage` reports this exact set. Requesting
+an unavailable adapter returns an explicit dependency error.
+
+Matching uses Unicode normalization and case folding, with literal substring
+matching and kind/ID ordering. Searchable display fields are Project name and
+description, Task objective, Attempt state, Job kind/state/reason, and accepted
+instruction document paths. Instruction results identify accepted revision
+metadata; they do not attest that the live instruction files match that revision.
+The instruction detail owner still checks the live files. Search performs bounded
+root identity checks without enumerating the instruction tree.
+
+`GET /api/v1/attention` requires an explicit `limit` (1–100) and supports `cursor`,
+`project_id`, `canonical_disposition`, and `presentation_disposition`. Its current
+coverage is canonical Job Attention. Each item separates canonical disposition,
+current Job source revision, and the current human's presentation disposition and
+revision. No personal record means `UNACKNOWLEDGED` at revision zero. Current,
+state-valid action references identify registered operations and their operands;
+the invoked owner rechecks authority.
+
+`POST /api/v1/notifications/dismiss` requires the current cookie and CSRF token,
+Attention ID, idempotency key, expected presentation revision, and expected Job
+source revision. Each accepted explicit acknowledgement appends one immutable
+personal version, receipt, and event. The same command/key returns its original
+receipt. A new command must use current versions. Dismissal changes neither the
+canonical disposition nor source state, occurrence history, or evidence. An open
+canonical item remains discoverable after personal dismissal. A later source
+occurrence or resolution leaves the retained personal acknowledgement truthful;
+this API selects no delivery, suppression, or re-alert timing.
+
+If an acknowledgement is lost, retain the original command, key, payload digest,
+Attention scope, and store incarnation. Resolve that original identity through
+`POST /api/v1/operations/resolve` before considering a retry. An older accepted
+receipt remains historical evidence when source or personal revisions advance;
+it grants no current action authority. The generated client does not retry
+mutations automatically. Restore retains presentation versions and receipts while
+invalidating cursors from the old store incarnation.
+
+These endpoints do not complete other search or Attention producers, desktop
+notification delivery, Shared User onboarding, or the operational Workspace UI.
+
 ## Task verification dispatch
 
 `POST /api/v1/tasks/dispatch` accepts `TaskDispatch` and returns the durable Job.

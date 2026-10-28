@@ -117,3 +117,18 @@ void client.listProjects();
 void client.listTasks("project", 1, undefined, "FINISHED");
 // @ts-expect-error Callers cannot select another Principal through discovery filters.
 void client.listJobs(1, {principal_id: "other-human"});
+
+import type { SearchPage, AttentionPage, NotificationDismiss, NotificationReceipt } from "../generated/client.js";
+const searchResult: Promise<SearchPage> = client.searchWorkspace("café", ["PROJECT", "TASK"], 10, {project_id: "project", cursor: "cursor"});
+const attentionResult: Promise<AttentionPage> = client.listAttention(10, {canonical_disposition: "OPEN", presentation_disposition: "DISMISSED"});
+const dismissCommand: NotificationDismiss = {schema_version: 1, idempotency_key: "dismiss", attention_id: "attention", expected_revision: 0, expected_source_revision: 1};
+const dismissed: Promise<NotificationReceipt> = client.dismissNotification(dismissCommand, "csrf");
+void [searchResult, attentionResult, dismissed];
+// @ts-expect-error Unsupported adapters are not advertised by the generated client.
+void client.searchWorkspace("query", ["UNIMPLEMENTED"], 10);
+// @ts-expect-error Canonical resolution cannot be requested through personal dismissal.
+const resolvesSource: NotificationDismiss = {...dismissCommand, canonical_disposition: "RESOLVED"};
+void resolvesSource;
+// @ts-expect-error Source revision is required independently of personal revision.
+const missingSource: NotificationDismiss = {attention_id: "attention", idempotency_key: "dismiss", expected_revision: 0};
+void missingSource;

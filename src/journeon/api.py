@@ -791,6 +791,9 @@ def create_app(
     from journeon.job_api import bind_job_api
 
     bind_job_api(app, engine, instructions)
+    from journeon.workspace_api import bind_workspace_api
+
+    bind_workspace_api(app, engine, instructions)
     from journeon.administration_api import bind_administration_api
 
     bind_administration_api(app, engine, instructions)

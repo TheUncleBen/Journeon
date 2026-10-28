@@ -81,6 +81,28 @@ async function main() {
     assert.equal(requests, 1);
   }
 
+  await discovery.searchWorkspace("café &kinds=hidden", ["PROJECT", "TASK"], 10, {project_id: "project&other", cursor: opaque});
+  const searchQuery = new URL(discoveryCalls.at(-1).url, "https://example.test").searchParams;
+  assert.equal(searchQuery.get("q"), "café &kinds=hidden");
+  assert.deepEqual(searchQuery.getAll("kinds"), ["PROJECT", "TASK"]);
+  assert.equal(searchQuery.get("project_id"), "project&other");
+  assert.equal(searchQuery.get("cursor"), opaque);
+  await discovery.listAttention(10, {canonical_disposition: "OPEN", presentation_disposition: "DISMISSED", cursor: opaque});
+  const attentionQuery = new URL(discoveryCalls.at(-1).url, "https://example.test").searchParams;
+  assert.equal(attentionQuery.get("canonical_disposition"), "OPEN");
+  assert.equal(attentionQuery.get("presentation_disposition"), "DISMISSED");
+  assert.equal(attentionQuery.get("cursor"), opaque);
+  const dismiss = {schema_version: 1, idempotency_key: "dismiss", attention_id: "attention", expected_revision: 0, expected_source_revision: 1};
+  await successor.dismissNotification(dismiss, "csrf");
+  assert.equal(successorCalls.at(-1).url, "/api/v1/notifications/dismiss");
+  assert.equal(successorCalls.at(-1).init.headers["X-CSRF-Token"], "csrf");
+  assert.equal(successorCalls.at(-1).init.credentials, "same-origin");
+  assert.deepEqual(JSON.parse(successorCalls.at(-1).init.body), dismiss);
+  let lostCalls = 0;
+  const lostDismiss = new JourneonClient("", async () => { lostCalls++; throw new Error("Lost acknowledgement"); });
+  await assert.rejects(() => lostDismiss.dismissNotification(dismiss, "csrf"));
+  assert.equal(lostCalls, 1);
+
   const client = new JourneonClient("", transport);
   const command = {
     schema_version: 1, idempotency_key: "synthetic-command", name: "Example project",

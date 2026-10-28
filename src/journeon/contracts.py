@@ -1328,6 +1328,29 @@ class GrantPage(Contract):
     store_incarnation: Identifier
 
 
+class NotificationDismiss(Contract):
+    schema_version: SchemaVersion = 1
+    idempotency_key: Identifier
+    attention_id: Identifier
+    expected_revision: Annotated[int, Field(ge=0)]
+    expected_source_revision: PositiveRevision
+
+
+class NotificationReceipt(Contract):
+    schema_version: SchemaVersion = 1
+    command: Literal["notification.dismiss.v1"] = "notification.dismiss.v1"
+    operation_id: Identifier
+    target_kind: Literal["job"] = "job"
+    target_id: Identifier
+    principal_id: Identifier
+    attention_id: Identifier
+    revision: PositiveRevision
+    source_revision: PositiveRevision
+    disposition: Literal["DISMISSED"] = "DISMISSED"
+    committed_at: str
+    request: NotificationDismiss
+
+
 CanonicalReceipt = (
     ExecutionReceipt
     | AttemptReceipt
@@ -1344,6 +1367,7 @@ CanonicalReceipt = (
     | GrantReceipt
     | DeploymentPolicyReceipt
     | SessionMutationReceipt
+    | NotificationReceipt
 )
 
 

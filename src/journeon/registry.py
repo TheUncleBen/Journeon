@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from journeon import instruction_contracts as instruction_dto
 from journeon.attempt_contracts import AttemptPrepare, AttemptReceipt, AttemptView
+from journeon.attention_contracts import AttentionPage
 from journeon.contracts import (
     BotCreate,
     BotRevise,
@@ -35,6 +36,8 @@ from journeon.contracts import (
     GrantSetConfirmed,
     LegacyPlan,
     LegacyPreview,
+    NotificationDismiss,
+    NotificationReceipt,
     OperationIdentityResolution,
     OperationIdentityResolve,
     OperationReceipt,
@@ -88,6 +91,7 @@ from journeon.migrate import configuration
 from journeon.models import Base
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.restore_contracts import RestorePlan, RestorePreview
+from journeon.search_contracts import SearchPage
 
 
 @dataclass(frozen=True)
@@ -1652,6 +1656,92 @@ for discovery_name, (
         dict.fromkeys((*MODULES[discovery_owner]["permissions"], *discovery_permissions))
     )
 MODULES["work"]["api_prefixes"] += ("/api/v1/projects/{project_id}/tasks",)
+
+
+for name, owner, result, grants in (
+    (
+        "workspace.search.v1",
+        "projects",
+        SearchPage,
+        tuple(check for _, _, checks in DISCOVERY_QUERIES.values() for check in checks),
+    ),
+    (
+        "attention.list.v1",
+        "jobs",
+        AttentionPage,
+        (
+            *CONFIGURATION_AUTHORIZATION["job.read.v1"]["grant_checks"],
+            *CONFIGURATION_AUTHORIZATION["job.cancel.v1"]["grant_checks"],
+            grant_check("job.receipt.read", "job.project_id", "own presentation", owner=False),
+            grant_check(
+                "project.instruction.receipt.read",
+                "job.project_id",
+                "instruction presentation",
+                owner=False,
+            ),
+        ),
+    ),
+):
+    permissions = tuple(dict.fromkeys(check["capability"] for check in grants))
+    QUERIES[name] = {"owner": owner, "permissions": permissions, "result_model": result}
+    CONFIGURATION_AUTHORIZATION[name] = {
+        "owner_only": False,
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": list(grants),
+        "semantics": (
+            "Canonical owner authority precedes stored content, matching and filtered lookahead"
+        ),
+    }
+    MODULES[owner]["permissions"] = tuple(
+        dict.fromkeys((*MODULES[owner]["permissions"], *permissions))
+    )
+notification_permissions = tuple(
+    dict.fromkeys(
+        (
+            *QUERIES["job.read.v1"]["permissions"],
+            "job.receipt.read",
+            "project.instruction.receipt.read",
+        )
+    )
+)
+COMMANDS["notification.dismiss.v1"] = CommandDefinition(
+    name="notification.dismiss.v1",
+    owner="jobs",
+    input_model=NotificationDismiss,
+    result_model=NotificationReceipt,
+    permissions=notification_permissions,
+    risk="LOCAL_CANONICAL_MUTATION",
+    external_effects=(),
+    reversibility="Retained own presentation acknowledgement; canonical source remains unchanged",
+    dry_run=False,
+    idempotent=True,
+    verification=(
+        "Current source authority and revision; atomic own presentation, receipt and event"
+    ),
+)
+CONFIGURATION_AUTHORIZATION["notification.dismiss.v1"] = {
+    "owner_only": False,
+    "authentication": "current originating Principal session",
+    "grant_checks": list(CONFIGURATION_AUTHORIZATION["job.read.v1"]["grant_checks"])
+    + [
+        grant_check("job.receipt.read", "job.project_id", "Task Job", owner=False),
+        grant_check(
+            "project.instruction.receipt.read", "job.project_id", "instruction Job", owner=False
+        ),
+    ],
+    "semantics": (
+        "Only the current human presentation changes; "
+        "source authority and version are rechecked at commit"
+    ),
+}
+MODULES["projects"]["api_prefixes"] += ("/api/v1/search",)
+MODULES["jobs"]["api_prefixes"] += ("/api/v1/attention", "/api/v1/notifications")
+MODULES["jobs"]["tables"] += ("notification_presentations",)
+MODULES["jobs"]["events_published"] += ("notification.dismissed",)
+MODULES["jobs"]["migration"] = "0017_notification_presentation"
+MODULES["jobs"]["permissions"] = tuple(
+    dict.fromkeys((*MODULES["jobs"]["permissions"], *notification_permissions))
+)
 
 
 @dataclass(frozen=True)

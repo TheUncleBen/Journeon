@@ -3344,6 +3344,305 @@
     "title": "AttentionList",
     "type": "array"
   },
+  "AttentionPage": {
+    "$defs": {
+      "AttentionAction": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Arguments",
+            "type": "object"
+          },
+          "operation": {
+            "enum": [
+              "job.cancel.v1",
+              "notification.dismiss.v1"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation",
+          "target_id",
+          "arguments"
+        ],
+        "title": "AttentionAction",
+        "type": "object"
+      },
+      "AttentionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/$defs/AttentionAction"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "canonical_disposition": {
+            "enum": [
+              "OPEN",
+              "DISMISSED",
+              "RESOLVED"
+            ],
+            "title": "Canonical Disposition",
+            "type": "string"
+          },
+          "occurrences": {
+            "minimum": 1,
+            "title": "Occurrences",
+            "type": "integer"
+          },
+          "presentation_disposition": {
+            "enum": [
+              "UNACKNOWLEDGED",
+              "DISMISSED"
+            ],
+            "title": "Presentation Disposition",
+            "type": "string"
+          },
+          "presentation_revision": {
+            "minimum": 0,
+            "title": "Presentation Revision",
+            "type": "integer"
+          },
+          "presentation_source_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presentation Source Revision"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/$defs/JobView"
+          },
+          "source_revision": {
+            "minimum": 1,
+            "title": "Source Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attention_id",
+          "project_id",
+          "source",
+          "source_revision",
+          "reason",
+          "occurrences",
+          "canonical_disposition",
+          "presentation_disposition",
+          "presentation_revision",
+          "presentation_source_revision",
+          "actions"
+        ],
+        "title": "AttentionItem",
+        "type": "object"
+      },
+      "JobView": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Admission Id",
+            "type": "string"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "effect": {
+            "enum": [
+              "NONE",
+              "UNKNOWN",
+              "COMMITTED",
+              "ABANDONED"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "INSTRUCTION_NAVIGATION",
+              "TASK_VERIFICATION"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "RETRY_WAIT"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "job_id",
+          "project_id",
+          "kind",
+          "candidate_id",
+          "task_id",
+          "revision",
+          "state",
+          "effect",
+          "reason",
+          "operation_id",
+          "admission_id"
+        ],
+        "title": "JobView",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/AttentionItem"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      },
+      "supported_coverage": {
+        "items": {
+          "const": "JOB",
+          "type": "string"
+        },
+        "title": "Supported Coverage",
+        "type": "array"
+      }
+    },
+    "required": [
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation",
+      "supported_coverage",
+      "items"
+    ],
+    "title": "AttentionPage",
+    "type": "object"
+  },
   "BindingImpact": {
     "additionalProperties": false,
     "properties": {
@@ -8372,6 +8671,164 @@
     "title": "LegacyPreview",
     "type": "object"
   },
+  "NotificationDismiss": {
+    "additionalProperties": false,
+    "properties": {
+      "attention_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Attention Id",
+        "type": "string"
+      },
+      "expected_revision": {
+        "minimum": 0,
+        "title": "Expected Revision",
+        "type": "integer"
+      },
+      "expected_source_revision": {
+        "minimum": 1,
+        "title": "Expected Source Revision",
+        "type": "integer"
+      },
+      "idempotency_key": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "attention_id",
+      "expected_revision",
+      "expected_source_revision"
+    ],
+    "title": "NotificationDismiss",
+    "type": "object"
+  },
+  "NotificationReceipt": {
+    "$defs": {
+      "NotificationDismiss": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "expected_source_revision": {
+            "minimum": 1,
+            "title": "Expected Source Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "attention_id",
+          "expected_revision",
+          "expected_source_revision"
+        ],
+        "title": "NotificationDismiss",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "attention_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Attention Id",
+        "type": "string"
+      },
+      "command": {
+        "const": "notification.dismiss.v1",
+        "default": "notification.dismiss.v1",
+        "title": "Command",
+        "type": "string"
+      },
+      "committed_at": {
+        "title": "Committed At",
+        "type": "string"
+      },
+      "disposition": {
+        "const": "DISMISSED",
+        "default": "DISMISSED",
+        "title": "Disposition",
+        "type": "string"
+      },
+      "operation_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Operation Id",
+        "type": "string"
+      },
+      "principal_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Principal Id",
+        "type": "string"
+      },
+      "request": {
+        "$ref": "#/$defs/NotificationDismiss"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "source_revision": {
+        "minimum": 1,
+        "title": "Source Revision",
+        "type": "integer"
+      },
+      "target_id": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Target Id",
+        "type": "string"
+      },
+      "target_kind": {
+        "const": "job",
+        "default": "job",
+        "title": "Target Kind",
+        "type": "string"
+      }
+    },
+    "required": [
+      "operation_id",
+      "target_id",
+      "principal_id",
+      "attention_id",
+      "revision",
+      "source_revision",
+      "committed_at",
+      "request"
+    ],
+    "title": "NotificationReceipt",
+    "type": "object"
+  },
   "OfficialPreview": {
     "$defs": {
       "CandidateRegister": {
@@ -10654,6 +11111,123 @@
         "title": "JobReceipt",
         "type": "object"
       },
+      "NotificationDismiss": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "expected_source_revision": {
+            "minimum": 1,
+            "title": "Expected Source Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "attention_id",
+          "expected_revision",
+          "expected_source_revision"
+        ],
+        "title": "NotificationDismiss",
+        "type": "object"
+      },
+      "NotificationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "command": {
+            "const": "notification.dismiss.v1",
+            "default": "notification.dismiss.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "disposition": {
+            "const": "DISMISSED",
+            "default": "DISMISSED",
+            "title": "Disposition",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/$defs/NotificationDismiss"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "source_revision": {
+            "minimum": 1,
+            "title": "Source Revision",
+            "type": "integer"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "const": "job",
+            "default": "job",
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "target_id",
+          "principal_id",
+          "attention_id",
+          "revision",
+          "source_revision",
+          "committed_at",
+          "request"
+        ],
+        "title": "NotificationReceipt",
+        "type": "object"
+      },
       "ObservedOperationReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -10714,6 +11288,9 @@
               },
               {
                 "$ref": "#/$defs/SessionMutationReceipt"
+              },
+              {
+                "$ref": "#/$defs/NotificationReceipt"
               }
             ],
             "title": "Receipt"
@@ -20173,6 +20750,129 @@
       "digest"
     ],
     "title": "RootObservation",
+    "type": "object"
+  },
+  "SearchPage": {
+    "$defs": {
+      "SearchItem": {
+        "additionalProperties": false,
+        "properties": {
+          "display_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Display Fields",
+            "type": "array"
+          },
+          "entity_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ATTEMPT",
+              "INSTRUCTION_NAVIGATION",
+              "JOB",
+              "PROJECT",
+              "TASK"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "CANONICAL",
+              "ACCEPTED_INSTRUCTION_REVISION"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "entity_id",
+          "project_id",
+          "revision",
+          "display_fields",
+          "href",
+          "provenance"
+        ],
+        "title": "SearchItem",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/SearchItem"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      },
+      "supported_coverage": {
+        "items": {
+          "enum": [
+            "ATTEMPT",
+            "INSTRUCTION_NAVIGATION",
+            "JOB",
+            "PROJECT",
+            "TASK"
+          ],
+          "type": "string"
+        },
+        "title": "Supported Coverage",
+        "type": "array"
+      }
+    },
+    "required": [
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation",
+      "supported_coverage",
+      "items"
+    ],
+    "title": "SearchPage",
     "type": "object"
   },
   "SessionLogout": {

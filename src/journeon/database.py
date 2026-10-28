@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from journeon.contracts import DomainError
 from journeon.maintenance import RestoreWriteIdentity
 
-SCHEMA_REVISION = "0016_identity_sessions"
+SCHEMA_REVISION = "0017_notification_presentation"
 
 
 def require_compatible_schema(session: Session) -> None:

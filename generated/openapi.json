@@ -416,12 +416,193 @@
         "title": "AttemptView",
         "type": "object"
       },
+      "AttentionAction": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Arguments",
+            "type": "object"
+          },
+          "operation": {
+            "enum": [
+              "job.cancel.v1",
+              "notification.dismiss.v1"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation",
+          "target_id",
+          "arguments"
+        ],
+        "title": "AttentionAction",
+        "type": "object"
+      },
+      "AttentionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/AttentionAction"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "canonical_disposition": {
+            "enum": [
+              "OPEN",
+              "DISMISSED",
+              "RESOLVED"
+            ],
+            "title": "Canonical Disposition",
+            "type": "string"
+          },
+          "occurrences": {
+            "minimum": 1.0,
+            "title": "Occurrences",
+            "type": "integer"
+          },
+          "presentation_disposition": {
+            "enum": [
+              "UNACKNOWLEDGED",
+              "DISMISSED"
+            ],
+            "title": "Presentation Disposition",
+            "type": "string"
+          },
+          "presentation_revision": {
+            "minimum": 0.0,
+            "title": "Presentation Revision",
+            "type": "integer"
+          },
+          "presentation_source_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presentation Source Revision"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/JobView"
+          },
+          "source_revision": {
+            "minimum": 1.0,
+            "title": "Source Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attention_id",
+          "project_id",
+          "source",
+          "source_revision",
+          "reason",
+          "occurrences",
+          "canonical_disposition",
+          "presentation_disposition",
+          "presentation_revision",
+          "presentation_source_revision",
+          "actions"
+        ],
+        "title": "AttentionItem",
+        "type": "object"
+      },
       "AttentionList": {
         "items": {
           "$ref": "#/components/schemas/AttentionView"
         },
         "title": "AttentionList",
         "type": "array"
+      },
+      "AttentionPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AttentionItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          },
+          "supported_coverage": {
+            "items": {
+              "const": "JOB",
+              "type": "string"
+            },
+            "title": "Supported Coverage",
+            "type": "array"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation",
+          "supported_coverage",
+          "items"
+        ],
+        "title": "AttentionPage",
+        "type": "object"
       },
       "AttentionView": {
         "additionalProperties": false,
@@ -4675,6 +4856,123 @@
         "title": "LegacyPreview",
         "type": "object"
       },
+      "NotificationDismiss": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "expected_source_revision": {
+            "minimum": 1.0,
+            "title": "Expected Source Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "attention_id",
+          "expected_revision",
+          "expected_source_revision"
+        ],
+        "title": "NotificationDismiss",
+        "type": "object"
+      },
+      "NotificationReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attention Id",
+            "type": "string"
+          },
+          "command": {
+            "const": "notification.dismiss.v1",
+            "default": "notification.dismiss.v1",
+            "title": "Command",
+            "type": "string"
+          },
+          "committed_at": {
+            "title": "Committed At",
+            "type": "string"
+          },
+          "disposition": {
+            "const": "DISMISSED",
+            "default": "DISMISSED",
+            "title": "Disposition",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "principal_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/NotificationDismiss"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "source_revision": {
+            "minimum": 1.0,
+            "title": "Source Revision",
+            "type": "integer"
+          },
+          "target_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "const": "job",
+            "default": "job",
+            "title": "Target Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "target_id",
+          "principal_id",
+          "attention_id",
+          "revision",
+          "source_revision",
+          "committed_at",
+          "request"
+        ],
+        "title": "NotificationReceipt",
+        "type": "object"
+      },
       "ObservedOperationReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -4735,6 +5033,9 @@
               },
               {
                 "$ref": "#/components/schemas/SessionMutationReceipt"
+              },
+              {
+                "$ref": "#/components/schemas/NotificationReceipt"
               }
             ],
             "title": "Receipt"
@@ -7829,6 +8130,127 @@
         "title": "RunManifest",
         "type": "object"
       },
+      "SearchItem": {
+        "additionalProperties": false,
+        "properties": {
+          "display_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Display Fields",
+            "type": "array"
+          },
+          "entity_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ATTEMPT",
+              "INSTRUCTION_NAVIGATION",
+              "JOB",
+              "PROJECT",
+              "TASK"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "CANONICAL",
+              "ACCEPTED_INSTRUCTION_REVISION"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "entity_id",
+          "project_id",
+          "revision",
+          "display_fields",
+          "href",
+          "provenance"
+        ],
+        "title": "SearchItem",
+        "type": "object"
+      },
+      "SearchPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          },
+          "supported_coverage": {
+            "items": {
+              "enum": [
+                "ATTEMPT",
+                "INSTRUCTION_NAVIGATION",
+                "JOB",
+                "PROJECT",
+                "TASK"
+              ],
+              "type": "string"
+            },
+            "title": "Supported Coverage",
+            "type": "array"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation",
+          "supported_coverage",
+          "items"
+        ],
+        "title": "SearchPage",
+        "type": "object"
+      },
       "SessionLogout": {
         "additionalProperties": false,
         "properties": {
@@ -10114,6 +10536,258 @@
           "task.read"
         ],
         "x-journeon-query": "attempt.read.v1"
+      }
+    },
+    "/api/v1/attention": {
+      "get": {
+        "operationId": "listAttention",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "canonical_disposition",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "OPEN",
+                    "DISMISSED",
+                    "RESOLVED"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Canonical Disposition"
+            }
+          },
+          {
+            "in": "query",
+            "name": "presentation_disposition",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "UNACKNOWLEDGED",
+                    "DISMISSED"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Presentation Disposition"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttentionPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Attention",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch, including empty pages",
+          "grant_checks": [
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.accept",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.cancel",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "job.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "own presentation"
+            },
+            {
+              "capability": "project.instruction.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction presentation"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Canonical owner authority precedes stored content, matching and filtered lookahead"
+        },
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.read",
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.verification.read",
+          "project.instruction.accept",
+          "job.cancel",
+          "job.receipt.read",
+          "project.instruction.receipt.read"
+        ],
+        "x-journeon-query": "attention.list.v1"
       }
     },
     "/api/v1/auth/context": {
@@ -13044,6 +13718,160 @@
         ]
       }
     },
+    "/api/v1/notifications/dismiss": {
+      "post": {
+        "operationId": "dismissNotification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationDismiss"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Dismiss",
+        "x-journeon-authorization": {
+          "authentication": "current originating Principal session",
+          "grant_checks": [
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "job.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task Job"
+            },
+            {
+              "capability": "project.instruction.receipt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction Job"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Only the current human presentation changes; source authority and version are rechecked at commit"
+        },
+        "x-journeon-command": "notification.dismiss.v1",
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.read",
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.verification.read",
+          "job.receipt.read",
+          "project.instruction.receipt.read"
+        ]
+      }
+    },
     "/api/v1/operations/resolve": {
       "post": {
         "operationId": "resolveOperationIdentity",
@@ -13216,6 +14044,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/SessionMutationReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotificationReceipt"
                     }
                   ],
                   "title": "Response Getoperationreceipt"
@@ -18126,6 +18957,276 @@
           "project.instruction.read"
         ],
         "x-journeon-query": "task.review.read.v1"
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "operationId": "searchWorkspace",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kinds",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 1,
+              "title": "Kinds",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Search",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch, including empty pages",
+          "grant_checks": [
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "project.id",
+              "when": "each candidate"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "project.id",
+              "when": "Task collection link"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "Attempt collection link"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "exact-resource Attempt collection link"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "exact-resource read"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "Job collection link"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "execution.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "evidence link"
+            },
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "evidence link"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Canonical owner authority precedes stored content, matching and filtered lookahead"
+        },
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.read",
+          "task.read",
+          "attempt.read",
+          "project.instruction.read",
+          "job.read",
+          "project.verification.read",
+          "execution.read"
+        ],
+        "x-journeon-query": "workspace.search.v1"
       }
     },
     "/api/v1/tasks": {

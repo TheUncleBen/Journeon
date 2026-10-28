@@ -139,6 +139,20 @@ def authorize_original(
         if name == "identity.session.logout.v1" and target.principal_id != actor.principal_id:
             raise DomainError("NOT_FOUND", "Session is unavailable")
         return AuthorizedOriginalScope("identity", target_id=target.id)
+    if name == "notification.dismiss.v1":
+        from journeon.jobs import authorize as authorize_job
+        from journeon.models import Attention
+
+        exact_scope(query, {"attention_id"})
+        item = db.get(
+            Attention, scope_value(query, "attention_id"), options=[defer(Attention.history)]
+        )
+        job = db.get(Job, item.job_id) if item else None
+        if item is None or job is None:
+            raise DomainError("NOT_FOUND", "Attention is unavailable")
+        authorize_job(db, actor, job)
+        authorize_job(db, actor, job, "receipt.read")
+        return AuthorizedOriginalScope("jobs", project_id=job.project_id, target_id=job.id)
     if name == "passkey.label.v1":
         from journeon.factors import owned_key
 
@@ -317,6 +331,16 @@ def resolve_original(
 
     current_actor(db, actor)
     scope = authorize_original(db, actor, query)
+    if query.command == "notification.dismiss.v1":
+        from journeon.notification_presentation import source_in
+
+        source_in(
+            db,
+            actor,
+            scope_value(query, "attention_id"),
+            engine,
+            require_instruction_configuration(configuration),
+        )
     current = incarnation(db)
 
     def result(
@@ -362,6 +386,15 @@ def resolve_original(
             AccessGrant.capability == scope_value(query, "capability"),
             AccessGrant.resource_kind == scope_value(query, "resource_kind"),
             AccessGrant.resource_id == scope_value(query, "resource_id"),
+        )
+    if query.command == "notification.dismiss.v1":
+        from journeon.models import NotificationPresentation
+
+        statement = statement.join(
+            NotificationPresentation, NotificationPresentation.operation_id == Receipt.id
+        ).where(
+            NotificationPresentation.principal_id == actor.principal_id,
+            NotificationPresentation.attention_id == scope_value(query, "attention_id"),
         )
     row = db.scalar(statement)
     if row is not None:

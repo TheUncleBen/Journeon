@@ -2989,6 +2989,308 @@
     {
       "authentication": null,
       "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "each candidate"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "Task collection link"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "Attempt collection link"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "exact-resource Attempt collection link"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "exact-resource read"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "Job collection link"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner authority precedes stored content, matching and filtered lookahead"
+      },
+      "command": null,
+      "endpoint": "journeon.workspace_api.bind_workspace_api.<locals>.search",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "searchWorkspace",
+      "owner": "projects",
+      "path": "/api/v1/search",
+      "permissions": [
+        "project.read",
+        "task.read",
+        "attempt.read",
+        "project.instruction.read",
+        "job.read",
+        "project.verification.read",
+        "execution.read"
+      ],
+      "query": "workspace.search.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.cancel",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "job.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "own presentation"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction presentation"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner authority precedes stored content, matching and filtered lookahead"
+      },
+      "command": null,
+      "endpoint": "journeon.workspace_api.bind_workspace_api.<locals>.attention",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listAttention",
+      "owner": "jobs",
+      "path": "/api/v1/attention",
+      "permissions": [
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read",
+        "project.instruction.accept",
+        "job.cancel",
+        "job.receipt.read",
+        "project.instruction.receipt.read"
+      ],
+      "query": "attention.list.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current originating Principal session",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "job.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task Job"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction Job"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Only the current human presentation changes; source authority and version are rechecked at commit"
+      },
+      "command": "notification.dismiss.v1",
+      "endpoint": "journeon.workspace_api.bind_workspace_api.<locals>.dismiss",
+      "methods": [
+        "POST"
+      ],
+      "operation_id": "dismissNotification",
+      "owner": "jobs",
+      "path": "/api/v1/notifications/dismiss",
+      "permissions": [
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read",
+        "job.receipt.read",
+        "project.instruction.receipt.read"
+      ],
+      "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
         "grant_checks": [],
         "owner_only": true,
         "semantics": "Current Owner administration; mutations require official strong exact-effect confirmation; no ordinary-resource grant bypass"
@@ -5420,6 +5722,83 @@
       "risk": "SECURITY_ADMINISTRATION",
       "stability": "INTERNAL",
       "verification": "Current official exact-effect consent and atomic state, receipt and outbox"
+    },
+    {
+      "authorization": {
+        "authentication": "current originating Principal session",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "job.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task Job"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction Job"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Only the current human presentation changes; source authority and version are rechecked at commit"
+      },
+      "dry_run": false,
+      "external_effects": [],
+      "idempotent": true,
+      "input_model": "NotificationDismiss",
+      "name": "notification.dismiss.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read",
+        "job.receipt.read",
+        "project.instruction.receipt.read"
+      ],
+      "result_model": "NotificationReceipt",
+      "reversibility": "Retained own presentation acknowledgement; canonical source remains unchanged",
+      "risk": "LOCAL_CANONICAL_MUTATION",
+      "stability": "INTERNAL",
+      "verification": "Current source authority and revision; atomic own presentation, receipt and event"
     }
   ],
   "internal_services": [
@@ -5612,7 +5991,9 @@
     {
       "api_prefixes": [
         "/api/v1/jobs",
-        "/api/v1/events"
+        "/api/v1/events",
+        "/api/v1/attention",
+        "/api/v1/notifications"
       ],
       "backup_class": "R0",
       "core": true,
@@ -5623,10 +6004,11 @@
         "job.admitted",
         "job.changed",
         "attention.raised",
-        "attention.resolved"
+        "attention.resolved",
+        "notification.dismissed"
       ],
       "health": "schema_and_database",
-      "migration": "0013_task_dispatch",
+      "migration": "0017_notification_presentation",
       "module_id": "jobs",
       "permission_namespaces": [
         "attempt",
@@ -5657,14 +6039,16 @@
         "execution.complete",
         "execution.receipt.read",
         "project.read",
-        "project.verification.read"
+        "project.verification.read",
+        "project.instruction.receipt.read"
       ],
       "settings": [],
       "tables": [
         "jobs",
         "attention",
         "task_verification_jobs",
-        "task_verification_evidence"
+        "task_verification_evidence",
+        "notification_presentations"
       ],
       "version": "0.0.0.dev1"
     },
@@ -5822,7 +6206,8 @@
     },
     {
       "api_prefixes": [
-        "/api/v1/projects"
+        "/api/v1/projects",
+        "/api/v1/search"
       ],
       "backup_class": "R0",
       "core": true,
@@ -5838,6 +6223,9 @@
       "migration": "0014_review_completion",
       "module_id": "projects",
       "permission_namespaces": [
+        "attempt",
+        "execution",
+        "job",
         "project",
         "task"
       ],
@@ -5849,7 +6237,11 @@
         "project.review.configure",
         "project.review.read",
         "project.read",
-        "task.read"
+        "task.read",
+        "attempt.read",
+        "project.instruction.read",
+        "job.read",
+        "execution.read"
       ],
       "settings": [],
       "tables": [
@@ -6712,6 +7104,218 @@
         "project.read"
       ],
       "result_model": "JobPage"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "each candidate"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "Task collection link"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "Attempt collection link"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "exact-resource Attempt collection link"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "exact-resource read"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "Job collection link"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner authority precedes stored content, matching and filtered lookahead"
+      },
+      "name": "workspace.search.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.read",
+        "task.read",
+        "attempt.read",
+        "project.instruction.read",
+        "job.read",
+        "project.verification.read",
+        "execution.read"
+      ],
+      "result_model": "SearchPage"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.accept",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.cancel",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "job.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "own presentation"
+          },
+          {
+            "capability": "project.instruction.receipt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction presentation"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner authority precedes stored content, matching and filtered lookahead"
+      },
+      "name": "attention.list.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read",
+        "project.instruction.accept",
+        "job.cancel",
+        "job.receipt.read",
+        "project.instruction.receipt.read"
+      ],
+      "result_model": "AttentionPage"
     }
   ],
   "surfaces": [

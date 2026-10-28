@@ -959,3 +959,17 @@ class TaskVerificationEvidence(Base):
     manifest_id: Mapped[str] = mapped_column(ForeignKey("attempt_manifests.id"))
     content_hash: Mapped[str] = mapped_column(String(64))
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class NotificationPresentation(Base):
+    __tablename__ = "notification_presentations"
+    principal_id: Mapped[str] = mapped_column(ForeignKey("principals.id"), primary_key=True)
+    attention_id: Mapped[str] = mapped_column(ForeignKey("attention.id"), primary_key=True)
+    operation_id: Mapped[str] = mapped_column(ForeignKey("operation_receipts.id"), unique=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disposition: Mapped[str] = mapped_column(String(16))
+    source_revision: Mapped[int] = mapped_column(Integer)
+    __table_args__ = (
+        CheckConstraint("revision >= 1 AND source_revision >= 1", name="presentation_versions"),
+        CheckConstraint("disposition = 'DISMISSED'", name="presentation_disposition"),
+    )

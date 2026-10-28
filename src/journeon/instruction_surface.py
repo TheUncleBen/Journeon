@@ -71,6 +71,7 @@ def bind_surface(app: FastAPI, engine: Engine, config: InstructionConfiguration 
             "button,a{font:inherit}button{padding:.7rem;margin:.5rem;border:2px solid #333}"
             ":focus-visible{outline:3px solid #005fcc;outline-offset:3px}"
             "@media(prefers-color-scheme:dark){body{color:#eee;background:#171717}"
+            "a{color:#8dbdff}"
             "button{color:#eee;background:#333;border-color:#aaa}"
             ":focus-visible{outline:3px solid #8dbdff;outline-offset:3px}}",
             media_type="text/css",

@@ -303,28 +303,37 @@ class JobService:
         with transaction(self.engine) as db:
             return self.read_in(db, actor, identity)
 
+    def check_configuration(self, db: Session, actor: AuthenticatedContext, row: Job) -> None:
+        """Check source configuration after the caller authorizes its operation."""
+        if row.kind == "TASK_VERIFICATION":
+            from journeon.task_dispatch import TaskDispatchService
+
+            TaskDispatchService(self.engine, self.configuration).bound(db, actor, row)
+            return
+        from journeon.models import Project, ProjectInstructionBinding
+        from journeon.project_instructions import ProjectInstructionService
+
+        binding = db.get(ProjectInstructionBinding, row.project_id)
+        if (
+            binding is None
+            or db.scalar(select(Project.id).where(Project.id == row.project_id)) is None
+        ):
+            raise DomainError("NOT_FOUND", "Job is unavailable")
+        try:
+            ProjectInstructionService(self.engine, self.configuration).location(db, actor, binding)
+        except DomainError as error:
+            if error.code == "REVISION_CONFLICT":
+                raise DomainError(
+                    "PERMISSION_DENIED", "Current instruction root is unavailable"
+                ) from None
+            raise
+
     def read_in(self, db: Session, actor: AuthenticatedContext, identity: str) -> JobView:
         row = db.get(Job, identity)
         if row is None:
             raise DomainError("NOT_FOUND", "Job is unavailable")
         authorize(db, actor, row)
-        if row.kind == "TASK_VERIFICATION":
-            from journeon.task_dispatch import TaskDispatchService
-
-            TaskDispatchService(self.engine, self.configuration).bound(db, actor, row)
-        else:
-            from journeon.project_instructions import ProjectInstructionService
-
-            try:
-                ProjectInstructionService(self.engine, self.configuration).binding(
-                    db, actor, row.project_id
-                )
-            except DomainError as error:
-                if error.code == "REVISION_CONFLICT":
-                    raise DomainError(
-                        "PERMISSION_DENIED", "Current instruction root is unavailable"
-                    ) from None
-                raise
+        self.check_configuration(db, actor, row)
         return view(row)
 
     def list(

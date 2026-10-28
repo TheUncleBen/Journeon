@@ -666,3 +666,73 @@ def test_advertised_presentation_action_invokes_owner_and_tracks_current_grant(f
     assert denied.status_code == 403
     assert denied.json()["code"] == "PERMISSION_DENIED"
     assert effects(owner) == before
+
+
+@pytest.mark.parametrize("same_key", [True, False])
+def test_real_fresh_session_presentation_race_keeps_one_immutable_version(failed_work, same_key):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    from test_workspace_identity_security import login_again
+
+    from journeon.passkeys import STANDARD_PASSKEY_POLICY, PasskeyService
+
+    fixture, _ = failed_work
+    owner, config = fixture[:2]
+    item = attention_page(owner)["items"][0]
+    original_actor = actor_for(owner)
+    with TestClient(
+        create_app(
+            owner.engine,
+            browser_auth=owner.client.app.state.browser_auth,
+            instructions=config,
+            passkeys=PasskeyService(
+                owner.engine,
+                rp_id="example.test",
+                origin="https://example.test",
+                policy=STANDARD_PASSKEY_POLICY,
+            ),
+        ),
+        base_url="https://example.test",
+    ) as client:
+        fresh = replace(owner, client=client, headers=dict(owner.headers))
+        login_again(fresh)
+        fresh_actor = actor_for(fresh)
+        assert original_actor.authentication_ref != fresh_actor.authentication_ref
+        assert original_actor.principal_id == fresh_actor.principal_id
+        commands = [
+            NotificationDismiss(
+                idempotency_key="session-race" if same_key else f"session-race-{index}",
+                attention_id=item["attention_id"],
+                expected_revision=0,
+                expected_source_revision=item["source_revision"],
+            )
+            for index in range(2)
+        ]
+        start = threading.Barrier(2)
+        service = NotificationPresentationService(owner.engine, config)
+        before = effects(owner)
+
+        def invoke(pair):
+            actor, command = pair
+            start.wait(timeout=45)
+            try:
+                return service.dismiss(actor, command)
+            except DomainError as error:
+                return error.code
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(
+                pool.map(invoke, zip([original_actor, fresh_actor], commands, strict=True))
+            )
+        if same_key:
+            assert results[0] == results[1]
+            assert not isinstance(results[0], str)
+        else:
+            assert sum(result == "REVISION_CONFLICT" for result in results) == 1
+            assert sum(not isinstance(result, str) for result in results) == 1
+        assert effects(owner) == tuple(value + 1 for value in before)
+        current = attention_page(fresh)["items"][0]
+        assert current["presentation_revision"] == 1
+        assert current["canonical_disposition"] == "OPEN"
+        assert current["source"] == item["source"]

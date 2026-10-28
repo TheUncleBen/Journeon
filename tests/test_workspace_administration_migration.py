@@ -187,16 +187,29 @@ def test_workspace_upgrade_preserves_rows_triggers_and_sequence(legacy_store, bo
     with engine.begin() as db:
         assert (
             db.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0016_identity_sessions"
+            == "0017_notification_presentation"
         )
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         for name, rows in retained.items():
             assert db.exec_driver_sql(f'SELECT * FROM "{name}"').all() == rows
-        assert (
-            db.exec_driver_sql(
-                "SELECT name,sql FROM sqlite_master WHERE type='trigger' ORDER BY name"
-            ).all()
-            == triggers
+        assert db.exec_driver_sql(
+            "SELECT name,sql FROM sqlite_master WHERE type='trigger' ORDER BY name"
+        ).all() == sorted(
+            [
+                *triggers,
+                (
+                    "immutable_notification_presentations_update",
+                    "CREATE TRIGGER immutable_notification_presentations_update "
+                    "BEFORE UPDATE ON notification_presentations "
+                    "BEGIN SELECT RAISE(ABORT, 'Immutable presentation history'); END",
+                ),
+                (
+                    "immutable_notification_presentations_delete",
+                    "CREATE TRIGGER immutable_notification_presentations_delete "
+                    "BEFORE DELETE ON notification_presentations "
+                    "BEGIN SELECT RAISE(ABORT, 'Immutable presentation history'); END",
+                ),
+            ]
         )
         assert (
             db.exec_driver_sql(

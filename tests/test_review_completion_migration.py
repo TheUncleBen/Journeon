@@ -195,7 +195,7 @@ upgrade(engine)
     with engine.begin() as db:
         assert (
             db.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0016_identity_sessions"
+            == "0017_notification_presentation"
         )
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         for name, rows in retained.items():

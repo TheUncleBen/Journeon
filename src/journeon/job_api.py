@@ -254,10 +254,7 @@ def bind_job_api(
             if job is None:
                 raise DomainError("NOT_FOUND", "Job is unavailable")
             authorize(db, actor, job)
-            if job.kind == "TASK_VERIFICATION":
-                from journeon.task_dispatch import TaskDispatchService
-
-                TaskDispatchService(engine, service().configuration).bound(db, actor, job)
+            service().check_configuration(db, actor, job)
             return [
                 AttentionView.model_validate(
                     dict(

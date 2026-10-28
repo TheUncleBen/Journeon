@@ -182,26 +182,26 @@ def check_receipt_configuration(
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Review target receipt requires repair")
         ReviewTargetService(engine, configuration).check_configuration(db, actor, identity)
     if row.owner == "jobs":
-        from journeon.jobs import authorize
+        from journeon.jobs import JobService, authorize
         from journeon.models import Job
-        from journeon.task_dispatch import TaskDispatchService
 
         job = db.get(Job, row.target_id)
         if job is None:
             raise DomainError("NOT_FOUND", "Job is unavailable")
+        authorize(db, actor, job)
         authorize(db, actor, job, "receipt.read")
+        if configuration is None:
+            raise RuntimeConfigurationUnavailable(
+                "Task dispatcher is not configured"
+                if job.kind == "TASK_VERIFICATION"
+                else "Explicit instruction runtime configuration is required"
+            )
         if row.command == "notification.dismiss.v1":
             from journeon.notification_presentation import presentation_receipt_source
 
-            if configuration is None:
-                raise RuntimeConfigurationUnavailable(
-                    "Explicit instruction runtime configuration is required"
-                )
             presentation_receipt_source(db, actor, row, engine, configuration)
-        if job.kind == "TASK_VERIFICATION":
-            if configuration is None:
-                raise RuntimeConfigurationUnavailable("Task dispatcher is not configured")
-            TaskDispatchService(engine, configuration).bound(db, actor, job)
+        else:
+            JobService(engine, configuration).check_configuration(db, actor, job)
     if row.owner == "work" and row.target_kind == "execution":
         from journeon.executions import ExecutionService, authorized_execution
 

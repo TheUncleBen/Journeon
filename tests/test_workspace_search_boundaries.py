@@ -6,6 +6,7 @@ from dataclasses import replace
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select, text
+from test_production_instructions import official_effect
 from test_workspace_discovery_pages import grant, projects, revoke
 from test_workspace_discovery_work import dispatch
 from test_workspace_durable_resolution import read_state
@@ -18,7 +19,14 @@ from workspace_durable_helpers import genuine_project_task as genuine_project_ta
 
 from journeon.api import create_app
 from journeon.database import transaction
-from journeon.models import BrowserSession, InstructionRoot, Job, Principal, TaskVerificationJob
+from journeon.models import (
+    AccessGrant,
+    BrowserSession,
+    InstructionRoot,
+    Job,
+    Principal,
+    TaskVerificationJob,
+)
 
 
 def test_all_real_kinds_share_deterministic_order_and_authorized_lookahead(genuine_durable_work):
@@ -165,3 +173,66 @@ def test_global_read_authentication_does_not_refresh_idle(enrolled_owner, state,
         assert owner.client.get(path, params=params).status_code == 401
     with transaction(owner.engine) as db:
         assert db.get(BrowserSession, identity).last_activity == before
+
+
+@pytest.mark.parametrize(
+    "kind,capability", [("TASK", "task.read"), ("ATTEMPT", "attempt.read"), ("JOB", "job.read")]
+)
+def test_search_required_corruption_is_hidden_before_decode_and_explicit_when_authorized(
+    genuine_durable_work, kind, capability
+):
+    owner, _, prepare, grants, _ = genuine_durable_work
+    admitted = dispatch(genuine_durable_work, "search-corruption-acceptance")
+    with transaction(owner.engine) as db:
+        attempt = db.get(TaskVerificationJob, admitted["job_id"]).attempt_id
+    identity = {
+        "TASK": prepare["origin"]["task_id"],
+        "ATTEMPT": attempt,
+        "JOB": admitted["job_id"],
+    }[kind]
+    revoke(owner, grants[capability]["grant"])
+    table, column = {
+        "TASK": ("tasks", "snapshot"),
+        "ATTEMPT": ("attempts", "snapshot"),
+        "JOB": ("task_verification_jobs", "inputs"),
+    }[kind]
+    key = "job_id" if kind == "JOB" else "id"
+    with transaction(owner.engine) as db:
+        db.execute(
+            text(f"UPDATE {table} SET {column}='invalid-json' WHERE {key}=:id"), {"id": identity}
+        )
+    before = read_state(owner)
+    hidden = search(owner, "e", (kind,), limit=1)
+    assert hidden.status_code == 200, hidden.text
+    assert hidden.json()["items"] == []
+    assert hidden.json()["has_more"] is False
+    assert hidden.json()["next_cursor"] is None
+    assert identity not in hidden.text
+    assert read_state(owner) == before
+    with transaction(owner.engine) as db:
+        revision = db.get(AccessGrant, grants[capability]["grant"]["grant_id"]).revision
+    official_effect(
+        owner.client,
+        owner.headers,
+        owner.grant(
+            capability,
+            project_id=prepare["project_id"],
+            identity="restore-search-authority-" + kind,
+        )
+        | {"expected_revision": revision},
+    )
+    before = read_state(owner)
+    visible = search(owner, "e", (kind,), limit=1)
+    assert visible.status_code == 503, visible.text
+    assert visible.json()["code"] == "DEPENDENCY_UNAVAILABLE"
+    assert identity not in visible.text
+    assert read_state(owner) == before
+
+
+@pytest.mark.parametrize("limit", [0, 101])
+def test_explicit_search_limit_rejects_outside_contract(genuine_project_task, limit):
+    owner = genuine_project_task[0]
+    before = read_state(owner)
+    response = search(owner, "e", ("PROJECT",), limit=limit)
+    assert response.status_code == 422
+    assert read_state(owner) == before

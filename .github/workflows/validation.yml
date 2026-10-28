@@ -1,0 +1,47 @@
+name: Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - name: Check out the pull request head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Record source identities
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          actual=$(git rev-parse HEAD)
+          test "$actual" = "$PR_HEAD_SHA"
+          printf 'checkout=%s\npr_head=%s\nevent_merge=%s\n' "$actual" "$PR_HEAD_SHA" "$EVENT_SHA"
+      - name: Provision the native containment runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends bubblewrap dbus-user-session libpam-systemd
+          sudo systemctl start "user@$(id -u).service"
+      - name: Select Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.15'
+          architecture: arm64
+      - name: Select Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.22.1'
+          architecture: arm64
+          package-manager-cache: false
+      - name: Install the pinned validation environment
+        run: python -I tools/bootstrap_validation.py --destination "$RUNNER_TEMP/validation" --node-bin "$(dirname "$(command -v node)")"
+      - name: Run all required checks
+        run: python -I tools/preflight.py --repo "$GITHUB_WORKSPACE" --python "$RUNNER_TEMP/validation/venv/bin/python" --node-bin "$(dirname "$(command -v node)")"

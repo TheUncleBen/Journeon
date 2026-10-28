@@ -1,0 +1,728 @@
+[
+  {
+    "model": "AttemptPrepare",
+    "canonical_model": "AttemptPrepare",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "attempt",
+      "project_id": "project",
+      "expected_policy_revision": 1,
+      "origin": {
+        "kind": "TASK",
+        "task_id": "task",
+        "task_revision": 1
+      },
+      "workspace_key": "workspace",
+      "workspace_revision": 1
+    }
+  },
+  {
+    "model": "BotCreate",
+    "canonical_model": "BotCreate",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "name": "x",
+      "profile_id": "x",
+      "expected_profile_revision": 1,
+      "additive": {
+        "template_id": "x",
+        "template": "x",
+        "required_variables": [],
+        "eval_ids": []
+      },
+      "memory_enabled": false,
+      "overrides": {}
+    }
+  },
+  {
+    "model": "BotRevise",
+    "canonical_model": "BotRevise",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "bot_id": "x",
+      "expected_revision": 1,
+      "expected_hash": "x",
+      "name": "x",
+      "additive": {
+        "template_id": "x",
+        "template": "x",
+        "required_variables": [],
+        "eval_ids": []
+      },
+      "overrides": {},
+      "reset_to_inherit": [],
+      "visual_ref": null,
+      "reason": "x"
+    }
+  },
+  {
+    "model": "BundleResolve",
+    "canonical_model": "BundleResolve",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "profile_id": "x",
+      "profile_revision": 1,
+      "project_id": "x",
+      "project_revision": 1,
+      "origin": {
+        "kind": "ONE_OFF_PROFILE",
+        "source_kind": "OTHER",
+        "source_id": "source"
+      },
+      "components": [],
+      "variables": []
+    }
+  },
+  {
+    "model": "CandidateRegister",
+    "canonical_model": "CandidateRegister",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "manifest_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "ExecutionStart",
+    "canonical_model": "ExecutionStart",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_policy_revision": 1,
+      "root_key": "x",
+      "root_revision": 1,
+      "route_key": "x",
+      "route_revision": 1,
+      "check_id": "x"
+    }
+  },
+  {
+    "model": "ExecutionStop",
+    "canonical_model": "ExecutionStop",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "execution_id": "x",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "GrantRevoke",
+    "canonical_model": "GrantRevoke",
+    "exclude_key": false,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "grant_id": "x",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "GrantRevokeConfirmed",
+    "canonical_model": "GrantRevoke",
+    "exclude_key": false,
+    "payload": {
+      "request_id": "x",
+      "request_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nonce": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "grant_id": "x",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "GrantSet",
+    "canonical_model": "GrantSet",
+    "exclude_key": false,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "expected_revision": 1,
+      "principal_id": "x",
+      "capability": "x",
+      "resource_kind": "deployment",
+      "resource_id": "x",
+      "enabled": false,
+      "expires_at": null
+    }
+  },
+  {
+    "model": "GrantSetConfirmed",
+    "canonical_model": "GrantSet",
+    "exclude_key": false,
+    "payload": {
+      "request_id": "x",
+      "request_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nonce": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "expected_revision": 1,
+      "principal_id": "x",
+      "capability": "x",
+      "resource_kind": "deployment",
+      "resource_id": "x",
+      "enabled": false,
+      "expires_at": null
+    }
+  },
+  {
+    "model": "InstructionAccept",
+    "canonical_model": "InstructionAccept",
+    "exclude_key": false,
+    "payload": {
+      "project_id": "x",
+      "candidate_id": "x",
+      "candidate_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_binding_revision": 1,
+      "expected_policy_revision": 1,
+      "idempotency_key": "x",
+      "review_ids": [],
+      "eval_ids": []
+    }
+  },
+  {
+    "model": "InstructionBind",
+    "canonical_model": "InstructionBind",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_project_revision": 1,
+      "expected_binding_revision": 1,
+      "root_id": "x",
+      "expected_root_revision": 1,
+      "expected_tree_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "owner": "ENVIRONMENT",
+      "documents": [],
+      "required_fragments": [],
+      "reason": "x"
+    }
+  },
+  {
+    "model": "InstructionChangeConsent",
+    "canonical_model": "InstructionChangeConsent",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "candidate_id": "x",
+      "candidate_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_binding_revision": 1,
+      "expected_policy_revision": 1,
+      "review_ids": [],
+      "eval_ids": []
+    }
+  },
+  {
+    "model": "InstructionPropose",
+    "canonical_model": "InstructionPropose",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_revision": 1,
+      "expected_tree_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "documents": [],
+      "required_fragments": [],
+      "reason": "x",
+      "source_refs": [],
+      "category": "NAVIGATION_REPAIR"
+    }
+  },
+  {
+    "model": "InstructionRestore",
+    "canonical_model": "InstructionRestore",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "revision": 1,
+      "expected_revision": 1,
+      "expected_tree_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reason": "x"
+    }
+  },
+  {
+    "model": "InstructionReview",
+    "canonical_model": "InstructionReview",
+    "exclude_key": false,
+    "payload": {
+      "project_id": "x",
+      "candidate_id": "x",
+      "candidate_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_binding_revision": 1,
+      "expected_policy_revision": 1,
+      "idempotency_key": "x",
+      "verdict": "PASS",
+      "coverage": "x",
+      "limitations": "x",
+      "findings": []
+    }
+  },
+  {
+    "model": "NotificationDismiss",
+    "canonical_model": "NotificationDismiss",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "dismiss",
+      "attention_id": "attention",
+      "expected_revision": 0,
+      "expected_source_revision": 1
+    }
+  },
+  {
+    "model": "PasskeyLabelCommand",
+    "canonical_model": "PasskeyLabelCommand",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "passkey_id": "x",
+      "expected_revision": 1,
+      "label": "x"
+    }
+  },
+  {
+    "model": "PolicyConfigure",
+    "canonical_model": "PolicyConfigure",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_project_revision": 1,
+      "expected_binding_revision": 1,
+      "expected_root_revision": 1,
+      "expected_policy_revision": 1,
+      "policy": {
+        "authorized_categories": [
+          "NAVIGATION_REPAIR"
+        ],
+        "navigation_repairs": false,
+        "independent_review": false,
+        "require_confirmation": false,
+        "required_evals": [
+          "instruction-boundaries-v1"
+        ]
+      }
+    }
+  },
+  {
+    "model": "PolicyInitialize",
+    "canonical_model": "PolicyInitialize",
+    "exclude_key": false,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "expected_revision": 0,
+      "provider_mode": "LOCAL_ONLY"
+    }
+  },
+  {
+    "model": "PolicyInitializeConfirmed",
+    "canonical_model": "PolicyInitialize",
+    "exclude_key": false,
+    "payload": {
+      "request_id": "x",
+      "request_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "nonce": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "expected_revision": 0,
+      "provider_mode": "LOCAL_ONLY"
+    }
+  },
+  {
+    "model": "ProfileCreate",
+    "canonical_model": "ProfileCreate",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "name": "x",
+      "baseline": {
+        "template_id": "x",
+        "template": "x",
+        "required_variables": [],
+        "eval_ids": []
+      },
+      "preferences": {},
+      "eligibility": []
+    }
+  },
+  {
+    "model": "ProfileRevise",
+    "canonical_model": "ProfileRevise",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "name": "x",
+      "baseline": {
+        "template_id": "x",
+        "template": "x",
+        "required_variables": [],
+        "eval_ids": []
+      },
+      "preferences": {},
+      "eligibility": [],
+      "profile_id": "x",
+      "expected_revision": 1,
+      "expected_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reason": "x",
+      "preview_digest": "x",
+      "expected_affected_bots": []
+    }
+  },
+  {
+    "model": "ProjectCreate",
+    "canonical_model": "ProjectCreate",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "name": "x",
+      "expected_policy_revision": 1
+    }
+  },
+  {
+    "model": "ProjectionCommand",
+    "canonical_model": "ProjectionCommand",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_revision": 1,
+      "root_id": "x",
+      "expected_root_revision": 1,
+      "filename": "AGENTS.md",
+      "expected_observed_hash": null
+    }
+  },
+  {
+    "model": "PublicationRecovery",
+    "canonical_model": "PublicationRecovery",
+    "exclude_key": false,
+    "payload": {
+      "root_revisions": [
+        {
+          "root_id": "x",
+          "revision": 1
+        }
+      ],
+      "project_id": "x",
+      "operation_id": "x",
+      "expected_generation": 1,
+      "expected_binding_revision": 1,
+      "expected_policy_revision": 1,
+      "publication_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "target_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "disposition": "FINISH_TARGET",
+      "idempotency_key": "x"
+    }
+  },
+  {
+    "model": "ReleaseInstall",
+    "canonical_model": "ReleaseInstall",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "evidence_id": "x",
+      "manifest_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "RestorePlan",
+    "canonical_model": "RestorePlan",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "snapshot": "x",
+      "destination": "x",
+      "data_class": "PROJECT_INSTRUCTION_HISTORY",
+      "selection": [
+        {
+          "project_id": "x",
+          "revisions": [
+            1
+          ]
+        }
+      ],
+      "snapshot_hash": "x",
+      "store_id": "x",
+      "incarnation": "x",
+      "current_versions_hash": "x",
+      "dependencies_hash": "x",
+      "platform": "x",
+      "schema_revision": "x",
+      "source_path": "x",
+      "destination_path": "x"
+    }
+  },
+  {
+    "model": "ReviewPolicyConfigure",
+    "canonical_model": "ReviewPolicyConfigure",
+    "exclude_key": true,
+    "payload": {
+      "independent_review_required": false,
+      "minimum_independence": [],
+      "preferred_diversity": [],
+      "required_coverage": [],
+      "material_severities": [],
+      "owner_override_severities": [],
+      "automatic_round_limit": null,
+      "stop_on_cycle": false,
+      "stop_on_unchanged_target": false,
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_project_revision": 1,
+      "expected_policy_revision": 1
+    }
+  },
+  {
+    "model": "ReviewTargetSelect",
+    "canonical_model": "ReviewTargetSelect",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "task_id": "x",
+      "expected_revision": 1,
+      "attempt_id": "x",
+      "expected_review_policy_revision": 1
+    }
+  },
+  {
+    "model": "RootAdmit",
+    "canonical_model": "RootAdmit",
+    "exclude_key": false,
+    "payload": {
+      "root_key": "x",
+      "config_revision": 1,
+      "idempotency_key": "x",
+      "inspection_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "RootRevoke",
+    "canonical_model": "RootRevoke",
+    "exclude_key": false,
+    "payload": {
+      "idempotency_key": "x",
+      "root_id": "x",
+      "expected_revision": 1
+    }
+  },
+  {
+    "model": "SessionLogout",
+    "canonical_model": "SessionLogout",
+    "exclude_key": false,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "expected_security_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "model": "SessionRevoke",
+    "canonical_model": "SessionRevoke",
+    "exclude_key": false,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "target_session_id": "x",
+      "expected_security_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "model": "SessionRevokeRequest",
+    "canonical_model": "SessionRevoke",
+    "exclude_key": false,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "target_session_id": "x",
+      "expected_security_version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "model": "TaskAdmission",
+    "canonical_model": "TaskAdmission",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "task_id": "x",
+      "expected_revision": 1,
+      "reason": "x",
+      "expected_policy_revision": 1
+    }
+  },
+  {
+    "model": "TaskAssign",
+    "canonical_model": "TaskAssign",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "task_id": "x",
+      "expected_revision": 1,
+      "reason": "x",
+      "responsibility": "UNASSIGNED"
+    }
+  },
+  {
+    "model": "TaskComplete",
+    "canonical_model": "TaskComplete",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "task_id": "x",
+      "expected_revision": 1,
+      "reason": "x",
+      "target_id": "x",
+      "target_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "model": "TaskControl",
+    "canonical_model": "TaskControl",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "task_id": "x",
+      "expected_revision": 1,
+      "reason": "x"
+    }
+  },
+  {
+    "model": "TaskCreate",
+    "canonical_model": "TaskCreate",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "project_id": "x",
+      "expected_project_revision": 1,
+      "objective": "x",
+      "responsibility": "UNASSIGNED"
+    }
+  },
+  {
+    "model": "TaskDispatch",
+    "canonical_model": "TaskDispatch",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "attempt",
+      "project_id": "project",
+      "expected_policy_revision": 1,
+      "origin": {
+        "kind": "TASK",
+        "task_id": "task",
+        "task_revision": 1
+      },
+      "workspace_key": "workspace",
+      "workspace_revision": 1,
+      "step_id": "verify",
+      "route_key": "route",
+      "route_revision": 1
+    }
+  },
+  {
+    "model": "TaskRevise",
+    "canonical_model": "TaskRevise",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "x",
+      "task_id": "x",
+      "expected_revision": 1,
+      "reason": "x",
+      "success_conditions": [
+        "x"
+      ],
+      "workflow": {
+        "steps": [
+          {
+            "step_id": "x",
+            "kind": "WORK"
+          }
+        ]
+      },
+      "expected_policy_revision": 1
+    }
+  },
+  {
+    "model": "TeamCreate",
+    "canonical_model": "TeamCreate",
+    "exclude_key": true,
+    "payload": {
+      "idempotency_key": "x",
+      "name": "x",
+      "members": [
+        {
+          "key": "x",
+          "bot": {
+            "idempotency_key": "x",
+            "name": "x",
+            "profile_id": "x",
+            "expected_profile_revision": 1,
+            "additive": {
+              "template_id": "x",
+              "template": "x",
+              "required_variables": [],
+              "eval_ids": []
+            },
+            "memory_enabled": false,
+            "overrides": {}
+          }
+        }
+      ],
+      "lead_key": "x"
+    }
+  },
+  {
+    "model": "VerificationPolicyConfigure",
+    "canonical_model": "VerificationPolicyConfigure",
+    "exclude_key": true,
+    "payload": {
+      "schema_version": 1,
+      "idempotency_key": "policy",
+      "project_id": "project",
+      "expected_project_revision": 1,
+      "expected_policy_revision": 0,
+      "enabled": true,
+      "checks": [
+        {
+          "check_id": "check",
+          "criterion": "Check result",
+          "argv": [
+            "true"
+          ],
+          "working_directory": ".",
+          "expected_exit_code": 0
+        }
+      ],
+      "workflow": {
+        "steps": [
+          {
+            "step_id": "verify",
+            "kind": "VERIFICATION",
+            "check_id": "check"
+          }
+        ]
+      }
+    }
+  }
+]

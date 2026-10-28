@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session, defer
 
 from journeon.contracts import DomainError
 from journeon.database import transaction
+from journeon.discovery import allowed, paginate, read_transaction
+from journeon.discovery_contracts import DiscoveryLink, JobPage, JobSummary
 from journeon.instruction_config import InstructionConfiguration
 from journeon.instruction_contracts import CandidateReference, CandidateView, InstructionAccept
 from journeon.job_contracts import JobCancel, JobReceipt, JobView
@@ -299,15 +301,85 @@ class JobService:
 
     def read(self, actor: AuthenticatedContext, identity: str) -> JobView:
         with transaction(self.engine) as db:
-            row = db.get(Job, identity)
-            if row is None:
-                raise DomainError("NOT_FOUND", "Job is unavailable")
-            authorize(db, actor, row)
-            if row.kind == "TASK_VERIFICATION":
-                from journeon.task_dispatch import TaskDispatchService
+            return self.read_in(db, actor, identity)
 
-                TaskDispatchService(self.engine, self.configuration).bound(db, actor, row)
-            return view(row)
+    def read_in(self, db: Session, actor: AuthenticatedContext, identity: str) -> JobView:
+        row = db.get(Job, identity)
+        if row is None:
+            raise DomainError("NOT_FOUND", "Job is unavailable")
+        authorize(db, actor, row)
+        if row.kind == "TASK_VERIFICATION":
+            from journeon.task_dispatch import TaskDispatchService
+
+            TaskDispatchService(self.engine, self.configuration).bound(db, actor, row)
+        return view(row)
+
+    def list(
+        self,
+        actor: AuthenticatedContext,
+        limit: int,
+        cursor: str | None = None,
+        project_id: str | None = None,
+        task_id: str | None = None,
+        attempt_id: str | None = None,
+    ) -> JobPage:
+        from journeon.attempts import AttemptService, authorized_attempt
+        from journeon.models import TaskVerificationJob
+        from journeon.task_dispatch import TaskDispatchService
+        from journeon.work import task_row
+
+        with read_transaction(self.engine, actor) as db:
+            query = select(Job.id)
+            if project_id is not None:
+                query = query.where(Job.project_id == project_id)
+            if task_id is not None:
+                task_row(db, actor, task_id, "task.read")
+                query = query.where(Job.task_id == task_id)
+            if attempt_id is not None:
+                attempt = authorized_attempt(db, actor, attempt_id)
+                AttemptService(self.engine, self.configuration).check_configuration(db, attempt)
+                require_grant(db, actor, "job.read", project_id=attempt.project_id)
+                query = query.join(TaskVerificationJob, TaskVerificationJob.job_id == Job.id).where(
+                    TaskVerificationJob.attempt_id == attempt_id
+                )
+
+            def summary(identity: str) -> JobSummary:
+                item = self.read_in(db, actor, identity)
+                linked_attempt = None
+                links = []
+                if item.kind == "TASK_VERIFICATION":
+                    binding = db.get(TaskVerificationJob, identity)
+                    assert binding is not None
+                    linked_attempt = binding.attempt_id
+                    if allowed(
+                        lambda: TaskDispatchService(self.engine, self.configuration).evidence_in(
+                            db, actor, identity
+                        )
+                    ):
+                        links.append(
+                            DiscoveryLink(
+                                relation="evidence", href=f"/api/v1/jobs/{identity}/evidence"
+                            )
+                        )
+                return JobSummary(**item.model_dump(), attempt_id=linked_attempt, links=links)
+
+            return JobPage(
+                **paginate(
+                    db,
+                    actor,
+                    query,
+                    Job.id,
+                    summary,
+                    limit=limit,
+                    cursor=cursor,
+                    query={
+                        "operation": "job.list.v1",
+                        "project_id": project_id,
+                        "task_id": task_id,
+                        "attempt_id": attempt_id,
+                    },
+                )
+            )
 
     def cancel(self, actor: AuthenticatedContext, identity: str, command: JobCancel) -> JobView:
         with transaction(self.engine) as db:

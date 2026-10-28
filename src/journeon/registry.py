@@ -72,6 +72,7 @@ from journeon.contracts import (
     VerificationPolicyReceipt,
     WorkflowTemplates,
 )
+from journeon.discovery_contracts import AttemptPage, JobPage, ProjectPage, TaskPage
 from journeon.health import schema_and_database
 from journeon.instruction_config import RootObservation
 from journeon.job_contracts import (
@@ -1579,6 +1580,78 @@ for owner in ("permissions", "egress", "identity", "operations"):
     MODULES[owner]["migration"] = "0015_workspace_read_models"
 for identity_owner in ("identity", "operations"):
     MODULES[identity_owner]["migration"] = "0016_identity_sessions"
+
+
+DISCOVERY_QUERIES = {
+    "project.list.v1": (
+        "projects",
+        ProjectPage,
+        (
+            grant_check("project.read", "project.id", "each candidate", owner=False),
+            grant_check("task.read", "project.id", "Task collection link", owner=False),
+        ),
+    ),
+    "task.list.v1": (
+        "work",
+        TaskPage,
+        (
+            grant_check("task.read", "task.project_id", owner=False),
+            grant_check("attempt.read", "task.project_id", "Attempt collection link", owner=False),
+            grant_check(
+                "project.instruction.read",
+                "task.project_id",
+                "exact-resource Attempt collection link",
+                owner=False,
+            ),
+        ),
+    ),
+    "attempt.list.v1": (
+        "work",
+        AttemptPage,
+        (
+            grant_check("attempt.read", "attempt.project_id", owner=False),
+            grant_check("task.read", "attempt.project_id", owner=False),
+            grant_check(
+                "project.instruction.read", "attempt.project_id", "exact-resource read", owner=False
+            ),
+            grant_check("job.read", "attempt.project_id", "Job collection link", owner=False),
+        ),
+    ),
+    "job.list.v1": (
+        "jobs",
+        JobPage,
+        (
+            *CONFIGURATION_AUTHORIZATION["job.read.v1"]["grant_checks"],
+            grant_check("execution.read", "job.project_id", "evidence link", owner=False),
+            grant_check("project.read", "job.project_id", "evidence link", owner=False),
+        ),
+    ),
+}
+for discovery_name, (
+    discovery_owner,
+    discovery_result,
+    discovery_grants,
+) in DISCOVERY_QUERIES.items():
+    discovery_permissions = tuple(dict.fromkeys(check["capability"] for check in discovery_grants))
+    QUERIES[discovery_name] = {
+        "owner": discovery_owner,
+        "permissions": discovery_permissions,
+        "result_model": discovery_result,
+    }
+    CONFIGURATION_AUTHORIZATION[discovery_name] = {
+        "owner_only": False,
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": list(discovery_grants),
+        "semantics": (
+            "Canonical owner checks precede JSON, filters and lookahead; "
+            "links require their target authority. Attempts and Jobs retain originating "
+            "Principal, current root/configuration and binding checks. Cursors never grant access."
+        ),
+    }
+    MODULES[discovery_owner]["permissions"] = tuple(
+        dict.fromkeys((*MODULES[discovery_owner]["permissions"], *discovery_permissions))
+    )
+MODULES["work"]["api_prefixes"] += ("/api/v1/projects/{project_id}/tasks",)
 
 
 @dataclass(frozen=True)

@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 from typing import Annotated, Any, cast
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Query, Response
 from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import defer
 
 from journeon.api import authenticated_context
-from journeon.contracts import DomainError, ErrorEnvelope, RuntimeConfigurationUnavailable
+from journeon.contracts import (
+    DomainError,
+    ErrorEnvelope,
+    Identifier,
+    RuntimeConfigurationUnavailable,
+)
 from journeon.database import transaction
+from journeon.discovery_contracts import JobPage
 from journeon.instruction_config import InstructionConfiguration
 from journeon.job_contracts import (
     AttentionList,
@@ -25,6 +31,7 @@ from journeon.jobs import JobService, authorize
 from journeon.models import Attention, Job, OutboxEvent, Receipt, StoreIdentity
 from journeon.permissions import AuthenticatedContext
 from journeon.receipts import authorized_receipt, check_receipt_configuration
+from journeon.registry import configuration_metadata
 from journeon.sessions import current_session
 
 
@@ -139,6 +146,25 @@ def bind_job_api(
             )
         return JobService(engine, configuration)
 
+    @app.get(
+        "/api/v1/jobs",
+        response_model=JobPage,
+        operation_id="listJobs",
+        responses=errors,
+        openapi_extra=configuration_metadata("job.list.v1"),
+    )
+    def list_jobs(
+        response: Response,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+        limit: Annotated[int, Query(ge=1, le=100)],
+        cursor: Annotated[str | None, Query(max_length=4096)] = None,
+        project_id: Identifier | None = None,
+        task_id: Identifier | None = None,
+        attempt_id: Identifier | None = None,
+    ) -> JobPage:
+        response.headers["Cache-Control"] = "no-store"
+        return service().list(actor, limit, cursor, project_id, task_id, attempt_id)
+
     @app.post(
         "/api/v1/tasks/dispatch",
         responses=errors,
@@ -247,7 +273,7 @@ def bind_job_api(
 
     from fastapi.routing import APIRoute
 
-    from journeon.registry import JOB_ROUTES, configuration_metadata
+    from journeon.registry import JOB_ROUTES
 
     for route in app.routes:
         if isinstance(route, APIRoute) and route.operation_id in JOB_ROUTES:

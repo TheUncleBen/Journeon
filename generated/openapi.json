@@ -118,6 +118,51 @@
         "title": "AdmissionDecision",
         "type": "object"
       },
+      "AttemptPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AttemptSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation",
+          "items"
+        ],
+        "title": "AttemptPage",
+        "type": "object"
+      },
       "AttemptPrepare": {
         "additionalProperties": false,
         "properties": {
@@ -234,6 +279,57 @@
           "attempt"
         ],
         "title": "AttemptReceipt",
+        "type": "object"
+      },
+      "AttemptSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "PREPARING",
+              "PREPARED",
+              "RECOVERY_REQUIRED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt_id",
+          "project_id",
+          "task_id",
+          "revision",
+          "state",
+          "links"
+        ],
+        "title": "AttemptSummary",
         "type": "object"
       },
       "AttemptView": {
@@ -1948,6 +2044,32 @@
           "byte_count"
         ],
         "title": "DeterministicInstructionBundle",
+        "type": "object"
+      },
+      "DiscoveryLink": {
+        "additionalProperties": false,
+        "properties": {
+          "href": {
+            "maxLength": 1024,
+            "title": "Href",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "tasks",
+              "attempts",
+              "jobs",
+              "evidence"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation",
+          "href"
+        ],
+        "title": "DiscoveryLink",
         "type": "object"
       },
       "Document": {
@@ -4082,6 +4204,51 @@
         "title": "JobCancel",
         "type": "object"
       },
+      "JobPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/JobSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation",
+          "items"
+        ],
+        "title": "JobPage",
+        "type": "object"
+      },
       "JobReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -4139,6 +4306,143 @@
           "state"
         ],
         "title": "JobReceipt",
+        "type": "object"
+      },
+      "JobSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Admission Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "effect": {
+            "enum": [
+              "NONE",
+              "UNKNOWN",
+              "COMMITTED",
+              "ABANDONED"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "INSTRUCTION_NAVIGATION",
+              "TASK_VERIFICATION"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "RETRY_WAIT"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "job_id",
+          "project_id",
+          "kind",
+          "candidate_id",
+          "task_id",
+          "revision",
+          "state",
+          "effect",
+          "reason",
+          "operation_id",
+          "admission_id",
+          "attempt_id",
+          "links"
+        ],
+        "title": "JobSummary",
         "type": "object"
       },
       "JobView": {
@@ -5720,6 +6024,87 @@
           "resource_refs"
         ],
         "title": "ProjectCreated",
+        "type": "object"
+      },
+      "ProjectPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation",
+          "items"
+        ],
+        "title": "ProjectPage",
+        "type": "object"
+      },
+      "ProjectSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "name",
+          "links"
+        ],
+        "title": "ProjectSummary",
         "type": "object"
       },
       "ProjectView": {
@@ -8385,6 +8770,51 @@
         "title": "TaskEvidence",
         "type": "object"
       },
+      "TaskPage": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "store_incarnation": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Store Incarnation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "observed_at",
+          "store_incarnation",
+          "items"
+        ],
+        "title": "TaskPage",
+        "type": "object"
+      },
       "TaskPolicyBinding": {
         "additionalProperties": false,
         "properties": {
@@ -8548,6 +8978,64 @@
           "expected_policy_revision"
         ],
         "title": "TaskRevise",
+        "type": "object"
+      },
+      "TaskSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "objective": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Objective",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "BACKLOG",
+              "READY",
+              "RUNNING",
+              "WAITING",
+              "REVIEW",
+              "BLOCKED",
+              "DONE",
+              "CANCELLED",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id",
+          "revision",
+          "objective",
+          "state",
+          "links"
+        ],
+        "title": "TaskSummary",
         "type": "object"
       },
       "TaskView": {
@@ -11525,6 +12013,231 @@
         "x-journeon-query": "instruction.bundle.read.v1"
       }
     },
+    "/api/v1/jobs": {
+      "get": {
+        "operationId": "listJobs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "task_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "attempt_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Jobs",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch, including empty pages",
+          "grant_checks": [
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "instruction origin"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "project.verification.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "Task origin"
+            },
+            {
+              "capability": "execution.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "evidence link"
+            },
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "job.project_id",
+              "when": "evidence link"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+        },
+        "x-journeon-owner": "jobs",
+        "x-journeon-permissions": [
+          "project.instruction.read",
+          "job.read",
+          "task.read",
+          "attempt.read",
+          "project.verification.read",
+          "execution.read",
+          "project.read"
+        ],
+        "x-journeon-query": "job.list.v1"
+      }
+    },
     "/api/v1/jobs/{identity}": {
       "get": {
         "operationId": "readJob",
@@ -13767,6 +14480,147 @@
       }
     },
     "/api/v1/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Projects",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch, including empty pages",
+          "grant_checks": [
+            {
+              "capability": "project.read",
+              "owner_configuration_authority": false,
+              "resource": "project.id",
+              "when": "each candidate"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "project.id",
+              "when": "Task collection link"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+        },
+        "x-journeon-owner": "projects",
+        "x-journeon-permissions": [
+          "project.read",
+          "task.read"
+        ],
+        "x-journeon-query": "project.list.v1"
+      },
       "post": {
         "operationId": "createProject",
         "requestBody": {
@@ -16195,6 +17049,193 @@
           "project.review.read"
         ],
         "x-journeon-query": "project.review.read.v1"
+      }
+    },
+    "/api/v1/projects/{project_id}/tasks": {
+      "get": {
+        "operationId": "listTasks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "BACKLOG",
+                    "READY",
+                    "RUNNING",
+                    "WAITING",
+                    "REVIEW",
+                    "BLOCKED",
+                    "DONE",
+                    "CANCELLED",
+                    "ARCHIVED"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Tasks",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch, including empty pages",
+          "grant_checks": [
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "Attempt collection link"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "task.project_id",
+              "when": "exact-resource Attempt collection link"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+        },
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "task.read",
+          "attempt.read",
+          "project.instruction.read"
+        ],
+        "x-journeon-query": "task.list.v1"
       }
     },
     "/api/v1/projects/{project_id}/verification": {
@@ -18867,6 +19908,173 @@
           "task.read"
         ],
         "x-journeon-query": "task.read.v1"
+      }
+    },
+    "/api/v1/tasks/{task_id}/attempts": {
+      "get": {
+        "operationId": "listAttempts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Attempts",
+        "x-journeon-authorization": {
+          "authentication": "current session and Principal epoch, including empty pages",
+          "grant_checks": [
+            {
+              "capability": "attempt.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "task.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "always"
+            },
+            {
+              "capability": "project.instruction.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "exact-resource read"
+            },
+            {
+              "capability": "job.read",
+              "owner_configuration_authority": false,
+              "resource": "attempt.project_id",
+              "when": "Job collection link"
+            }
+          ],
+          "owner_only": false,
+          "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+        },
+        "x-journeon-owner": "work",
+        "x-journeon-permissions": [
+          "attempt.read",
+          "task.read",
+          "project.instruction.read",
+          "job.read"
+        ],
+        "x-journeon-query": "attempt.list.v1"
       }
     },
     "/api/v1/teams": {

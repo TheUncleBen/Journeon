@@ -1,4 +1,128 @@
 {
+  "AttemptPage": {
+    "$defs": {
+      "AttemptSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/$defs/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "PREPARING",
+              "PREPARED",
+              "RECOVERY_REQUIRED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt_id",
+          "project_id",
+          "task_id",
+          "revision",
+          "state",
+          "links"
+        ],
+        "title": "AttemptSummary",
+        "type": "object"
+      },
+      "DiscoveryLink": {
+        "additionalProperties": false,
+        "properties": {
+          "href": {
+            "maxLength": 1024,
+            "title": "Href",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "tasks",
+              "attempts",
+              "jobs",
+              "evidence"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation",
+          "href"
+        ],
+        "title": "DiscoveryLink",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/AttemptSummary"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation",
+      "items"
+    ],
+    "title": "AttemptPage",
+    "type": "object"
+  },
   "AttemptPrepare": {
     "$defs": {
       "JobAttemptOrigin": {
@@ -7748,6 +7872,216 @@
     "title": "JobCancel",
     "type": "object"
   },
+  "JobPage": {
+    "$defs": {
+      "DiscoveryLink": {
+        "additionalProperties": false,
+        "properties": {
+          "href": {
+            "maxLength": 1024,
+            "title": "Href",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "tasks",
+              "attempts",
+              "jobs",
+              "evidence"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation",
+          "href"
+        ],
+        "title": "DiscoveryLink",
+        "type": "object"
+      },
+      "JobSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Admission Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "effect": {
+            "enum": [
+              "NONE",
+              "UNKNOWN",
+              "COMMITTED",
+              "ABANDONED"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "INSTRUCTION_NAVIGATION",
+              "TASK_VERIFICATION"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/$defs/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "RETRY_WAIT"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "required": [
+          "job_id",
+          "project_id",
+          "kind",
+          "candidate_id",
+          "task_id",
+          "revision",
+          "state",
+          "effect",
+          "reason",
+          "operation_id",
+          "admission_id",
+          "attempt_id",
+          "links"
+        ],
+        "title": "JobSummary",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/JobSummary"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation",
+      "items"
+    ],
+    "title": "JobPage",
+    "type": "object"
+  },
   "JobView": {
     "additionalProperties": false,
     "properties": {
@@ -13880,6 +14214,115 @@
       "expected_policy_revision"
     ],
     "title": "ProjectCreate",
+    "type": "object"
+  },
+  "ProjectPage": {
+    "$defs": {
+      "DiscoveryLink": {
+        "additionalProperties": false,
+        "properties": {
+          "href": {
+            "maxLength": 1024,
+            "title": "Href",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "tasks",
+              "attempts",
+              "jobs",
+              "evidence"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation",
+          "href"
+        ],
+        "title": "DiscoveryLink",
+        "type": "object"
+      },
+      "ProjectSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/$defs/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "name",
+          "links"
+        ],
+        "title": "ProjectSummary",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/ProjectSummary"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation",
+      "items"
+    ],
+    "title": "ProjectPage",
     "type": "object"
   },
   "ProjectView": {
@@ -22272,6 +22715,137 @@
       "content_digest"
     ],
     "title": "TaskEvidence",
+    "type": "object"
+  },
+  "TaskPage": {
+    "$defs": {
+      "DiscoveryLink": {
+        "additionalProperties": false,
+        "properties": {
+          "href": {
+            "maxLength": 1024,
+            "title": "Href",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "tasks",
+              "attempts",
+              "jobs",
+              "evidence"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation",
+          "href"
+        ],
+        "title": "DiscoveryLink",
+        "type": "object"
+      },
+      "TaskSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/$defs/DiscoveryLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "objective": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Objective",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "BACKLOG",
+              "READY",
+              "RUNNING",
+              "WAITING",
+              "REVIEW",
+              "BLOCKED",
+              "DONE",
+              "CANCELLED",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "task_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "project_id",
+          "revision",
+          "objective",
+          "state",
+          "links"
+        ],
+        "title": "TaskSummary",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "items": {
+        "items": {
+          "$ref": "#/$defs/TaskSummary"
+        },
+        "title": "Items",
+        "type": "array"
+      },
+      "next_cursor": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Next Cursor"
+      },
+      "observed_at": {
+        "title": "Observed At",
+        "type": "string"
+      },
+      "store_incarnation": {
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$",
+        "title": "Store Incarnation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "next_cursor",
+      "has_more",
+      "observed_at",
+      "store_incarnation",
+      "items"
+    ],
+    "title": "TaskPage",
     "type": "object"
   },
   "TaskReceipt": {

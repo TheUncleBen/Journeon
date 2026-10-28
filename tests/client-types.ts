@@ -104,3 +104,16 @@ void approvedAdmission;
 import type { ProjectView } from "../generated/client.js";
 const currentProject: Promise<ProjectView> = client.getProject("project-fixture");
 void currentProject;
+
+import type { ProjectPage, TaskPage, AttemptPage, JobPage } from "../generated/client.js";
+const projectsPage: Promise<ProjectPage> = client.listProjects(1);
+const tasksPage: Promise<TaskPage> = client.listTasks("project", 2, undefined, "BACKLOG");
+const attemptsPage: Promise<AttemptPage> = client.listAttempts("task", 3);
+const jobsPage: Promise<JobPage> = client.listJobs(4, {attempt_id: "attempt"});
+void [projectsPage, tasksPage, attemptsPage, jobsPage];
+// @ts-expect-error Discovery requires an explicit page limit.
+void client.listProjects();
+// @ts-expect-error State filters use canonical Task states.
+void client.listTasks("project", 1, undefined, "FINISHED");
+// @ts-expect-error Callers cannot select another Principal through discovery filters.
+void client.listJobs(1, {principal_id: "other-human"});

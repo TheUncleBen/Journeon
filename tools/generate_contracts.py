@@ -71,6 +71,7 @@ from journeon.contracts import (
     VerificationPolicyConfigure,
     VerificationPolicyReceipt,
 )
+from journeon.discovery_contracts import AttemptPage, JobPage, ProjectPage, TaskPage
 from journeon.instruction_contracts import ProtectedEffect
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
 from journeon.registry import AUTHENTICATION, COMMANDS, registry_manifest
@@ -243,6 +244,14 @@ def artifacts() -> dict[str, str]:
         "resolveOperationIdentity": ("POST", "/api/v1/operations/resolve"),
     }
     expected_operations.update(identity_paths)
+    expected_operations.update(
+        {
+            "listProjects": ("GET", "/api/v1/projects"),
+            "listTasks": ("GET", "/api/v1/projects/{project_id}/tasks"),
+            "listAttempts": ("GET", "/api/v1/tasks/{task_id}/attempts"),
+            "listJobs": ("GET", "/api/v1/jobs"),
+        }
+    )
     if operations != expected_operations:
         raise ValueError("Update client generation for changed operation bindings")
     instruction_methods = [
@@ -258,6 +267,34 @@ def artifacts() -> dict[str, str]:
             "const query = new URLSearchParams({limit: String(limit)}); "
             "if (cursor !== undefined) query.set('cursor', cursor); "
             "return this.request(`/api/v1/auth/sessions?${query}`, {method: 'GET'}); }",
+        ]
+    )
+    instruction_methods.extend(
+        [
+            "  listProjects(limit: number, cursor?: string): Promise<ProjectPage> { "
+            "const query = new URLSearchParams({limit: String(limit)}); "
+            "if (cursor !== undefined) query.set('cursor', cursor); "
+            "return this.request(`/api/v1/projects?${query}`, {method: 'GET'}); }",
+            "  listTasks(projectId: string, limit: number, cursor?: string, "
+            "state?: TaskSummary['state']): Promise<TaskPage> { "
+            "const query = new URLSearchParams({limit: String(limit)}); "
+            "if (cursor !== undefined) query.set('cursor', cursor); "
+            "if (state !== undefined) query.set('state', state); "
+            "return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}"
+            "/tasks?${query}`, "
+            "{method: 'GET'}); }",
+            "  listAttempts(taskId: string, limit: number, "
+            "cursor?: string): Promise<AttemptPage> { "
+            "const query = new URLSearchParams({limit: String(limit)}); "
+            "if (cursor !== undefined) query.set('cursor', cursor); "
+            "return this.request(`/api/v1/tasks/${encodeURIComponent(taskId)}/attempts?${query}`, "
+            "{method: 'GET'}); }",
+            "  listJobs(limit: number, filters: {project_id?: string; task_id?: string; "
+            "attempt_id?: string; cursor?: string} = {}): Promise<JobPage> { "
+            "const query = new URLSearchParams({limit: String(limit)}); "
+            "for (const name of ['project_id', 'task_id', 'attempt_id', 'cursor'] as const) { "
+            "const value = filters[name]; if (value !== undefined) query.set(name, value); } "
+            "return this.request(`/api/v1/jobs?${query}`, {method: 'GET'}); }",
         ]
     )
     for operation, request_name, result_name in (
@@ -594,6 +631,10 @@ export class JourneonClient {
             ProjectCreate,
             CurrentHumanContext,
             BrowserSessionPage,
+            ProjectPage,
+            TaskPage,
+            AttemptPage,
+            JobPage,
             ContextBootstrap,
             ContextBootstrapped,
             SessionRevokeRequest,

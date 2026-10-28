@@ -17,6 +17,14 @@ export type AdmissionDecision = {
   "workflow_revision": number;
 };
 
+export type AttemptPage = {
+  "has_more": boolean;
+  "items": Array<AttemptSummary>;
+  "next_cursor": string | null;
+  "observed_at": string;
+  "store_incarnation": string;
+};
+
 export type AttemptPrepare = {
   "expected_policy_revision": number;
   "idempotency_key": string;
@@ -35,6 +43,15 @@ export type AttemptReceipt = {
   "operation_id": string;
   "outcome"?: "CANONICAL_COMMITTED";
   "schema_version"?: 1;
+};
+
+export type AttemptSummary = {
+  "attempt_id": string;
+  "links": Array<DiscoveryLink>;
+  "project_id": string;
+  "revision": number;
+  "state": "PREPARING" | "PREPARED" | "RECOVERY_REQUIRED";
+  "task_id": string;
 };
 
 export type AttemptView = {
@@ -333,6 +350,11 @@ export type DeterministicInstructionBundle = {
   "rendering": string;
   "task_id": string;
   "task_revision": number;
+};
+
+export type DiscoveryLink = {
+  "href": string;
+  "relation": "tasks" | "attempts" | "jobs" | "evidence";
 };
 
 export type Document = {
@@ -723,6 +745,14 @@ export type JobCancel = {
   "expected_revision": number;
 };
 
+export type JobPage = {
+  "has_more": boolean;
+  "items": Array<JobSummary>;
+  "next_cursor": string | null;
+  "observed_at": string;
+  "store_incarnation": string;
+};
+
 export type JobReceipt = {
   "command": "job.admitted.v1" | "job.changed.v1";
   "committed_at": string;
@@ -731,6 +761,22 @@ export type JobReceipt = {
   "state": "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "RETRY_WAIT";
   "target_id": string;
   "target_kind"?: "job";
+};
+
+export type JobSummary = {
+  "admission_id": string;
+  "attempt_id": string | null;
+  "candidate_id": string | null;
+  "effect": "NONE" | "UNKNOWN" | "COMMITTED" | "ABANDONED";
+  "job_id": string;
+  "kind": "INSTRUCTION_NAVIGATION" | "TASK_VERIFICATION";
+  "links": Array<DiscoveryLink>;
+  "operation_id": string | null;
+  "project_id": string;
+  "reason": string | null;
+  "revision": number;
+  "state": "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "RETRY_WAIT";
+  "task_id": string | null;
 };
 
 export type JobView = {
@@ -996,6 +1042,21 @@ export type ProjectCreated = {
   "resource_refs": Array<string>;
   "revision": number;
   "verification_policy_ref": string | null;
+};
+
+export type ProjectPage = {
+  "has_more": boolean;
+  "items": Array<ProjectSummary>;
+  "next_cursor": string | null;
+  "observed_at": string;
+  "store_incarnation": string;
+};
+
+export type ProjectSummary = {
+  "links": Array<DiscoveryLink>;
+  "name": string;
+  "project_id": string;
+  "revision": number;
 };
 
 export type ProjectView = {
@@ -1467,6 +1528,14 @@ export type TaskEvidence = {
   "step_id": string;
 };
 
+export type TaskPage = {
+  "has_more": boolean;
+  "items": Array<TaskSummary>;
+  "next_cursor": string | null;
+  "observed_at": string;
+  "store_incarnation": string;
+};
+
 export type TaskPolicyBinding = {
   "policy_ref": string | null;
   "policy_revision"?: number | null;
@@ -1493,6 +1562,15 @@ export type TaskRevise = {
   "success_conditions": Array<string>;
   "task_id": string;
   "workflow": TaskWorkflow;
+};
+
+export type TaskSummary = {
+  "links": Array<DiscoveryLink>;
+  "objective": string;
+  "project_id": string;
+  "revision": number;
+  "state": "BACKLOG" | "READY" | "RUNNING" | "WAITING" | "REVIEW" | "BLOCKED" | "DONE" | "CANCELLED" | "ARCHIVED";
+  "task_id": string;
 };
 
 export type TaskView = {
@@ -1650,6 +1728,10 @@ export class JourneonClient {
   getCurrentContext(): Promise<CurrentHumanContext> { return this.request('/api/v1/auth/context', {method: 'GET'}); }
   bootstrapCurrentContext(): Promise<ContextBootstrapped> { return this.request('/api/v1/auth/context/bootstrap', {method: 'POST', body: '{}'}); }
   listBrowserSessions(limit: number, cursor?: string): Promise<BrowserSessionPage> { const query = new URLSearchParams({limit: String(limit)}); if (cursor !== undefined) query.set('cursor', cursor); return this.request(`/api/v1/auth/sessions?${query}`, {method: 'GET'}); }
+  listProjects(limit: number, cursor?: string): Promise<ProjectPage> { const query = new URLSearchParams({limit: String(limit)}); if (cursor !== undefined) query.set('cursor', cursor); return this.request(`/api/v1/projects?${query}`, {method: 'GET'}); }
+  listTasks(projectId: string, limit: number, cursor?: string, state?: TaskSummary['state']): Promise<TaskPage> { const query = new URLSearchParams({limit: String(limit)}); if (cursor !== undefined) query.set('cursor', cursor); if (state !== undefined) query.set('state', state); return this.request(`/api/v1/projects/${encodeURIComponent(projectId)}/tasks?${query}`, {method: 'GET'}); }
+  listAttempts(taskId: string, limit: number, cursor?: string): Promise<AttemptPage> { const query = new URLSearchParams({limit: String(limit)}); if (cursor !== undefined) query.set('cursor', cursor); return this.request(`/api/v1/tasks/${encodeURIComponent(taskId)}/attempts?${query}`, {method: 'GET'}); }
+  listJobs(limit: number, filters: {project_id?: string; task_id?: string; attempt_id?: string; cursor?: string} = {}): Promise<JobPage> { const query = new URLSearchParams({limit: String(limit)}); for (const name of ['project_id', 'task_id', 'attempt_id', 'cursor'] as const) { const value = filters[name]; if (value !== undefined) query.set(name, value); } return this.request(`/api/v1/jobs?${query}`, {method: 'GET'}); }
   revokeBrowserSession(command: SessionRevokeRequest, csrfToken: string): Promise<SessionMutationReceipt> { return this.request('/api/v1/auth/sessions/revoke', {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
   logoutBrowserSession(command: SessionLogout, csrfToken: string): Promise<SessionMutationReceipt> { return this.request('/api/v1/auth/logout', {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }
   resolveOperationIdentity(command: OperationIdentityResolve, csrfToken: string): Promise<OperationIdentityResolution> { return this.request('/api/v1/operations/resolve', {method: 'POST', headers: {'X-CSRF-Token': csrfToken}, body: JSON.stringify(command)}); }

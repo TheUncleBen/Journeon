@@ -41,6 +41,46 @@ async function main() {
   assert.equal(successorCalls.at(-1).init.method, "GET");
   await successor.getWorkflowTemplates("encoded/project");
   assert.equal(successorCalls.at(-1).url, "/api/v1/tasks/workflow-templates?project_id=encoded%2Fproject");
+  const discoveryCalls = [];
+  const discovery = new JourneonClient("", async (url, init) => {
+    discoveryCalls.push({url, init});
+    return new Response(JSON.stringify({items: [], next_cursor: null, has_more: false}), {status: 200});
+  });
+  const opaque = "a+b/c==&limit=100# café";
+  await discovery.listProjects(1, opaque);
+  await discovery.listTasks("project/with?separator", 2, opaque, "BACKLOG");
+  await discovery.listAttempts("task/with?separator", 3, opaque);
+  await discovery.listJobs(4, {project_id: "project&task_id=other", task_id: "task/one", attempt_id: "attempt+one", cursor: opaque});
+  for (const [index, call] of discoveryCalls.entries()) {
+    const url = new URL(call.url, "https://example.test");
+    assert.equal(url.searchParams.get("limit"), String(index + 1));
+    assert.equal(url.searchParams.get("cursor"), opaque);
+    assert.equal(url.searchParams.getAll("limit").length, 1);
+    assert.equal(call.init.method, "GET");
+    assert.equal(call.init.credentials, "same-origin");
+    assert.equal(call.init.body, undefined);
+  }
+  assert.equal(new URL(discoveryCalls[1].url, "https://example.test").pathname, "/api/v1/projects/project%2Fwith%3Fseparator/tasks");
+  assert.equal(new URL(discoveryCalls[1].url, "https://example.test").searchParams.get("state"), "BACKLOG");
+  assert.equal(new URL(discoveryCalls[2].url, "https://example.test").pathname, "/api/v1/tasks/task%2Fwith%3Fseparator/attempts");
+  const jobQuery = new URL(discoveryCalls[3].url, "https://example.test").searchParams;
+  assert.equal(jobQuery.get("project_id"), "project&task_id=other");
+  assert.equal(jobQuery.get("task_id"), "task/one");
+  assert.equal(jobQuery.get("attempt_id"), "attempt+one");
+  await discovery.listProjects(1);
+  assert.equal(discoveryCalls.at(-1).url, "/api/v1/projects?limit=1");
+  await discovery.listJobs(1);
+  assert.equal(discoveryCalls.at(-1).url, "/api/v1/jobs?limit=1");
+  for (const status of [401, 403, 409, 422, 503]) {
+    let requests = 0;
+    const rejected = new JourneonClient("", async () => {
+      requests++;
+      return new Response(JSON.stringify({code: "DEPENDENCY_UNAVAILABLE", reason: "Unavailable"}), {status});
+    });
+    await assert.rejects(() => rejected.listJobs(1), error => error instanceof JourneonError && error.status === status);
+    assert.equal(requests, 1);
+  }
+
   const client = new JourneonClient("", transport);
   const command = {
     schema_version: 1, idempotency_key: "synthetic-command", name: "Example project",

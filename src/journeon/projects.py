@@ -20,6 +20,8 @@ from journeon.contracts import (
     ProviderSnapshot,
 )
 from journeon.database import require_compatible_schema, transaction
+from journeon.discovery import allowed, paginate, read_transaction
+from journeon.discovery_contracts import DiscoveryLink, ProjectPage, ProjectSummary
 from journeon.models import DeploymentPolicy, OutboxEvent, Principal, Project, Receipt
 from journeon.permissions import AuthenticatedContext, current_owner, require_grant
 from journeon.policy import PolicyState
@@ -201,29 +203,66 @@ class ProjectService:
         try:
             with transaction(self.engine) as session:
                 require_compatible_schema(session)
-                require_grant(session, actor, "project.read", project_id=project_id)
-                project = session.get(Project, project_id)
-                if project is None:
-                    raise DomainError("NOT_FOUND", "Project is unavailable")
-                return ProjectView.model_validate(
-                    {
-                        "project_id": project.id,
-                        "revision": project.revision,
-                        "name": project.name,
-                        "description": project.description,
-                        "instruction_owner": project.instruction_owner,
-                        "instruction_authority_ref": project.instruction_authority_ref,
-                        "provider_allowance_at_creation": project.provider_snapshot,
-                        "verification_policy_ref": project.verification_policy_ref,
-                        "resource_refs": project.resource_refs,
-                    }
-                )
+                return self.read_in(session, actor, project_id)
         except (ValidationError, json.JSONDecodeError):
             raise DomainError(
                 "DEPENDENCY_UNAVAILABLE", "Stored Project state requires repair"
             ) from None
         except SQLAlchemyError as exc:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "The Project store is unavailable") from exc
+
+    def read_in(
+        self, session: Session, actor: AuthenticatedContext, project_id: str
+    ) -> ProjectView:
+        require_grant(session, actor, "project.read", project_id=project_id)
+        project = session.get(Project, project_id)
+        if project is None:
+            raise DomainError("NOT_FOUND", "Project is unavailable")
+        return ProjectView.model_validate(
+            {
+                "project_id": project.id,
+                "revision": project.revision,
+                "name": project.name,
+                "description": project.description,
+                "instruction_owner": project.instruction_owner,
+                "instruction_authority_ref": project.instruction_authority_ref,
+                "provider_allowance_at_creation": project.provider_snapshot,
+                "verification_policy_ref": project.verification_policy_ref,
+                "resource_refs": project.resource_refs,
+            }
+        )
+
+    def list(
+        self, actor: AuthenticatedContext, limit: int, cursor: str | None = None
+    ) -> ProjectPage:
+        with read_transaction(self.engine, actor) as db:
+
+            def summary(identity: str) -> ProjectSummary:
+                item = self.read_in(db, actor, identity)
+                links = []
+                if allowed(lambda: require_grant(db, actor, "task.read", project_id=identity)):
+                    links.append(
+                        DiscoveryLink(
+                            relation="tasks",
+                            href=f"/api/v1/projects/{identity}/tasks?limit={limit}",
+                        )
+                    )
+                return ProjectSummary(
+                    project_id=item.project_id, revision=item.revision, name=item.name, links=links
+                )
+
+            return ProjectPage(
+                **paginate(
+                    db,
+                    actor,
+                    select(Project.id),
+                    Project.id,
+                    summary,
+                    limit=limit,
+                    cursor=cursor,
+                    query={"operation": "project.list.v1"},
+                )
+            )
 
     def receipt(self, actor: AuthenticatedContext, operation_id: str) -> OperationReceipt:
         try:

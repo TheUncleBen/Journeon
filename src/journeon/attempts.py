@@ -36,6 +36,8 @@ from journeon.contracts import (
     VerificationPolicy,
 )
 from journeon.database import transaction
+from journeon.discovery import allowed, paginate, read_transaction
+from journeon.discovery_contracts import AttemptPage, AttemptSummary, DiscoveryLink
 from journeon.instruction_config import InstructionConfiguration, git_identity, open_directory
 from journeon.instructions import InstructionService, digest
 from journeon.models import (
@@ -217,17 +219,78 @@ class AttemptService:
 
     def read(self, actor: AuthenticatedContext, identity: str) -> AttemptView:
         with work_transaction(self.engine, actor) as db:
-            row = authorized_attempt(db, actor, identity)
-            self.check_configuration(db, row)
-            result = AttemptView.model_validate(row.snapshot)
-            if (
-                result.attempt_id != row.id
-                or result.project_id != row.project_id
-                or result.revision != row.revision
-            ):
-                raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored Attempt requires repair")
-            validate_attempt_view(db, row, result)
-            return result
+            return self.read_in(db, actor, identity)
+
+    def read_in(self, db: Session, actor: AuthenticatedContext, identity: str) -> AttemptView:
+        row = authorized_attempt(db, actor, identity)
+        self.check_configuration(db, row)
+        result = AttemptView.model_validate(row.snapshot)
+        if (
+            result.attempt_id != row.id
+            or result.project_id != row.project_id
+            or result.revision != row.revision
+        ):
+            raise DomainError("DEPENDENCY_UNAVAILABLE", "Stored Attempt requires repair")
+        validate_attempt_view(db, row, result)
+        return result
+
+    def collection_scope(self, db: Session, actor: AuthenticatedContext, task_id: str) -> str:
+        task = task_row(db, actor, task_id, "task.read")
+        require_grant(db, actor, "attempt.read", project_id=task.project_id)
+        require_grant(
+            db,
+            actor,
+            "project.instruction.read",
+            resource_kind="project",
+            resource_id=task.project_id,
+        )
+        if self.configuration is None or self.configuration.attempts is None:
+            raise RuntimeConfigurationUnavailable("Attempt preparation is not configured")
+        return task.project_id
+
+    def list(
+        self, actor: AuthenticatedContext, task_id: str, limit: int, cursor: str | None = None
+    ) -> AttemptPage:
+        with read_transaction(self.engine, actor) as db:
+            self.collection_scope(db, actor, task_id)
+
+            def summary(identity: str) -> AttemptSummary:
+                item = self.read_in(db, actor, identity)
+                links = []
+                if (
+                    self.configuration is not None
+                    and self.configuration.jobs is not None
+                    and allowed(
+                        lambda: require_grant(db, actor, "job.read", project_id=item.project_id)
+                    )
+                ):
+                    links.append(
+                        DiscoveryLink(
+                            relation="jobs",
+                            href=f"/api/v1/jobs?attempt_id={identity}&limit={limit}",
+                        )
+                    )
+                return AttemptSummary(
+                    attempt_id=item.attempt_id,
+                    project_id=item.project_id,
+                    task_id=task_id,
+                    revision=item.revision,
+                    state=item.state,
+                    links=links,
+                )
+
+            return AttemptPage(
+                **paginate(
+                    db,
+                    actor,
+                    select(Attempt.id).where(Attempt.task_id == task_id),
+                    Attempt.id,
+                    summary,
+                    limit=limit,
+                    cursor=cursor,
+                    query={"operation": "attempt.list.v1", "task_id": task_id},
+                )
+            )
 
     def check_configuration(self, db: Session, row: Attempt) -> None:
         if self.configuration is None or self.configuration.attempts is None:

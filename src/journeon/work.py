@@ -27,12 +27,15 @@ from journeon.contracts import (
     TaskPolicyBinding,
     TaskReceipt,
     TaskRevise,
+    TaskState,
     TaskView,
     VerificationPolicy,
     VerificationPolicyConfigure,
     VerificationPolicyReceipt,
 )
 from journeon.database import require_compatible_schema, transaction
+from journeon.discovery import allowed, paginate, read_transaction
+from journeon.discovery_contracts import DiscoveryLink, TaskPage, TaskSummary
 from journeon.instruction_config import InstructionConfiguration
 from journeon.models import OutboxEvent, Project, Receipt, Task, TaskRevision
 from journeon.permissions import AuthenticatedContext, require_grant
@@ -241,7 +244,72 @@ class WorkService:
 
     def read(self, actor: AuthenticatedContext, task_id: str) -> TaskView:
         with work_transaction(self.engine, actor) as db:
-            return task_view(task_row(db, actor, task_id, "task.read"))
+            return self.read_in(db, actor, task_id)
+
+    def read_in(self, db: Session, actor: AuthenticatedContext, task_id: str) -> TaskView:
+        return task_view(task_row(db, actor, task_id, "task.read"))
+
+    def list(
+        self,
+        actor: AuthenticatedContext,
+        project_id: str,
+        limit: int,
+        cursor: str | None = None,
+        state: TaskState | None = None,
+        configuration: InstructionConfiguration | None = None,
+    ) -> TaskPage:
+        from typing import get_args
+
+        from journeon.attempts import AttemptService
+
+        with read_transaction(self.engine, actor) as db:
+            require_grant(db, actor, "task.read", project_id=project_id)
+            if db.scalar(select(Project.id).where(Project.id == project_id)) is None:
+                raise DomainError("NOT_FOUND", "Project is unavailable")
+            if state is not None and state not in get_args(TaskState):
+                raise DomainError("VALIDATION_FAILED", "Invalid Task state filter")
+
+            def summary(identity: str) -> TaskSummary | None:
+                item = self.read_in(db, actor, identity)
+                if state is not None and item.state != state:
+                    return None
+                links = []
+                if (
+                    configuration is not None
+                    and configuration.attempts is not None
+                    and allowed(
+                        lambda: AttemptService(self.engine, configuration).collection_scope(
+                            db, actor, identity
+                        )
+                    )
+                ):
+                    links.append(
+                        DiscoveryLink(
+                            relation="attempts",
+                            href=f"/api/v1/tasks/{identity}/attempts?limit={limit}",
+                        )
+                    )
+                return TaskSummary(
+                    task_id=item.task_id,
+                    project_id=item.project_id,
+                    revision=item.revision,
+                    objective=item.objective,
+                    state=item.state,
+                    links=links,
+                )
+
+            return TaskPage(
+                **paginate(
+                    db,
+                    actor,
+                    select(Task.id).where(Task.project_id == project_id),
+                    Task.id,
+                    summary,
+                    limit=limit,
+                    cursor=cursor,
+                    query={"operation": "task.list.v1", "project_id": project_id, "state": state},
+                )
+            )
 
     def create(self, actor: AuthenticatedContext, command: TaskCreate) -> TaskReceipt:
         digest = payload_hash(command)

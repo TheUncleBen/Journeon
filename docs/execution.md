@@ -40,6 +40,42 @@ Only the Task origin currently has a preparation producer. Other typed origin
 shapes do not create admission authority; their owning services must provide the
 corresponding producer and current authorization before they can be used.
 
+## Discovering current work
+
+Start with `GET /api/v1/projects?limit=20`. Each authorized Project summary can
+link to its Tasks, each Task to its Attempts, and each Attempt to its Jobs. Follow
+returned `links` directly; collection links carry the requested page limit.
+Links appear only when the current session can read their target. A Job may also
+link to its existing verification evidence after the evidence read checks pass.
+
+The collection routes are:
+
+- `GET /api/v1/projects?limit=20`
+- `GET /api/v1/projects/{project_id}/tasks?limit=20`, optionally filtered by `state`
+- `GET /api/v1/tasks/{task_id}/attempts?limit=20`
+- `GET /api/v1/jobs?limit=20`, optionally filtered by `project_id`, `task_id`, or
+  `attempt_id`
+
+Every request requires an explicit limit from 1 to 100. Responses contain `items`,
+`next_cursor`, `has_more`, `observed_at`, and `store_incarnation`; each item carries
+its current revision. IDs determine page order. Pass `next_cursor` unchanged with
+the same route and filters to continue. The generated client provides
+`listProjects`, `listTasks`, `listAttempts`, and `listJobs` with query encoding.
+
+Pages reflect current authority and state on each request. They are live views;
+a grant change or Task transition can change later pages. A cursor grants no
+access and cannot cross Principals, filters, or store incarnations. If its binding
+is stale, restart from the first page. Hidden records do not contribute to
+`has_more`, and no global total is returned. If bounded scanning cannot establish
+a complete authorized page, the service returns unavailable instead of a partial
+success. Authorized corrupt state also returns unavailable and requires repair.
+
+Discovery does not renew session inactivity, dispatch work, or change Task
+completion. Creation authority does not imply read authority, including for the
+Owner. Attempts retain their originating Principal, exact instruction scope and
+current workspace checks. Jobs retain their kind-specific authorization and Task
+binding checks. Missing required Attempt or Job configuration returns unavailable.
+
 ## Task verification dispatch
 
 `POST /api/v1/tasks/dispatch` accepts `TaskDispatch` and returns the durable Job.

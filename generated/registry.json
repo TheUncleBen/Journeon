@@ -21,6 +21,132 @@
     },
     {
       "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "each candidate"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "Task collection link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.list_projects",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listProjects",
+      "owner": "projects",
+      "path": "/api/v1/projects",
+      "permissions": [
+        "project.read",
+        "task.read"
+      ],
+      "query": "project.list.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "Attempt collection link"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "exact-resource Attempt collection link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.list_tasks",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listTasks",
+      "owner": "work",
+      "path": "/api/v1/projects/{project_id}/tasks",
+      "permissions": [
+        "task.read",
+        "attempt.read",
+        "project.instruction.read"
+      ],
+      "query": "task.list.v1"
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "exact-resource read"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "Job collection link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "command": null,
+      "endpoint": "journeon.api.create_app.<locals>.list_attempts",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listAttempts",
+      "owner": "work",
+      "path": "/api/v1/tasks/{task_id}/attempts",
+      "permissions": [
+        "attempt.read",
+        "task.read",
+        "project.instruction.read",
+        "job.read"
+      ],
+      "query": "attempt.list.v1"
+    },
+    {
+      "authentication": null,
       "command": "project.create.v1",
       "endpoint": "journeon.api.create_app.<locals>.create_project",
       "methods": [
@@ -2303,6 +2429,82 @@
       "path": "/api/v1/projects/{identity}/instructions/policy",
       "permissions": [],
       "query": null
+    },
+    {
+      "authentication": null,
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "command": null,
+      "endpoint": "journeon.job_api.bind_job_api.<locals>.list_jobs",
+      "methods": [
+        "GET"
+      ],
+      "operation_id": "listJobs",
+      "owner": "jobs",
+      "path": "/api/v1/jobs",
+      "permissions": [
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read",
+        "execution.read",
+        "project.read"
+      ],
+      "query": "job.list.v1"
     },
     {
       "authentication": null,
@@ -5636,7 +5838,8 @@
       "migration": "0014_review_completion",
       "module_id": "projects",
       "permission_namespaces": [
-        "project"
+        "project",
+        "task"
       ],
       "permissions": [
         "project.create",
@@ -5645,7 +5848,8 @@
         "project.verification.read",
         "project.review.configure",
         "project.review.read",
-        "project.read"
+        "project.read",
+        "task.read"
       ],
       "settings": [],
       "tables": [
@@ -5659,7 +5863,8 @@
       "api_prefixes": [
         "/api/v1/tasks",
         "/api/v1/attempts",
-        "/api/v1/review-targets"
+        "/api/v1/review-targets",
+        "/api/v1/projects/{project_id}/tasks"
       ],
       "backup_class": "R0",
       "core": true,
@@ -6333,6 +6538,180 @@
       "owner": "egress",
       "permissions": [],
       "result_model": "DeploymentPolicyView"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "each candidate"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "project.id",
+            "when": "Task collection link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "name": "project.list.v1",
+      "owner": "projects",
+      "permissions": [
+        "project.read",
+        "task.read"
+      ],
+      "result_model": "ProjectPage"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "Attempt collection link"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "task.project_id",
+            "when": "exact-resource Attempt collection link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "name": "task.list.v1",
+      "owner": "work",
+      "permissions": [
+        "task.read",
+        "attempt.read",
+        "project.instruction.read"
+      ],
+      "result_model": "TaskPage"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "always"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "exact-resource read"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "attempt.project_id",
+            "when": "Job collection link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "name": "attempt.list.v1",
+      "owner": "work",
+      "permissions": [
+        "attempt.read",
+        "task.read",
+        "project.instruction.read",
+        "job.read"
+      ],
+      "result_model": "AttemptPage"
+    },
+    {
+      "authorization": {
+        "authentication": "current session and Principal epoch, including empty pages",
+        "grant_checks": [
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "instruction origin"
+          },
+          {
+            "capability": "job.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "task.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "attempt.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.instruction.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "project.verification.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "Task origin"
+          },
+          {
+            "capability": "execution.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          },
+          {
+            "capability": "project.read",
+            "owner_configuration_authority": false,
+            "resource": "job.project_id",
+            "when": "evidence link"
+          }
+        ],
+        "owner_only": false,
+        "semantics": "Canonical owner checks precede JSON, filters and lookahead; links require their target authority. Attempts and Jobs retain originating Principal, current root/configuration and binding checks. Cursors never grant access."
+      },
+      "name": "job.list.v1",
+      "owner": "jobs",
+      "permissions": [
+        "project.instruction.read",
+        "job.read",
+        "task.read",
+        "attempt.read",
+        "project.verification.read",
+        "execution.read",
+        "project.read"
+      ],
+      "result_model": "JobPage"
     }
   ],
   "surfaces": [

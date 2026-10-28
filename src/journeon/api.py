@@ -5,7 +5,7 @@ import tomllib
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import Depends, FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
@@ -60,6 +60,7 @@ from journeon.contracts import (
     TaskCreate,
     TaskReceipt,
     TaskRevise,
+    TaskState,
     TaskView,
     TeamCreate,
     TeamView,
@@ -68,6 +69,7 @@ from journeon.contracts import (
     VerificationPolicyReceipt,
     WorkflowTemplates,
 )
+from journeon.discovery_contracts import AttemptPage, ProjectPage, TaskPage
 from journeon.factors import FactorService
 from journeon.instruction_config import InstructionConfiguration
 from journeon.instructions import InstructionService
@@ -178,6 +180,57 @@ def create_app(
         return IdentityService(engine, instructions_configured=instructions is not None).context(
             actor
         )
+
+    @app.get(
+        "/api/v1/projects",
+        response_model=ProjectPage,
+        operation_id="listProjects",
+        responses=errors,
+        openapi_extra=configuration_metadata("project.list.v1"),
+    )
+    def list_projects(
+        response: Response,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+        limit: Annotated[int, Query(ge=1, le=100)],
+        cursor: Annotated[str | None, Query(max_length=4096)] = None,
+    ) -> ProjectPage:
+        response.headers["Cache-Control"] = "no-store"
+        return service.list(actor, limit, cursor)
+
+    @app.get(
+        "/api/v1/projects/{project_id}/tasks",
+        response_model=TaskPage,
+        operation_id="listTasks",
+        responses=errors,
+        openapi_extra=configuration_metadata("task.list.v1"),
+    )
+    def list_tasks(
+        project_id: Identifier,
+        response: Response,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+        limit: Annotated[int, Query(ge=1, le=100)],
+        cursor: Annotated[str | None, Query(max_length=4096)] = None,
+        state: TaskState | None = None,
+    ) -> TaskPage:
+        response.headers["Cache-Control"] = "no-store"
+        return WorkService(engine).list(actor, project_id, limit, cursor, state, instructions)
+
+    @app.get(
+        "/api/v1/tasks/{task_id}/attempts",
+        response_model=AttemptPage,
+        operation_id="listAttempts",
+        responses=errors,
+        openapi_extra=configuration_metadata("attempt.list.v1"),
+    )
+    def list_attempts(
+        task_id: Identifier,
+        response: Response,
+        actor: Annotated[AuthenticatedContext, Depends(authenticated_context)],
+        limit: Annotated[int, Query(ge=1, le=100)],
+        cursor: Annotated[str | None, Query(max_length=4096)] = None,
+    ) -> AttemptPage:
+        response.headers["Cache-Control"] = "no-store"
+        return AttemptService(engine, instructions).list(actor, task_id, limit, cursor)
 
     @app.post(
         "/api/v1/projects",

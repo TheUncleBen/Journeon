@@ -48,6 +48,28 @@ def test_count(report: Path) -> int:
     return count
 
 
+def validate_host(repo: Path, python: str, env: dict[str, str], report: Path) -> None:
+    for name in ("bwrap", "systemd-run", "systemctl", "python3", "git"):
+        if not os.access(f"/usr/bin/{name}", os.X_OK):
+            message = f"Required native executable is unavailable: /usr/bin/{name}"
+            print(message, file=sys.stderr)
+            raise ValueError(message)
+    command = [
+        python,
+        "-m",
+        "pytest",
+        "tests/test_execution_route.py::"
+        "test_real_local_route_binds_kernel_limits_and_command_result",
+        "-o",
+        "addopts=",
+        f"--junitxml={report}",
+    ]
+    print("RUN:", shlex.join(command), flush=True)
+    subprocess.run(command, cwd=repo, env=env, check=True, timeout=60)
+    if test_count(report) != 1:
+        raise ValueError("Host containment qualification must execute exactly one passing check.")
+
+
 def validate(repo: Path, python: str, node_bin: Path, env: dict[str, str]) -> None:
     required = [
         "pyproject.toml",
@@ -117,6 +139,8 @@ def validate(repo: Path, python: str, node_bin: Path, env: dict[str, str]) -> No
         output = run([str(node_bin / executable), "--version"], repo, env, True).stdout.strip()
         if executable == "node" and output != "v24.22.1":
             raise ValueError("Node does not match the pinned version.")
+    with tempfile.TemporaryDirectory(prefix="containment-probe-") as directory:
+        validate_host(repo, python, env, Path(directory) / "pytest.xml")
     print(
         f"VERIFIED: {len(expected)} Python package versions and TypeScript {version}.",
         flush=True,
@@ -163,7 +187,8 @@ def main() -> int:
                 ValueError,
                 KeyError,
                 TypeError,
-                subprocess.CalledProcessError,
+                subprocess.SubprocessError,
+                ET.ParseError,
             ):
                 print(
                     "NOT_CONFIGURED: checkout, pinned environment or required tools "

@@ -171,3 +171,90 @@ def test_preflight_runs_real_suite_without_hiding_failures(tmp_path, monkeypatch
         ],
     )
     assert module.main() == 1
+
+
+@pytest.mark.parametrize("missing", ["bwrap", "systemd-run", "systemctl", "python3", "git"])
+def test_host_probe_rejects_missing_native_tool(tmp_path, monkeypatch, missing):
+    module = load("preflight")
+    monkeypatch.setattr(module.os, "access", lambda path, mode: path != f"/usr/bin/{missing}")
+    with pytest.raises(ValueError, match=missing):
+        module.validate_host(ROOT, sys.executable, {}, tmp_path / "probe.xml")
+
+
+@pytest.mark.parametrize("outcome", ["pass", "failure", "timeout", "skip"])
+def test_host_probe_requires_bounded_real_containment_check(tmp_path, monkeypatch, outcome):
+    module = load("preflight")
+    monkeypatch.setattr(module.os, "access", lambda *args: True)
+    report = tmp_path / "probe.xml"
+    calls = []
+
+    def execute(command, **kwargs):
+        calls.append((command, kwargs))
+        assert kwargs["timeout"] == 60
+        assert kwargs["check"] is True
+        assert command[1:3] == ["-m", "pytest"]
+        assert command[3] == (
+            "tests/test_execution_route.py::"
+            "test_real_local_route_binds_kernel_limits_and_command_result"
+        )
+        assert command[4:6] == ["-o", "addopts="]
+        if outcome == "failure":
+            raise subprocess.CalledProcessError(1, command)
+        if outcome == "timeout":
+            raise subprocess.TimeoutExpired(command, 60)
+        skipped = ' skipped="1"' if outcome == "skip" else ""
+        report.write_text(f'<testsuites><testsuite tests="1"{skipped}/></testsuites>')
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(module.subprocess, "run", execute)
+    if outcome == "pass":
+        module.validate_host(ROOT, sys.executable, {}, report)
+    else:
+        with pytest.raises((ValueError, subprocess.SubprocessError)):
+            module.validate_host(ROOT, sys.executable, {}, report)
+    assert len(calls) == 1
+
+
+def test_workflow_provisions_native_containment_before_checks():
+    workflow = (ROOT / ".github/workflows/validation.yml").read_text()
+    assert (
+        "apt-get install --yes --no-install-recommends bubblewrap dbus-user-session libpam-systemd"
+        in workflow
+    )
+    assert 'sudo systemctl start "user@$(id -u).service"' in workflow
+    assert workflow.index("apt-get install") < workflow.index("tools/preflight.py")
+
+
+@pytest.mark.parametrize("manager_failure", [False, True])
+def test_host_provisioning_executes_expected_commands_and_stops_on_failure(
+    tmp_path, manager_failure
+):
+    import os
+
+    workflow = (ROOT / ".github/workflows/validation.yml").read_text()
+    script = workflow.split("      - name: Provision the native containment runtime\n", 1)[1]
+    script = script.split("      - name:", 1)[0].split("        run: |\n", 1)[1]
+    script = "\n".join(line[10:] for line in script.splitlines())
+    sudo = tmp_path / "sudo"
+    sudo.write_text(
+        '#!/bin/sh\nprintf "%s\n" "$*" >> "$PROVISION_LOG"\n'
+        'if [ "$1" = systemctl ]; then exit "$MANAGER_EXIT"; fi\n'
+    )
+    sudo.chmod(0o755)
+    log = tmp_path / "commands"
+    result = subprocess.run(
+        ["bash", "-e", "-c", script],
+        env={
+            "PATH": str(tmp_path) + ":" + os.defpath,
+            "PROVISION_LOG": str(log),
+            "MANAGER_EXIT": "7" if manager_failure else "0",
+        },
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == (7 if manager_failure else 0)
+    assert log.read_text().splitlines() == [
+        "apt-get update",
+        "apt-get install --yes --no-install-recommends bubblewrap dbus-user-session libpam-systemd",
+        f"systemctl start user@{os.getuid()}.service",
+    ]

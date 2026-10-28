@@ -210,6 +210,10 @@ def test_fixture_passkey_protected_routes_remain_unavailable(database):
         "project.instructions.accept.v1",
         "project.instructions.recover.v1",
         "lifecycle.restore.authorize.v1",
+        "permission.grant.set.v1",
+        "permission.grant.revoke.v1",
+        "egress.policy.initialize.v1",
+        "identity.session.revoke.v1",
     }
 
 

@@ -72,11 +72,15 @@ def test_registry_owns_every_canonical_table_and_api(database):
     assert len(owners) == len(set(owners))
     assert set(owners) == set(Base.metadata.tables)
     assert set(inspect(database[0]).get_table_names()) == set(owners) | {"alembic_version"}
-    for module in MODULES.values():
+    for owner, module in MODULES.items():
         assert module["backup_class"] in {"R0", "R1", "R2", "R3"}
         assert module["health"] == schema_and_database.__name__
         assert module["migration"] == (
-            "0014_review_completion"
+            "0016_identity_sessions"
+            if owner in {"identity", "operations"}
+            else "0015_workspace_read_models"
+            if owner in {"permissions", "egress"}
+            else "0014_review_completion"
             if set(module["tables"]) & {"review_policy_revisions", "review_targets"}
             else "0013_task_dispatch"
             if set(module["tables"]) & {"attempts", "executions", "jobs"}

@@ -62,15 +62,29 @@ def test_generation_includes_actual_registry():
     assert {item["module_id"] for item in manifest["modules"]} == set(MODULES)
     assert {item["name"] for item in manifest["commands"]} == set(COMMANDS)
     assert {item["name"] for item in manifest["authentication"]} == {
+        "identity.context.bootstrap.v1",
         "passkey.begin.v1",
         "passkey.finish.v1",
     }
     assert {item["authentication"] for item in manifest["api_operations"]} == {
         None,
+        "identity.context.bootstrap.v1",
         "passkey.begin.v1",
         "passkey.finish.v1",
     }
     assert {item["operation_id"] for item in manifest["api_operations"]} == {
+        "bootstrapCurrentContext",
+        "getCurrentContext",
+        "getDeploymentPolicy",
+        "getGrantCatalog",
+        "initializeDeploymentPolicy",
+        "listBrowserSessions",
+        "listGrants",
+        "logoutBrowserSession",
+        "resolveOperationIdentity",
+        "revokeBrowserSession",
+        "revokeGrant",
+        "setGrant",
         "createProfile",
         "previewProfileRevision",
         "reviseProfile",
@@ -318,3 +332,41 @@ def test_generation_checks_effective_included_prefix():
             registry_manifest(app)
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize(
+    "operation_id,path",
+    [
+        ("bootstrapCurrentContext", "/api/v1/auth/context-imposter/bootstrap"),
+        ("listBrowserSessions", "/api/v1/auth/sessions-imposter"),
+        ("logoutBrowserSession", "/api/v1/auth/logout-imposter"),
+    ],
+)
+def test_identity_namespace_suffix_is_not_owned(authentication_app, operation_id, path):
+    route = next(
+        route
+        for route in authentication_app.routes
+        if getattr(route, "operation_id", None) == operation_id
+    )
+    route.path = path
+    with pytest.raises(ValueError):
+        registry_manifest(authentication_app)
+
+
+@pytest.mark.parametrize(
+    "operation_id,path",
+    [
+        ("beginPasskey", "/api/v1/auth/context/begin"),
+        ("finishPasskey", "/api/v1/auth/sessions/finish"),
+        ("bootstrapCurrentContext", "/api/v1/auth/passkeys/bootstrap"),
+    ],
+)
+def test_authentication_stays_at_its_registered_path(authentication_app, operation_id, path):
+    route = next(
+        route
+        for route in authentication_app.routes
+        if getattr(route, "operation_id", None) == operation_id
+    )
+    route.path = path
+    with pytest.raises(ValueError):
+        registry_manifest(authentication_app)

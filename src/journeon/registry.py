@@ -1469,7 +1469,11 @@ CONFIGURATION_AUTHORIZATION["identity.context.read.v1"] = {
     "grant_checks": [],
     "semantics": "Current authenticated human and own browser session; no resource authority",
 }
-MODULES["identity"]["api_prefixes"] = ("/api/v1/auth",)
+MODULES["identity"]["api_prefixes"] += (
+    "/api/v1/auth/context",
+    "/api/v1/auth/sessions",
+    "/api/v1/auth/logout",
+)
 QUERIES["identity.sessions.read.v1"] = {
     "owner": "identity",
     "permissions": (),
@@ -1583,14 +1587,20 @@ class AuthenticationDefinition:
     owner: str
     input_model: type[BaseModel]
     result_model: type[BaseModel]
+    path: str
 
 
 AUTHENTICATION = {
-    name: AuthenticationDefinition(name, "identity", input_model, result_model)
-    for name, input_model, result_model in (
-        ("identity.context.bootstrap.v1", ContextBootstrap, ContextBootstrapped),
-        ("passkey.begin.v1", PasskeyBegin, PasskeyChallenge),
-        ("passkey.finish.v1", PasskeyFinish, PasskeyAuthenticated),
+    name: AuthenticationDefinition(name, "identity", input_model, result_model, path)
+    for name, input_model, result_model, path in (
+        (
+            "identity.context.bootstrap.v1",
+            ContextBootstrap,
+            ContextBootstrapped,
+            "/api/v1/auth/context/bootstrap",
+        ),
+        ("passkey.begin.v1", PasskeyBegin, PasskeyChallenge, "/api/v1/auth/passkeys/begin"),
+        ("passkey.finish.v1", PasskeyFinish, PasskeyAuthenticated, "/api/v1/auth/passkeys/finish"),
     )
 }
 
@@ -1808,6 +1818,7 @@ def registry_manifest(app: FastAPI) -> dict[str, Any]:
                 authentication is None
                 or authentication.name != authentication_name
                 or authentication.owner != owner
+                or route.path != authentication.path
                 or "x-journeon-permissions" in metadata
                 or route.body_field is None
                 or route.body_field.field_info.annotation is not authentication.input_model

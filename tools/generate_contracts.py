@@ -73,7 +73,7 @@ from journeon.contracts import (
 )
 from journeon.instruction_contracts import ProtectedEffect
 from journeon.passkey_api import PasskeyAuthenticated, PasskeyBegin, PasskeyChallenge, PasskeyFinish
-from journeon.registry import COMMANDS, registry_manifest
+from journeon.registry import AUTHENTICATION, COMMANDS, registry_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -179,8 +179,8 @@ def artifacts() -> dict[str, str]:
         "getProject": ("GET", "/api/v1/projects/{project_id}"),
         "getVerification": ("GET", "/api/v1/projects/{project_id}/verification"),
         "cancelTask": ("POST", "/api/v1/tasks/cancel"),
-        "beginPasskey": ("POST", "/api/v1/auth/passkeys/begin"),
-        "finishPasskey": ("POST", "/api/v1/auth/passkeys/finish"),
+        "beginPasskey": ("POST", AUTHENTICATION["passkey.begin.v1"].path),
+        "finishPasskey": ("POST", AUTHENTICATION["passkey.finish.v1"].path),
         "labelPasskey": ("POST", "/api/v1/auth/passkeys/label"),
         "createProject": ("POST", "/api/v1/projects"),
         "getOperationReceipt": ("GET", "/api/v1/operations/{operation_id}"),
@@ -236,7 +236,7 @@ def artifacts() -> dict[str, str]:
     expected_operations.update(administration_paths)
     expected_operations["getCurrentContext"] = ("GET", "/api/v1/auth/context")
     identity_paths = {
-        "bootstrapCurrentContext": ("POST", "/api/v1/auth/context/bootstrap"),
+        "bootstrapCurrentContext": ("POST", AUTHENTICATION["identity.context.bootstrap.v1"].path),
         "listBrowserSessions": ("GET", "/api/v1/auth/sessions"),
         "revokeBrowserSession": ("POST", "/api/v1/auth/sessions/revoke"),
         "logoutBrowserSession": ("POST", "/api/v1/auth/logout"),

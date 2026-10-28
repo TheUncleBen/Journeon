@@ -608,7 +608,7 @@ def test_completed_candidate_backup_retains_history_without_activation(
         }
     destination = tmp_path / "completion-snapshot"
     snapshot_database(Path(engine.url.database), destination)
-    assert validate_snapshot(destination)["schema"] == "0014_review_completion"
+    assert validate_snapshot(destination)["schema"] == "0016_identity_sessions"
     copy = destination / "database.sqlite"
     assert doctor(copy)["schema"] == "CURRENT"
     with sqlite3.connect("file:" + str(copy) + "?mode=ro", uri=True) as retained:

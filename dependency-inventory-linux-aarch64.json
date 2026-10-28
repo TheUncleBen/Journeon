@@ -49,14 +49,14 @@
     },
     {
       "name": "certifi",
-      "version": "2026.7.22",
+      "version": "2026.10.19",
       "use": "development",
       "declared_license": "MPL-2.0",
       "license_files": [
         "LICENSE"
       ],
-      "wheel": "certifi-2026.7.22-py3-none-any.whl",
-      "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+      "wheel": "certifi-2026.10.19-py3-none-any.whl",
+      "sha256": "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
     },
     {
       "name": "cffi",
@@ -263,7 +263,7 @@
     },
     {
       "name": "pip",
-      "version": "26.2.1",
+      "version": "26.2.2",
       "use": "development",
       "declared_license": "MIT",
       "license_files": [
@@ -290,8 +290,8 @@
         "src/pip/_vendor/truststore/LICENSE",
         "src/pip/_vendor/urllib3/LICENSE.txt"
       ],
-      "wheel": "pip-26.2.1-py3-none-any.whl",
-      "sha256": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e"
+      "wheel": "pip-26.2.2-py3-none-any.whl",
+      "sha256": "fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
     },
     {
       "name": "pluggy",

@@ -770,7 +770,7 @@ def test_snapshot_inspection_does_not_authorize_store_activation(official, tmp_p
     directory = tmp_path / "inspection"
     snapshot_database(Path(str(official[0].url.database)), directory)
     copied = directory / "database.sqlite"
-    assert validate_snapshot(directory)["schema"] == "0014_review_completion"
+    assert validate_snapshot(directory)["schema"] == "0016_identity_sessions"
     assert doctor(copied)["schema"] == "CURRENT"
     with pytest.raises(ValueError):
         application(runtime_settings(official, tmp_path, str(copied)))

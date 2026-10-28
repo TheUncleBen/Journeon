@@ -154,7 +154,7 @@ def test_populated_0008_successor_preserves_rows_and_sequence(populated_0007):
             assert db.execute(text(f"SELECT * FROM {name}")).all() == rows
         assert db.scalar(text("SELECT seq FROM sqlite_sequence WHERE name='outbox_events'")) == 400
         assert (
-            db.scalar(text("SELECT version_num FROM alembic_version")) == "0014_review_completion"
+            db.scalar(text("SELECT version_num FROM alembic_version")) == "0016_identity_sessions"
         )
         assert db.execute(text("PRAGMA foreign_key_check")).all() == []
         for name in ("operation_receipts", "outbox_events"):

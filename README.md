@@ -6,13 +6,41 @@ The FastAPI authentication dependency denies access unless explicitly configured
 
 ## Verify this slice
 
-Use CPython 3.12 on Linux x86_64 or Linux aarch64 and Node.js 24. The Python locks include runtime and development dependencies, with hashes for the inspected wheels on each platform. Use `requirements.lock` for x86_64 or `requirements-linux-aarch64.lock` for aarch64. Other platforms need separately verified wheels; Raspberry Pi qualification has not run.
+Use CPython 3.12 on Linux x86_64 or Linux aarch64 and Node.js 24.22.1. The Python locks include runtime and development dependencies, with hashes for the inspected wheels on each platform. Use `requirements.lock` and `dependency-inventory.json` for x86_64, or `requirements-linux-aarch64.lock` and `dependency-inventory-linux-aarch64.json` for aarch64. Other platforms need separately verified wheels; Raspberry Pi qualification has not run.
+
+Obtain the wheels on a machine with updated TLS trust and pip 26.2.2 or later. Follow the [Python Software Foundation bootstrap guidance](https://discuss.python.org/t/information-for-python-users-regarding-emudhra-emsign-ca-certificate-security-incident/109576) to obtain and verify a corrected installer before its first network operation. Updating certifi alone does not remove certificates from pip's system trust store. An online installer must use updated system trust or an explicitly validated CA file and certificate directory that exclude the affected certificates.
+
+With that prepared installer, download the exact wheels for the target platform. The following commands use the x86_64 files; substitute both aarch64 filenames on an aarch64 machine. Transfer the resulting `wheels` directory if installation is on a separate machine of the same target platform.
 
 ```sh
-python3.12 -m venv .venv
-.venv/bin/python -m pip install --only-binary=:all: --require-hashes -r requirements.lock
+python3.12 -m pip download --only-binary=:all: --require-hashes --dest wheels -r requirements.lock
+```
+
+Before executing any downloaded wheel, verify every file against the checked-in inventory. Run this from the source-tree root, and continue only if it succeeds:
+
+```sh
+python3.12 - dependency-inventory.json wheels <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+inventory = json.loads(Path(sys.argv[1]).read_text())
+for package in inventory["packages"]:
+    wheel = Path(sys.argv[2]) / package["wheel"]
+    if hashlib.sha256(wheel.read_bytes()).hexdigest() != package["sha256"]:
+        raise SystemExit("Wheel hash mismatch; do not install.")
+print("All pinned wheel hashes match.")
+PY
+```
+
+Create an empty environment and install offline using the verified pip wheel. This avoids using the virtual environment's bundled installer for an initial download.
+
+```sh
+python3.12 -m venv --without-pip .venv
+.venv/bin/python -I wheels/pip-26.2.2-py3-none-any.whl/pip --isolated --disable-pip-version-check install --no-index --no-deps --no-cache-dir --only-binary=:all: --require-hashes --find-links wheels -r requirements.lock
 .venv/bin/python -m pip check
-.venv/bin/pytest
+PYTHONPATH="$PWD/src" .venv/bin/pytest
 .venv/bin/ruff check src tests tools migrations
 .venv/bin/ruff format --check src tests tools migrations
 .venv/bin/mypy
@@ -24,7 +52,7 @@ npm test
 
 The tests use temporary file-backed databases and subprocesses. They cover current Owner/grant checks, provider allowance narrowing, conflicting and concurrent retries, revoked receipt access, schema incompatibility, crash rollback and recovery after a committed response is lost. They make no external provider calls. The client transport test uses a synthetic fetch implementation.
 
-On Linux aarch64, substitute `requirements-linux-aarch64.lock` in the install command above.
+On Linux aarch64, substitute `requirements-linux-aarch64.lock` in the install command above. The offline Python installation does not update the host's TLS trust or other Python environments.
 
 The [local runtime guide](docs/runtime.md) describes the explicit TLS launcher and relocatable source-shaped release bundle. The bundle preserves project metadata and migration paths and includes a checked runtime wheel lock. Local subprocess checks cover TLS, authentication, shutdown and restart. A project wheel, production installer, signed updater and complete recovery workflow remain unavailable; these checks do not establish deployment readiness.
 

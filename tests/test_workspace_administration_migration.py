@@ -187,7 +187,7 @@ def test_workspace_upgrade_preserves_rows_triggers_and_sequence(legacy_store, bo
     with engine.begin() as db:
         assert (
             db.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0015_workspace_read_models"
+            == "0016_identity_sessions"
         )
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         for name, rows in retained.items():

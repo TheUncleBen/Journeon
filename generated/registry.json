@@ -2968,18 +2968,21 @@
       "input_model": "ContextBootstrap",
       "name": "identity.context.bootstrap.v1",
       "owner": "identity",
+      "path": "/api/v1/auth/context/bootstrap",
       "result_model": "ContextBootstrapped"
     },
     {
       "input_model": "PasskeyBegin",
       "name": "passkey.begin.v1",
       "owner": "identity",
+      "path": "/api/v1/auth/passkeys/begin",
       "result_model": "PasskeyChallenge"
     },
     {
       "input_model": "PasskeyFinish",
       "name": "passkey.finish.v1",
       "owner": "identity",
+      "path": "/api/v1/auth/passkeys/finish",
       "result_model": "PasskeyAuthenticated"
     }
   ],
@@ -5327,7 +5330,10 @@
     },
     {
       "api_prefixes": [
-        "/api/v1/auth"
+        "/api/v1/auth/passkeys",
+        "/api/v1/auth/context",
+        "/api/v1/auth/sessions",
+        "/api/v1/auth/logout"
       ],
       "backup_class": "R0",
       "core": true,

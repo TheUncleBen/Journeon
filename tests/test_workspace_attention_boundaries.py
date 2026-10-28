@@ -619,3 +619,50 @@ def test_actual_running_execution_reconciliation_advances_attention_source(
             db.get(Attention, item["attention_id"]).history[-1]["revision"]
             == item["source_revision"]
         )
+
+
+def test_advertised_presentation_action_invokes_owner_and_tracks_current_grant(failed_work):
+    from journeon.registry import COMMANDS
+
+    fixture, _ = failed_work
+    owner = fixture[0]
+    item = attention_page(owner)["items"][0]
+    assert item["source"]["state"] == "FAILED"
+    assert len(item["actions"]) == 1
+    action = item["actions"][0]
+    assert action == {
+        "operation": "notification.dismiss.v1",
+        "target_id": item["attention_id"],
+        "arguments": {
+            "attention_id": item["attention_id"],
+            "expected_revision": 0,
+            "expected_source_revision": item["source_revision"],
+        },
+    }
+    registered = COMMANDS[action["operation"]]
+    assert registered.owner == "jobs"
+    command = registered.input_model.model_validate(
+        {"schema_version": 1, "idempotency_key": "follow-advertised-action"} | action["arguments"]
+    )
+    response = owner.client.post(
+        "/api/v1/notifications/dismiss",
+        headers=owner.headers,
+        json=command.model_dump(mode="json"),
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["command"] == action["operation"]
+    assert response.json()["attention_id"] == action["target_id"]
+    assert attention_page(owner)["items"][0]["canonical_disposition"] == "OPEN"
+    revoke(owner, fixture[3]["job.receipt.read"]["grant"])
+    remaining = attention_page(owner)["items"][0]
+    assert remaining["attention_id"] == item["attention_id"]
+    assert remaining["actions"] == []
+    before = effects(owner)
+    denied = owner.client.post(
+        "/api/v1/notifications/dismiss",
+        headers=owner.headers,
+        json=command.model_dump(mode="json"),
+    )
+    assert denied.status_code == 403
+    assert denied.json()["code"] == "PERMISSION_DENIED"
+    assert effects(owner) == before

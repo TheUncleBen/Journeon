@@ -210,14 +210,23 @@ def dispatch_worker(engine, config):
     claims = []
     original_claim = worker.claim
 
-    def claim_once():
+    def claim_one_job():
         if claims:
             with transaction(engine) as db:
                 if db.get(Job, claims[0].job_id).state in ("SUCCEEDED", "FAILED", "CANCELLED"):
                     stop.set()
-            return None
+                    return None
         claim = original_claim()
-        assert claim is not None
+        if claim is None:
+            assert claims
+            return None
+        if claims:
+            assert (claim.job_id, claim.owner, claim.incarnation) == (
+                claims[0].job_id,
+                claims[0].owner,
+                claims[0].incarnation,
+            )
+            assert claim.fence > claims[-1].fence
         claims.append(claim)
         return claim
 
@@ -225,13 +234,13 @@ def dispatch_worker(engine, config):
         expired.set()
         stop.set()
 
-    worker.claim = claim_once
+    worker.claim = claim_one_job
     watchdog = threading.Timer(45, watchdog_expired)
     watchdog.start()
     try:
         worker.run(stop)
         assert not expired.is_set(), "Task fixture did not reach a terminal Job"
-        assert len(claims) == 1
+        assert 1 <= len(claims) <= config.jobs.max_attempts
         with transaction(engine) as db:
             assert db.get(Job, claims[0].job_id).state in ("SUCCEEDED", "FAILED", "CANCELLED")
     finally:

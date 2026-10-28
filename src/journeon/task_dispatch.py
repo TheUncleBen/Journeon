@@ -14,6 +14,7 @@ from journeon.contracts import (
     DomainError,
     ExecutionStart,
     RunManifest,
+    RuntimeConfigurationUnavailable,
     TaskCriterion,
 )
 from journeon.instruction_config import InstructionConfiguration
@@ -162,6 +163,15 @@ class TaskDispatchService:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Task Job binding requires repair")
         attempt = authorized_attempt(db, actor, binding.attempt_id)
         self.attempts.check_configuration(db, attempt)
+        executions = self.configuration.executions
+        if executions is None:
+            raise RuntimeConfigurationUnavailable("Local execution routes are not configured")
+        if executions.revision != binding.configuration_revision or not any(
+            route.project_id == row.project_id
+            and digest(route.model_dump(mode="json")) == binding.route_digest
+            for route in executions.routes
+        ):
+            raise DomainError("PERMISSION_DENIED", "Task verification route scope changed")
         if row.task_id is None:
             raise DomainError("DEPENDENCY_UNAVAILABLE", "Task Job origin is unavailable")
         current = task_view(task_row(db, actor, row.task_id, "task.read"))
@@ -208,8 +218,6 @@ class TaskDispatchService:
             route.project_id != row.project_id
             or route.check_id != execution_command(command, manifest, row.id).check_id
             or digest(route.model_dump(mode="json")) != binding.route_digest
-            or self.configuration.executions is None
-            or self.configuration.executions.revision != binding.configuration_revision
         ):
             raise DomainError("PERMISSION_DENIED", "Task verification route scope changed")
         if execution:

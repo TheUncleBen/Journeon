@@ -25,6 +25,11 @@ jobs:
           actual=$(git rev-parse HEAD)
           test "$actual" = "$PR_HEAD_SHA"
           printf 'checkout=%s\npr_head=%s\nevent_merge=%s\n' "$actual" "$PR_HEAD_SHA" "$EVENT_SHA"
+      - name: Provision the native containment runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends bubblewrap dbus-user-session libpam-systemd
+          sudo systemctl start "user@$(id -u).service"
       - name: Select Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
